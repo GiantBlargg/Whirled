@@ -18,8 +18,9 @@ public class MDL2 : MeshInstance3D {
 
 	void LoadModel() {
 		if (IsInsideTree()) {
+			var gameDataManager = GetNode<GameDataManager>("/root/GameDataManager");
 			System.Threading.Tasks.Task.Run(() => {
-				Mesh = LoadMesh(modelPath, GetNode<GameDataManager>("/root/GameDataManager"));
+				Mesh = LoadMesh(modelPath, gameDataManager);
 			});
 		} else {
 			delayedLoad = true;
@@ -37,6 +38,22 @@ public class MDL2 : MeshInstance3D {
 	const ushort VERTEX_HAS_COLOUR = 0b0100;
 	const ushort VERTEX_HAS_UV = 0b1000;
 
+	struct Blend {
+		public uint Effect;
+		public ushort TextureID;
+		public byte CoordinateIndex;
+		public byte TilingInfo;
+	}
+
+	static Blend LoadBlend(File file) {
+		return new Blend() {
+			Effect = file.Get32(),
+			TextureID = file.Get16(),
+			CoordinateIndex = file.Get8(),
+			TilingInfo = file.Get8()
+		};
+	}
+
 	static Mesh LoadMesh(string modelPath, GameDataManager gameDataManager) {
 		var path = gameDataManager.ResolvePath(modelPath);
 
@@ -44,6 +61,8 @@ public class MDL2 : MeshInstance3D {
 		file.Open(path, File.ModeFlags.Read);
 
 		ArrayMesh mesh = new ArrayMesh();
+
+		Texture2D[] textures = new Texture2D[0];
 
 		while (true) {
 			var chunkType = file.Get32();
@@ -59,51 +78,75 @@ public class MDL2 : MeshInstance3D {
 					file.Close();
 					return mesh;
 
+				case MDL2_MAGIC:
+					file.Seek(file.GetPosition() + 12 + 12 + 12 + 12 + 12 + 4 + 16 + 48);
+
+					var nTextures = file.Get32();
+					textures = new Texture2D[nTextures];
+
+					for (int i = 0; i < nTextures; i++) {
+						var texturePath = file.GetFixedString(256);
+						textures[i] = MIP.LoadTexture(texturePath, gameDataManager);
+						file.Get32();
+						file.Get32();
+					}
+
+					break;
+
 				case GEO1_MAGIC: {
 						var nDetailLevels = file.Get32();
 
-						for (int detailLevel = 0; detailLevel < nDetailLevels; detailLevel++) {
-							var detailLevelType = file.Get32();
-							// I only care about the high detail level (0)
-							// But I don't know the length of the detail levels
-							// So I have to process the low detail one too
-							file.GetFloat();
-							var nRenderGroups = file.Get32();
-							file.Get64();
+						// for (int detailLevel = 0; detailLevel < nDetailLevels; detailLevel++) {
+						// I only care about the first detailLevel
+						var detailLevelType = file.Get32();
+						file.GetFloat();
+						var nRenderGroups = file.Get32();
+						file.Get64();
 
-							for (int renderGroup = 0; renderGroup < nRenderGroups; renderGroup++) {
-								var nPolygons = file.Get16();
-								var nVertices = file.Get16();
-								var materialID = file.Get16();
+						for (int renderGroup = 0; renderGroup < nRenderGroups; renderGroup++) {
+							var nPolygons = file.Get16();
+							var nVertices = file.Get16();
+							var materialID = file.Get16();
 
-								file.Seek(file.GetPosition() + 2 + 12 + 8 + 8 * 4);
+							file.Seek(file.GetPosition() + 2 + 12 + 8);
+							var blends = new Blend[] {
+									LoadBlend(file),
+									LoadBlend(file),
+									LoadBlend(file),
+									LoadBlend(file)
+								};
 
-								var groupArrays = new Godot.Collections.Array();
-								groupArrays.Resize((int)ArrayMesh.ArrayType.Max);
+							var groupArrays = new Godot.Collections.Array();
+							groupArrays.Resize((int)ArrayMesh.ArrayType.Max);
 
-								LoadVertices(file, ref groupArrays);
+							LoadVertices(file, ref groupArrays);
 
-								var fillSelectablePrimBlocks = file.Get32();
-								var fillType = file.Get32();
-								var nIndices = file.Get32();
+							var fillSelectablePrimBlocks = file.Get32();
+							var fillType = file.Get32();
+							var nIndices = file.Get32();
 
-								var indices = new int[nIndices];
+							var indices = new int[nIndices];
 
-								for (int index = 0; index < nIndices; index++) {
-									indices[index] = (int)file.Get16();
-								}
-
-								groupArrays[(int)ArrayMesh.ArrayType.Index] = indices;
-
-								if (detailLevel == 0) {
-									if (fillType == 0)
-										mesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, groupArrays);
-									else
-										mesh.AddSurfaceFromArrays(Mesh.PrimitiveType.TriangleStrip, groupArrays);
-								}
-
+							for (int index = 0; index < nIndices; index++) {
+								indices[index] = (int)file.Get16();
 							}
+
+							groupArrays[(int)ArrayMesh.ArrayType.Index] = indices;
+
+							// if (detailLevelType == 1) {
+							if (fillType == 0)
+								mesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, groupArrays);
+							else
+								mesh.AddSurfaceFromArrays(Mesh.PrimitiveType.TriangleStrip, groupArrays);
+
+							var mat = new StandardMaterial3D();
+							mat.Transparency = BaseMaterial3D.TransparencyEnum.AlphaScissor;
+							mat.AlphaScissorThreshold = 0.5f;
+							mat.AlbedoTexture = textures[blends[0].TextureID];
+							mesh.SurfaceSetMaterial(renderGroup, mat);
+							// }
 						}
+						// }
 					}
 					break;
 
@@ -151,7 +194,7 @@ public class MDL2 : MeshInstance3D {
 			}
 			if ((flags & VERTEX_HAS_COLOUR) != 0) {
 				file.Seek(startPosition + vertex * vertexSize + vertexOffsetColour);
-				colours[vertex] = file.GetColor();
+				colours[vertex] = file.GetColorFloat();
 			}
 			if ((flags & VERTEX_HAS_UV) != 0) {
 				file.Seek(startPosition + vertex * vertexSize + vertexOffsetTexcoord);

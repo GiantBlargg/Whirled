@@ -21,8 +21,9 @@ public class TDF : MeshInstance3D {
 
 	void LoadModel() {
 		if (IsInsideTree()) {
+			var gameDataManager = GetNode<GameDataManager>("/root/GameDataManager");
 			System.Threading.Tasks.Task.Run(() => {
-				Mesh = LoadMesh(modelPath, GetNode<GameDataManager>("/root/GameDataManager"));
+				Mesh = LoadMesh(modelPath, gameDataManager);
 			});
 		} else {
 			delayedLoad = true;
@@ -82,7 +83,6 @@ public class TDF : MeshInstance3D {
 				array[(int)ArrayMesh.ArrayType.Normal] = normals;
 				array[(int)ArrayMesh.ArrayType.Index] = indices;
 				mesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, array);
-
 			}
 		}
 
