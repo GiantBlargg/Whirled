@@ -1,0 +1,95 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://scripts/GameDataManager.cs" type="Script" id=1]
+[ext_resource path="res://scripts/ViewCamera.cs" type="Script" id=2]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends FileDialog
+
+func _on_GameDataManager_DataPathSet(path):
+	set_current_dir(path+\"game data/SAVED WORLDS/\")
+"
+
+[node name="GameDataManager" type="Node"]
+script = ExtResource( 1 )
+
+[node name="Control" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = null
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="PanelContainer" type="PanelContainer" parent="Control"]
+anchor_right = 1.0
+script = null
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Control/PanelContainer"]
+margin_left = 7.0
+margin_top = 7.0
+margin_right = 1273.0
+margin_bottom = 31.0
+script = null
+
+[node name="OpenButton" type="Button" parent="Control/PanelContainer/HBoxContainer"]
+margin_right = 49.0
+margin_bottom = 24.0
+text = "Open"
+script = null
+
+[node name="FileDialog" type="FileDialog" parent="Control/PanelContainer/HBoxContainer/OpenButton"]
+title = "Open a File"
+size = Vector2i( 500, 500 )
+min_size = Vector2i( 500, 500 )
+file_mode = 0
+access = 2
+filters = PackedStringArray( "*.WRL; LR2 Worlds" )
+current_dir = "/home/daniel/Projects/Whirled"
+current_path = "/home/daniel/Projects/Whirled/"
+script = SubResource( 1 )
+
+[node name="SaveButton" type="Button" parent="Control/PanelContainer/HBoxContainer"]
+margin_left = 53.0
+margin_right = 96.0
+margin_bottom = 24.0
+text = "Save"
+script = null
+
+[node name="PathButton" type="Button" parent="Control/PanelContainer/HBoxContainer"]
+margin_left = 100.0
+margin_right = 185.0
+margin_bottom = 24.0
+text = "Game Path"
+script = null
+
+[node name="FileDialog" type="FileDialog" parent="Control/PanelContainer/HBoxContainer/PathButton"]
+title = "Open a Directory"
+size = Vector2i( 500, 500 )
+min_size = Vector2i( 500, 500 )
+file_mode = 2
+access = 2
+current_dir = "/home/daniel/Projects/Whirled"
+current_path = "/home/daniel/Projects/Whirled/"
+script = null
+
+[node name="ViewCamera" type="Camera3D" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 5.32561 )
+current = true
+fov = 60.0
+far = 10000.0
+script = ExtResource( 2 )
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform( 0.996905, -0.056221, 0.054952, 0, 0.69899, 0.715132, -0.0786162, -0.712918, 0.696826, 0, 2.25158, 0 )
+script = null
+[connection signal="DataPathSet" from="." to="Control/PanelContainer/HBoxContainer/OpenButton/FileDialog" method="_on_GameDataManager_DataPathSet"]
+[connection signal="DataPathSet" from="." to="Control/PanelContainer/HBoxContainer/PathButton/FileDialog" method="set_current_dir"]
+[connection signal="pressed" from="Control/PanelContainer/HBoxContainer/OpenButton" to="Control/PanelContainer/HBoxContainer/OpenButton/FileDialog" method="popup_centered"]
+[connection signal="file_selected" from="Control/PanelContainer/HBoxContainer/OpenButton/FileDialog" to="." method="Open"]
+[connection signal="pressed" from="Control/PanelContainer/HBoxContainer/SaveButton" to="." method="Save"]
+[connection signal="pressed" from="Control/PanelContainer/HBoxContainer/PathButton" to="Control/PanelContainer/HBoxContainer/PathButton/FileDialog" method="popup_centered"]
+[connection signal="dir_selected" from="Control/PanelContainer/HBoxContainer/PathButton/FileDialog" to="." method="DataPathSelected"]
