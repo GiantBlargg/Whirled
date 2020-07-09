@@ -1,6 +1,6 @@
 using Godot;
 
-public class MDL2 : MeshInstance3D {
+public class MDL2 : MeshInstance {
 	public string modelPath {
 		get { return _modelPath; }
 		set {
@@ -62,7 +62,7 @@ public class MDL2 : MeshInstance3D {
 
 		ArrayMesh mesh = new ArrayMesh();
 
-		Texture2D[] textures = new Texture2D[0];
+		Texture[] textures = new Texture[0];
 
 		while (true) {
 			var chunkType = file.Get32();
@@ -82,7 +82,7 @@ public class MDL2 : MeshInstance3D {
 					file.Seek(file.GetPosition() + 12 + 12 + 12 + 12 + 12 + 4 + 16 + 48);
 
 					var nTextures = file.Get32();
-					textures = new Texture2D[nTextures];
+					textures = new Texture[nTextures];
 
 					for (int i = 0; i < nTextures; i++) {
 						var texturePath = file.GetFixedString(256);
@@ -139,9 +139,9 @@ public class MDL2 : MeshInstance3D {
 							else
 								mesh.AddSurfaceFromArrays(Mesh.PrimitiveType.TriangleStrip, groupArrays);
 
-							var mat = new StandardMaterial3D();
-							mat.Transparency = BaseMaterial3D.TransparencyEnum.AlphaScissor;
-							mat.AlphaScissorThreshold = 0.5f;
+							var mat = new SpatialMaterial();
+							mat.ParamsUseAlphaScissor = true;
+							mat.ParamsAlphaScissorThreshold = 0.5f;
 							mat.AlbedoTexture = textures[blends[0].TextureID];
 							mesh.SurfaceSetMaterial(renderGroup, mat);
 							// }

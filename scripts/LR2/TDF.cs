@@ -1,6 +1,6 @@
 using Godot;
 
-public class TDF : MeshInstance3D {
+public class TDF : MeshInstance {
 	public string modelPath {
 		get { return _modelPath; }
 		set {

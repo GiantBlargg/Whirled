@@ -2,7 +2,7 @@ using Godot;
 
 public static class MIP {
 
-	public static Texture2D LoadTexture(string path, GameDataManager gameDataManager) {
+	public static Texture LoadTexture(string path, GameDataManager gameDataManager) {
 		switch (path.Substring(path.Length - 3).ToLower()) {
 			case "tga": {
 					var resolvedPath = gameDataManager.ResolvePath(path.Remove(path.Length - 3) + "mip");
@@ -24,7 +24,7 @@ public static class MIP {
 		}
 	}
 
-	static Texture2D Garbage() {
+	static Texture Garbage() {
 		var texture = new GradientTexture();
 		var g = new Gradient();
 		g.Colors = new Color[] { new Color(1, 0, 0), new Color(0, 1, 0) };
@@ -41,7 +41,7 @@ public static class MIP {
 		return color;
 	}
 
-	static Texture2D LoadMIP(string path) {
+	static Texture LoadMIP(string path) {
 		File f = new File();
 		f.Open(path, File.ModeFlags.Read);
 
@@ -106,6 +106,7 @@ public static class MIP {
 
 		if (ImageType == 1) {
 			image.Create(width, height, false, Image.Format.Rgba8);
+			image.Lock();
 
 			for (int y = 0; y < height; y++) {
 				for (int x = 0; x < width; x++) {
@@ -115,6 +116,8 @@ public static class MIP {
 
 		} else if (ImageType == 2) {
 			image.Create(width, height, false, Image.Format.Rgba8);
+			image.Lock();
+
 			for (int y = 0; y < height; y++) {
 				for (int x = 0; x < width; x++) {
 					image.SetPixel(x, y, f.GetColor8());
@@ -122,6 +125,7 @@ public static class MIP {
 			}
 		}
 
+		image.Unlock();
 		var texture = new ImageTexture();
 		texture.CreateFromImage(image);
 		return texture;
@@ -129,7 +133,7 @@ public static class MIP {
 
 	const float delayTime = 1f / 30f;
 
-	static Texture2D LoadIFL(string path) {
+	static Texture LoadIFL(string path) {
 		var regex = new RegEx();
 		regex.Compile("^(.*[\\/\\\\]).*$");
 		var result = regex.Search(path);

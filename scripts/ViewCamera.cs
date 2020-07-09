@@ -1,6 +1,6 @@
 using Godot;
 
-public class ViewCamera : Camera3D {
+public class ViewCamera : Camera {
 	const float lookSpeed = 0.2f;
 	float moveSpeed = 100f;
 	public override void _Input(InputEvent inputEvent) {
