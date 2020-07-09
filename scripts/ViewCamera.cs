@@ -12,7 +12,10 @@ public class ViewCamera : Camera3D {
 		} else if (inputEvent is InputEventMouseMotion) {
 			var mouseMotion = (InputEventMouseMotion)inputEvent;
 			if (Input.IsMouseButtonPressed((int)ButtonList.Right)) {
-				RotationDegrees += new Vector3(mouseMotion.Relative.y, mouseMotion.Relative.x, 0) * -lookSpeed;
+				var newRot = RotationDegrees + new Vector3(mouseMotion.Relative.y, mouseMotion.Relative.x, 0) * -lookSpeed;
+				if (newRot.x < -90) newRot.x = -90;
+				if (newRot.x > 90) newRot.x = 90;
+				RotationDegrees = newRot;
 			}
 		}
 	}
