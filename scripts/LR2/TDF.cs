@@ -35,6 +35,14 @@ public class TDF : MeshInstance {
 	const int NUM_CHUNKS = 32;
 
 	static Mesh LoadMesh(string modelPath, GameDataManager gameDataManager) {
+		MIP.LoadTexture(modelPath + "/TERRAIN LAYERS.MIP", gameDataManager);
+
+		//Terrainmipped.mip contains a super low res version of the terrain texture
+		//I haven't figure out how to get the full texture so I'll just use this for now
+		var texture = MIP.LoadTexture(modelPath + "/TERRAINMIPPED.MIP", gameDataManager);
+		var mat = new SpatialMaterial();
+		mat.AlbedoTexture = texture;
+
 		var terrDataPath = gameDataManager.ResolvePath(modelPath + "/TERRDATA.TDF");
 		var file = new File();
 		file.Open(terrDataPath, File.ModeFlags.Read);
@@ -52,6 +60,7 @@ public class TDF : MeshInstance {
 
 				var vertices = new Vector3[VERTEX_CHUNK * VERTEX_CHUNK];
 				var normals = new Vector3[VERTEX_CHUNK * VERTEX_CHUNK];
+				var uv = new Vector2[VERTEX_CHUNK * VERTEX_CHUNK];
 				var cutout = new bool[VERTEX_CHUNK * VERTEX_CHUNK];
 
 				for (int sz = 0; sz < VERTEX_CHUNK; sz++) {
@@ -62,6 +71,9 @@ public class TDF : MeshInstance {
 								file.Get16() * heightScale,
 								cz * CHUNK_WIDTH + sz - CHUNK_WIDTH * NUM_CHUNKS / 2);
 						normals[index] = new Vector3((sbyte)file.Get8(), (sbyte)file.Get8(), (sbyte)file.Get8());
+						uv[index] = new Vector2(
+								(float)(cx * CHUNK_WIDTH + sx) / (CHUNK_WIDTH * NUM_CHUNKS),
+								(float)(cz * CHUNK_WIDTH + sz) / (CHUNK_WIDTH * NUM_CHUNKS));
 
 						cutout[index] = (file.Get8() & 1) == 1;
 
@@ -91,8 +103,10 @@ public class TDF : MeshInstance {
 				array.Resize((int)ArrayMesh.ArrayType.Max);
 				array[(int)ArrayMesh.ArrayType.Vertex] = vertices;
 				array[(int)ArrayMesh.ArrayType.Normal] = normals;
+				array[(int)ArrayMesh.ArrayType.TexUv] = uv;
 				array[(int)ArrayMesh.ArrayType.Index] = indices;
 				mesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, array);
+				mesh.SurfaceSetMaterial(mesh.GetSurfaceCount() - 1, mat);
 			}
 		}
 

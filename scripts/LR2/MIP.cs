@@ -126,6 +126,7 @@ public static class MIP {
 		}
 
 		image.Unlock();
+		image.SavePng(path + ".png");
 		var texture = new ImageTexture();
 		texture.CreateFromImage(image);
 		return texture;
