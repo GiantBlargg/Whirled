@@ -42,6 +42,8 @@ public class TDF : MeshInstance {
 		var texture = MIP.LoadTexture(modelPath + "/TERRAINMIPPED.MIP", gameDataManager);
 		var mat = new SpatialMaterial();
 		mat.AlbedoTexture = texture;
+		mat.ParamsDiffuseMode = SpatialMaterial.DiffuseMode.Lambert;
+		mat.ParamsSpecularMode = SpatialMaterial.SpecularMode.Disabled;
 
 		var terrDataPath = gameDataManager.ResolvePath(modelPath + "/TERRDATA.TDF");
 		var file = new File();

@@ -38,7 +38,6 @@ public class ModelEntry : CommonWRL {
 		model = new MDL2();
 
 		model.Transform = file.GetTransform();
-		// file.GetTransform();
 
 		var f0_8_1 = file.GetFloat();
 		var f0_8_2 = file.GetFloat();

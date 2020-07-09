@@ -79,7 +79,7 @@ far = 1500.0
 script = ExtResource( 2 )
 
 [node name="DirectionalLight" type="DirectionalLight" parent="."]
-transform = Transform( -1.62921e-07, 0.573577, -0.819152, 0, 0.819152, 0.573577, 1, 9.34475e-08, -1.33457e-07, 0, 0, 0 )
+transform = Transform( -1.62921e-07, 0.984808, -0.173648, 0, 0.173648, 0.984808, 1, 1.60446e-07, -2.82909e-08, 0, 0, 0 )
 [connection signal="DataPathSet" from="." to="Control/PanelContainer/HBoxContainer/OpenButton/FileDialog" method="_on_GameDataManager_DataPathSet"]
 [connection signal="DataPathSet" from="." to="Control/PanelContainer/HBoxContainer/PathButton/FileDialog" method="set_current_dir"]
 [connection signal="pressed" from="Control/PanelContainer/HBoxContainer/OpenButton" to="Control/PanelContainer/HBoxContainer/OpenButton/FileDialog" method="popup_centered"]
