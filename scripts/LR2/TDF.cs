@@ -33,14 +33,17 @@ public class TDF : MeshInstance3D {
 	const int CHUNK_WIDTH = 16;
 	const int VERTEX_CHUNK = CHUNK_WIDTH + 1;
 	const int NUM_CHUNKS = 32;
-	const int VERTEX_OFFSET = 0x20;
 
 	static Mesh LoadMesh(string modelPath, GameDataManager gameDataManager) {
 		var terrDataPath = gameDataManager.ResolvePath(modelPath + "/TERRDATA.TDF");
 		var file = new File();
 		file.Open(terrDataPath, File.ModeFlags.Read);
 
-		file.Seek(VERTEX_OFFSET);
+		file.Seek(0x10);
+
+		var heightScale = file.GetFloat();
+
+		file.Seek(0x20);
 
 		var indices = new int[CHUNK_WIDTH * CHUNK_WIDTH * 6];
 
@@ -70,7 +73,7 @@ public class TDF : MeshInstance3D {
 						var index = sz * VERTEX_CHUNK + sx;
 						vertices[index] = new Vector3(
 								cx * CHUNK_WIDTH + sx - CHUNK_WIDTH * NUM_CHUNKS / 2,
-								(file.Get16() - 56) / 64f, //Determined by trial and error; TODO: Find a more accurate conversion
+								file.Get16() * heightScale,
 								cz * CHUNK_WIDTH + sz - CHUNK_WIDTH * NUM_CHUNKS / 2);
 						normals[index] = new Vector3((sbyte)file.Get8(), (sbyte)file.Get8(), (sbyte)file.Get8());
 
