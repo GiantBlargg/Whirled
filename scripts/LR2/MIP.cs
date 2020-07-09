@@ -9,16 +9,16 @@ public static class MIP {
 					return LoadMIP(resolvedPath);
 				}
 			case "ifl": {
-					GD.PrintErr("Animated Textures are not supported");
-					return Garbage();
+					var resolvedPath = gameDataManager.ResolvePath(path);
+					return LoadIFL(resolvedPath);
 				}
 			case "mip": {
-					GD.PrintErr("Huh... Okay");
+					GD.PrintErr("Huh... Okay: ", path);
 					var resolvedPath = gameDataManager.ResolvePath(path);
 					return LoadMIP(resolvedPath);
 				}
 			default: {
-					GD.PrintErr("Unsupported Texture Type");
+					GD.PrintErr("Unsupported Texture Type: ", path);
 					return Garbage();
 				}
 		}
@@ -32,17 +32,12 @@ public static class MIP {
 		return texture;
 	}
 
-	static string ResolveTGAPath(string path, GameDataManager gameDataManager) {
-		return gameDataManager.ResolvePath(path.Remove(path.Length - 3) + "mip");
-	}
-
 	static Color GetColor8(this File file) {
 		var color = new Color();
 		color.b8 = file.Get8();
 		color.g8 = file.Get8();
 		color.r8 = file.Get8();
 		color.a8 = file.Get8();
-		// return new Color(file.Get32());
 		return color;
 	}
 
@@ -55,7 +50,7 @@ public static class MIP {
 		var ImageType = f.Get8();
 
 		if (ImageType != 1 && ImageType != 2) {
-			GD.PrintErr("Only non-compressed textures are supported");
+			GD.PrintErr("Only non-compressed textures are supported: ", path);
 			return Garbage();
 		}
 
@@ -64,7 +59,7 @@ public static class MIP {
 		var ColourDepth = f.Get8();
 
 		if (ImageType == 1 && ColourDepth != 32) {
-			GD.PrintErr("Only 32-bit colour is supported");
+			GD.PrintErr("Only 32-bit colour is supported: ", path);
 			return Garbage();
 		}
 
@@ -72,7 +67,7 @@ public static class MIP {
 			var x = f.Get16();
 			var y = f.Get16();
 			if (x != 0 || y != 0) {
-				GD.PrintErr("Origin must be (0,0)");
+				GD.PrintErr("Origin must be (0,0): ", path);
 				return Garbage();
 			}
 		}
@@ -83,17 +78,17 @@ public static class MIP {
 		var imageDescriptor = f.Get8();
 
 		if (ImageType == 1 && pixelDepth != 8) {
-			GD.PrintErr("Pixel depth must be 8 for colour mapped textures");
+			GD.PrintErr("Pixel depth must be 8 for colour mapped textures: ", path);
 			return Garbage();
 		}
 
 		if (ImageType == 2 && pixelDepth != 32) {
-			GD.PrintErr("Pixel depth must be 32 for non colour mapped textures");
+			GD.PrintErr("Pixel depth must be 32 for non colour mapped textures: ", path);
 			return Garbage();
 		}
 
 		if (imageDescriptor != 0) {
-			GD.PrintErr("Unsupported imageDescriptor");
+			GD.PrintErr("Unsupported imageDescriptor: ", path);
 			return Garbage();
 		}
 
@@ -129,6 +124,40 @@ public static class MIP {
 
 		var texture = new ImageTexture();
 		texture.CreateFromImage(image);
+		return texture;
+	}
+
+	const float delayTime = 1f / 30f;
+
+	static Texture2D LoadIFL(string path) {
+		var regex = new RegEx();
+		regex.Compile("^(.*[\\/\\\\]).*$");
+		var result = regex.Search(path);
+		var dirPath = result.GetString(1);
+		regex.Compile("(\\S+)\\s(\\d+)");
+
+		var f = new File();
+		f.Open(path, File.ModeFlags.Read);
+		var contents = f.GetAsText();
+		f.Close();
+
+		var texture = new AnimatedTexture();
+
+		var matches = regex.SearchAll(contents);
+		texture.Frames = matches.Count;
+		texture.Fps = 0;
+		for (int i = 0; i < matches.Count; i++) {
+			RegExMatch match = (RegExMatch)matches[i];
+
+			var mipPath = (string)match.Strings[1];
+			var resolvedMipPath = GameDataManager.ResolvePathStatic(dirPath, mipPath.Remove(mipPath.Length - 3) + "mip");
+
+			var frame = LoadMIP(resolvedMipPath);
+
+			texture.SetFrameTexture(i, frame);
+			texture.SetFrameDelay(i, delayTime * int.Parse((string)match.Strings[2]));
+		}
+
 		return texture;
 	}
 }

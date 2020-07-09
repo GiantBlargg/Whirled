@@ -1,5 +1,4 @@
 using Godot;
-using System;
 
 public class GameDataManager : Node {
 	ConfigFile config;
@@ -33,9 +32,12 @@ public class GameDataManager : Node {
 
 	//This function corrects the case sensitivity of filenames, not needed on windows but fuck 'em.
 	public string ResolvePath(string path) {
+		return ResolvePathStatic(dataPath, path);
+	}
+
+	public static string ResolvePathStatic(string dataPath, string path) {
 		Directory currentDir = new Directory();
 		currentDir.Open(dataPath);
-
 
 		string next = "";
 
@@ -44,7 +46,8 @@ public class GameDataManager : Node {
 			do {
 				next = currentDir.GetNext();
 				if (next == "") {
-					throw new Exception("Unable to resolve \"" + path + "\"");
+					GD.PrintErr("Unable to resolve \"" + path + "\" with dataPath \"" + dataPath + "\"");
+					return null;
 				}
 			} while (next.ToLower() != pathDir.ToLower());
 			currentDir.ListDirEnd();
