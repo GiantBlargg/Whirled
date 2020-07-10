@@ -29,14 +29,8 @@ public static class FileExtensions {
 		file.StoreFloat(vector.z);
 	}
 
-	public static Color GetColorFloat(this File file) {
+	public static Color GetColorRGBAf(this File file) {
 		return new Color(file.GetFloat(), file.GetFloat(), file.GetFloat(), file.GetFloat());
-	}
-	public static void StoreColorFloat(this File file, Color color) {
-		file.StoreFloat(color.r);
-		file.StoreFloat(color.g);
-		file.StoreFloat(color.b);
-		file.StoreFloat(color.a);
 	}
 
 	public static Quat GetQuat(this File file) {

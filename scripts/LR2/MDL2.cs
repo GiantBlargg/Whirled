@@ -30,8 +30,10 @@ public class MDL2 : MeshInstance {
 	const uint MDL0_MAGIC = 0x304c444d;
 	const uint MDL1_MAGIC = 0x314c444d;
 	const uint MDL2_MAGIC = 0x324c444d;
+	const uint P2G0_MAGIC = 0x30473250;
 	const uint GEO1_MAGIC = 0x314f4547;
 	const uint COLD_MAGIC = 0x444c4f43;
+	const uint SHA0_MAGIC = 0x30414853;
 
 	const ushort VERTEX_HAS_VECTOR = 0b0001;
 	const ushort VERTEX_HAS_NORMAL = 0b0010;
@@ -54,6 +56,18 @@ public class MDL2 : MeshInstance {
 		};
 	}
 
+	struct MaterialProps {
+		public Color ambient;
+		public Color diffuse;
+		public Color specular;
+		public Color emissive;
+		public float shine;
+		public float alpha;
+		public uint alphaType;
+		public uint bitfield;
+		public string animName;
+	}
+
 	static Mesh LoadMesh(string modelPath, GameDataManager gameDataManager) {
 		var path = gameDataManager.ResolvePath(modelPath);
 
@@ -63,6 +77,7 @@ public class MDL2 : MeshInstance {
 		ArrayMesh mesh = new ArrayMesh();
 
 		Texture[] textures = new Texture[0];
+		MaterialProps[] materialProps = new MaterialProps[0];
 
 		while (true) {
 			var chunkType = file.Get32();
@@ -70,6 +85,10 @@ public class MDL2 : MeshInstance {
 
 			var nextChunkPosition = file.GetPosition() + chunkSize;
 			switch (chunkType) {
+
+				default:
+					GD.Print("Unkown Chunk! ", modelPath);
+					break;
 
 				case MDL0_MAGIC:
 					// This isn't a chunked type, so I can't skip over it
@@ -89,6 +108,23 @@ public class MDL2 : MeshInstance {
 						textures[i] = MIP.LoadTexture(texturePath, gameDataManager);
 						file.Get32();
 						file.Get32();
+					}
+
+					var nMaterials = file.Get32();
+					materialProps = new MaterialProps[nMaterials];
+
+					for (int i = 0; i < nMaterials; i++) {
+						materialProps[i] = new MaterialProps() {
+							ambient = file.GetColorRGBAf(),
+							diffuse = file.GetColorRGBAf(),
+							specular = file.GetColorRGBAf(),
+							emissive = file.GetColorRGBAf(),
+							shine = file.GetFloat(),
+							alpha = file.GetFloat(),
+							alphaType = file.Get32(),
+							bitfield = file.Get32(),
+							animName = file.GetFixedString(8)
+						};
 					}
 
 					break;
@@ -139,15 +175,51 @@ public class MDL2 : MeshInstance {
 							else
 								mesh.AddSurfaceFromArrays(Mesh.PrimitiveType.TriangleStrip, groupArrays);
 
+							var materialProp = materialProps[materialID];
+
 							var mat = new SpatialMaterial();
-							mat.ParamsUseAlphaScissor = true;
-							mat.ParamsAlphaScissorThreshold = 0.5f;
+
+							mat.ParamsDiffuseMode = SpatialMaterial.DiffuseMode.Lambert;
+							// mat.ParamsSpecularMode = SpatialMaterial.SpecularMode.Phong;
+
+							// mat.AlbedoColor = materialProp.diffuse;
+							// mat.Emission = materialProp.emissive;
+							// mat.Roughness = materialProp.shine;
+							switch (materialProp.alphaType) {
+								case 0:
+									mat.ParamsUseAlphaScissor = true;
+									mat.ParamsAlphaScissorThreshold = 0.5f;
+									break;
+								case 1:
+									mat.ParamsBlendMode = SpatialMaterial.BlendMode.Mix;
+									mat.FlagsTransparent = true;
+									break;
+								case 4:
+									mat.ParamsBlendMode = SpatialMaterial.BlendMode.Add;
+									break;
+								default:
+									GD.Print("Unkown Alpha Type ", materialProp.alphaType, " in ", path);
+									break;
+							}
+
 							mat.AlbedoTexture = textures[blends[0].TextureID];
 							mesh.SurfaceSetMaterial(renderGroup, mat);
 							// }
 						}
 						// }
 					}
+					break;
+
+				case P2G0_MAGIC:
+					//I don't know what this is
+					break;
+
+				case SHA0_MAGIC:
+					//I don't know what this is
+					break;
+
+				case COLD_MAGIC:
+					//Collision
 					break;
 
 				case 0:
@@ -194,7 +266,7 @@ public class MDL2 : MeshInstance {
 			}
 			if ((flags & VERTEX_HAS_COLOUR) != 0) {
 				file.Seek(startPosition + vertex * vertexSize + vertexOffsetColour);
-				colours[vertex] = file.GetColorFloat();
+				colours[vertex] = file.GetColorRGBAf();
 			}
 			if ((flags & VERTEX_HAS_UV) != 0) {
 				file.Seek(startPosition + vertex * vertexSize + vertexOffsetTexcoord);
