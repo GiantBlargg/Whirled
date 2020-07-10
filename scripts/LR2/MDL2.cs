@@ -180,7 +180,7 @@ public class MDL2 : MeshInstance {
 							var mat = new SpatialMaterial();
 
 							mat.ParamsDiffuseMode = SpatialMaterial.DiffuseMode.Lambert;
-							// mat.ParamsSpecularMode = SpatialMaterial.SpecularMode.Phong;
+							mat.ParamsSpecularMode = SpatialMaterial.SpecularMode.Disabled;
 
 							// mat.AlbedoColor = materialProp.diffuse;
 							// mat.Emission = materialProp.emissive;

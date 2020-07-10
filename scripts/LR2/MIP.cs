@@ -145,7 +145,7 @@ public static class MIP {
 		image.SavePng(path + ".png");
 		var texture = new ImageTexture();
 		texture.CreateFromImage(image);
-		texture.Flags = 6;
+		texture.Flags = 22;
 		return texture;
 	}
 
