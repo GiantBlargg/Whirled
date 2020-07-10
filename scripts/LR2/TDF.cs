@@ -72,7 +72,7 @@ public class TDF : MeshInstance {
 								cx * CHUNK_WIDTH + sx - CHUNK_WIDTH * NUM_CHUNKS / 2,
 								file.Get16() * heightScale,
 								cz * CHUNK_WIDTH + sz - CHUNK_WIDTH * NUM_CHUNKS / 2);
-						normals[index] = new Vector3((sbyte)file.Get8(), (sbyte)file.Get8(), (sbyte)file.Get8());
+						normals[index] = new Vector3((sbyte)file.Get8(), (sbyte)file.Get8(), (sbyte)file.Get8()).Normalized();
 						uv[index] = new Vector2(
 								(float)(cx * CHUNK_WIDTH + sx) / (CHUNK_WIDTH * NUM_CHUNKS),
 								(float)(cz * CHUNK_WIDTH + sz) / (CHUNK_WIDTH * NUM_CHUNKS));
