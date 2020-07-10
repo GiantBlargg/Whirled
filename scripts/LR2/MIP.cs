@@ -32,12 +32,20 @@ public static class MIP {
 		return texture;
 	}
 
-	static Color GetColor8(this File file) {
+	static Color GetColorBGRA8(this File file) {
 		var color = new Color();
 		color.b8 = file.Get8();
 		color.g8 = file.Get8();
 		color.r8 = file.Get8();
 		color.a8 = file.Get8();
+		return color;
+	}
+
+	static Color GetColorBGR8(this File file) {
+		var color = new Color();
+		color.b8 = file.Get8();
+		color.g8 = file.Get8();
+		color.r8 = file.Get8();
 		return color;
 	}
 
@@ -82,8 +90,8 @@ public static class MIP {
 			return Garbage();
 		}
 
-		if (ImageType == 2 && pixelDepth != 32) {
-			GD.PrintErr("Pixel depth must be 32 for non colour mapped textures: ", path);
+		if (ImageType == 2 && pixelDepth != 32 && pixelDepth != 24) {
+			GD.PrintErr("Pixel depth must be 32 or 24 for non colour mapped textures: ", path);
 			return Garbage();
 		}
 
@@ -98,7 +106,7 @@ public static class MIP {
 
 		if (ColourMapType == 1) {
 			for (int i = ColourMapIndex; i < ColourMapLength; i++) {
-				ColourMap[i] = f.GetColor8();
+				ColourMap[i] = f.GetColorBGRA8();
 			}
 		}
 
@@ -115,12 +123,20 @@ public static class MIP {
 			}
 
 		} else if (ImageType == 2) {
-			image.Create(width, height, false, Image.Format.Rgba8);
+			if (pixelDepth == 24) {
+				image.Create(width, height, false, Image.Format.Rgb8);
+			} else if (pixelDepth == 32) {
+				image.Create(width, height, false, Image.Format.Rgba8);
+			}
 			image.Lock();
 
 			for (int y = 0; y < height; y++) {
 				for (int x = 0; x < width; x++) {
-					image.SetPixel(x, y, f.GetColor8());
+					if (pixelDepth == 24) {
+						image.SetPixel(x, y, f.GetColorBGR8());
+					} else if (pixelDepth == 32) {
+						image.SetPixel(x, y, f.GetColorBGRA8());
+					}
 				}
 			}
 		}
