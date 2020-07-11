@@ -7,6 +7,10 @@ public class WRL : Node {
 	}
 	const uint WRL_MAGIC = 0x57324352;
 	const uint WRL_VERSION = 0xb;
+
+	[Signal]
+	public delegate void Loaded(WRL wrl);
+
 	public override void _Ready() {
 		var file = new File();
 		file.Open(path, File.ModeFlags.Read);
@@ -29,6 +33,8 @@ public class WRL : Node {
 				entry.WRLLoaded();
 			}
 		}
+
+		EmitSignal(nameof(Loaded), this);
 	}
 
 	public void Save() {

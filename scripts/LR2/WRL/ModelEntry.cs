@@ -17,6 +17,8 @@ public class ModelEntry : CommonWRL {
 
 	private uint soundId;
 
+	float u1, u2;
+
 	MDL2 model;
 
 	public ModelEntry(string type) {
@@ -39,11 +41,8 @@ public class ModelEntry : CommonWRL {
 
 		model.Transform = file.GetTransform();
 
-		var f0_8_1 = file.GetFloat();
-		var f0_8_2 = file.GetFloat();
-		if (f0_8_1 != 0.8f || f0_8_2 != 0.8f) {
-			GD.PrintErr("I don't know what these are, I thought they were always 0.8 but they aren't now.");
-		}
+		u1 = file.GetFloat();
+		u2 = file.GetFloat();
 
 		soundId = file.Get32();
 
@@ -57,8 +56,8 @@ public class ModelEntry : CommonWRL {
 
 		file.StoreTransform(model.Transform);
 
-		file.StoreFloat(0.8f);
-		file.StoreFloat(0.8f);
+		file.StoreFloat(u1);
+		file.StoreFloat(u2);
 
 		file.Store32(soundId);
 

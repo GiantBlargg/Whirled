@@ -56,6 +56,14 @@ public class GameDataManager : Node {
 		return currentDir.GetCurrentDir() + "/" + next;
 	}
 
+	[Signal]
+	public delegate void WRLLoaded(WRL wrl);
+
+	public void onWRLLoaded(WRL wrl) {
+		if (wrl == this.wrl)
+			EmitSignal(nameof(WRLLoaded), wrl);
+	}
+
 	WRL wrl;
 
 	public void Open(string path) {
@@ -68,16 +76,14 @@ public class GameDataManager : Node {
 		}
 
 		if (wrl != null) {
-			//"WRL" is the name of the active WRL, 
-			// as the previous may not deleted when 
-			// the new one is added, the name may collide
-			wrl.Name = "OldWRL";
+			RemoveChild(wrl);
 
 			wrl.QueueFree();
 		}
 
 		wrl = new WRL(path);
 		wrl.Name = "WRL";
+		wrl.Connect(nameof(WRL.Loaded), this, nameof(onWRLLoaded));
 		AddChild(wrl);
 	}
 
