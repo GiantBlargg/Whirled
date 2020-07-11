@@ -121,6 +121,9 @@ public abstract class WRLEntry : Node {
 	public abstract string type { get; }
 	public abstract uint u { get; }
 	public abstract uint byteLength { get; }
+	public virtual Spatial GizmoTarget { get { return null; } }
+	public virtual Control PropertyControl { get { return _PropertyControl; } }
+	static Control _PropertyControl = new Control();
 
 	public abstract void Load(File file, uint u, uint length);
 	public abstract void Save(File file);

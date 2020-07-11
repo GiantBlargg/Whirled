@@ -19,6 +19,8 @@ public class ModelEntry : CommonWRL {
 
 	float u1, u2;
 
+	public override Spatial GizmoTarget { get { return model; } }
+
 	MDL2 model;
 
 	public ModelEntry(string type) {

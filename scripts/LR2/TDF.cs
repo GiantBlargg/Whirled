@@ -35,8 +35,6 @@ public class TDF : MeshInstance {
 	const int NUM_CHUNKS = 32;
 
 	static Mesh LoadMesh(string modelPath, GameDataManager gameDataManager) {
-		MIP.LoadTexture(modelPath + "/TERRAIN LAYERS.MIP", gameDataManager);
-
 		//Terrainmipped.mip contains a super low res version of the terrain texture
 		//I haven't figure out how to get the full texture so I'll just use this for now
 		var texture = MIP.LoadTexture(modelPath + "/TERRAINMIPPED.MIP", gameDataManager);
