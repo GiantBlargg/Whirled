@@ -6,7 +6,7 @@ public class GameDataManager : Node {
 	public override void _Ready() {
 		config = new ConfigFile();
 		config.Load(configPath);
-		GD.Print(config.GetValue(section, key, "WTF?"));
+		GD.Print(config.GetValue(section, key, ""));
 		EmitSignal(nameof(DataPathSet), config.GetValue(section, key, ""));
 	}
 
