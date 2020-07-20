@@ -1,0 +1,31 @@
+struct {
+	struct { 
+		float[3] LOD distances?
+		short[2] pos
+	}[9]
+	//0 is the tile itself, 1-8 seem to be occlusion data?
+
+	struct LOD {
+		int height_index
+		short[2] size // # of verticies
+
+		// Borders are used when adjacent tiles differ in LOD
+		// The lowest level has no border info (Because always use the higher of the 2 border infos?)
+		int border_index
+		struct {
+			byte[4]
+			short start?
+			short end?
+		} [2]
+
+		short u;
+	}[4]
+
+	// These don't seem to do anything
+	short[2]
+	byte[4]
+	short[2]
+
+	byte[4] texture ids
+	short[2] // something else about textures
+}

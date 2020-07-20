@@ -30,11 +30,11 @@ public class GameDataManager : Node {
 		EmitSignal(nameof(DataPathSet), path);
 	}
 
-	//This function corrects the case sensitivity of filenames, not needed on windows but fuck 'em.
 	public string ResolvePath(string path) {
 		return ResolvePathStatic(dataPath, path);
 	}
 
+	//This function corrects the case sensitivity of filenames, not needed on windows but I couldn't be bothered to disable it
 	public static string ResolvePathStatic(string dataPath, string path) {
 		Directory currentDir = new Directory();
 		currentDir.Open(dataPath);

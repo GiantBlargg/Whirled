@@ -10,7 +10,6 @@ public class Terrain : CommonWRL {
 	uint u1;
 	byte[] u2, u3;
 
-
 	public override void Load(File file, uint u, uint length) {
 		if (u != this.u) {
 			GD.PrintErr("u mismatch! expected :", this.u, " got ", u);

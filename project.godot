@@ -67,4 +67,7 @@ ui_down={
 
 [rendering]
 
+quality/shading/force_vertex_shading=true
+quality/shading/force_lambert_over_burley=true
+quality/shading/force_blinn_over_ggx=true
 environment/default_environment="res://default_env.tres"

@@ -6,15 +6,18 @@ public static class MIP {
 		switch (path.Substring(path.Length - 3).ToLower()) {
 			case "tga": {
 					var resolvedPath = gameDataManager.ResolvePath(path.Remove(path.Length - 3) + "mip");
+					if (resolvedPath == null) return null;
 					return LoadMIP(resolvedPath);
 				}
 			case "ifl": {
 					var resolvedPath = gameDataManager.ResolvePath(path);
+					if (resolvedPath == null) return null;
 					return LoadIFL(resolvedPath);
 				}
 			case "mip": {
 					GD.PrintErr("Huh... Okay: ", path);
 					var resolvedPath = gameDataManager.ResolvePath(path);
+					if (resolvedPath == null) return null;
 					return LoadMIP(resolvedPath);
 				}
 			default: {
