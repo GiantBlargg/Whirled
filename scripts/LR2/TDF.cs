@@ -85,12 +85,21 @@ public class TDF : MeshInstance {
 				var base_vertex = (z * VERTEX_CHUNK + x);
 
 				if (!cutout[base_vertex + 1 + VERTEX_CHUNK]) {
-					indices[index] = base_vertex;
-					indices[index + 1] = base_vertex + 1;
-					indices[index + 2] = base_vertex + VERTEX_CHUNK;
-					indices[index + 3] = base_vertex + VERTEX_CHUNK;
-					indices[index + 4] = base_vertex + 1;
-					indices[index + 5] = base_vertex + 1 + VERTEX_CHUNK;
+					if (z % 2 == 0) {
+						indices[index] = base_vertex;
+						indices[index + 1] = base_vertex + 1;
+						indices[index + 2] = base_vertex + VERTEX_CHUNK;
+						indices[index + 3] = base_vertex + VERTEX_CHUNK;
+						indices[index + 4] = base_vertex + 1;
+						indices[index + 5] = base_vertex + 1 + VERTEX_CHUNK;
+					} else {
+						indices[index] = base_vertex;
+						indices[index + 1] = base_vertex + 1;
+						indices[index + 2] = base_vertex + 1 + VERTEX_CHUNK;
+						indices[index + 3] = base_vertex;
+						indices[index + 4] = base_vertex + 1 + VERTEX_CHUNK;
+						indices[index + 5] = base_vertex + VERTEX_CHUNK;
+					}
 				}
 			}
 		}
