@@ -1,7 +1,7 @@
 using Godot;
 using System.Collections.Generic;
 
-public class TDF : MeshInstance {
+public class TDF : Spatial {
 	private string _modelPath;
 	public string modelPath {
 		get { return _modelPath; }
@@ -30,7 +30,15 @@ public class TDF : MeshInstance {
 		if (IsInsideTree()) {
 			var gameDataManager = GetNode<GameDataManager>("/root/GameDataManager");
 			System.Threading.Tasks.Task.Run(() => {
-				Mesh = LoadMesh(modelPath, textureScale, gameDataManager);
+				var meshes = LoadMesh(modelPath, textureScale, gameDataManager);
+				foreach (Node child in GetChildren()) {
+					child.QueueFree();
+				}
+				foreach (var mesh in meshes) {
+					var meshInstance = new MeshInstance();
+					meshInstance.Mesh = mesh;
+					AddChild(meshInstance);
+				}
 			});
 		} else {
 			delayedLoad = true;
@@ -114,7 +122,7 @@ public class TDF : MeshInstance {
 		mesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, array);
 	}
 
-	static Mesh LoadMesh(string modelPath, Vector2 textureScale, GameDataManager gameDataManager) {
+	static Mesh[] LoadMesh(string modelPath, Vector2 textureScale, GameDataManager gameDataManager) {
 
 		TDFMaterialFactory materialFactory = new TDFMaterialFactory(modelPath, gameDataManager);
 
@@ -126,7 +134,7 @@ public class TDF : MeshInstance {
 
 		var heightScale = file.GetFloat();
 
-		var mesh = new ArrayMesh();
+		var meshes = new ArrayMesh[NUM_CHUNKS * NUM_CHUNKS];
 
 		for (int i = 0; i < NUM_CHUNKS * NUM_CHUNKS; i++) {
 			if (i == 0x3A2) {
@@ -142,16 +150,19 @@ public class TDF : MeshInstance {
 			uint verticiesOffset = file.Get32();
 
 			file.Seek(0x20 + verticiesOffset);
+			var mesh = new ArrayMesh();
 			BuildSection(file, xPos, yPos, heightScale, textureScale, ref mesh);
 
 			file.Seek(0x366020 + surfaceOffset + 0x118);
 			byte[] textureIDs = file.GetBuffer(4);
 
 			var mat = materialFactory.GetMaterial(textureIDs);
-			mesh.SurfaceSetMaterial(i, mat);
+			mesh.SurfaceSetMaterial(0, mat);
+
+			meshes[i] = mesh;
 		}
 
-		return mesh;
+		return meshes;
 	}
 }
 
