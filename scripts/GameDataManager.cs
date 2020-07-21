@@ -75,16 +75,25 @@ public class GameDataManager : Node {
 			dataPath = gamePath;
 		}
 
-		if (wrl != null) {
-			RemoveChild(wrl);
-
-			wrl.QueueFree();
-		}
+		Close();
 
 		wrl = new WRL(path);
 		wrl.Name = "WRL";
 		wrl.Connect(nameof(WRL.Loaded), this, nameof(onWRLLoaded));
 		AddChild(wrl);
+	}
+
+	[Signal]
+	public delegate void Closed();
+
+	public void Close() {
+		if (wrl != null) {
+			RemoveChild(wrl);
+			wrl.QueueFree();
+			wrl = null;
+
+			EmitSignal(nameof(Closed));
+		}
 	}
 
 	public void Save() {
