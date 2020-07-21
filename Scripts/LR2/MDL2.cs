@@ -186,9 +186,8 @@ public class MDL2 : MeshInstance {
 							mat.ParamsDiffuseMode = SpatialMaterial.DiffuseMode.Lambert;
 							mat.ParamsSpecularMode = SpatialMaterial.SpecularMode.Disabled;
 
-							// mat.AlbedoColor = materialProp.diffuse;
-							// mat.Emission = materialProp.emissive;
-							// mat.Roughness = materialProp.shine;
+							float alpha = 1;
+
 							switch (materialProp.alphaType) {
 								case 0:
 									mat.ParamsUseAlphaScissor = true;
@@ -197,6 +196,9 @@ public class MDL2 : MeshInstance {
 								case 1:
 									mat.ParamsBlendMode = SpatialMaterial.BlendMode.Mix;
 									mat.FlagsTransparent = true;
+
+									alpha = materialProp.alpha;
+
 									break;
 								case 4:
 									mat.ParamsBlendMode = SpatialMaterial.BlendMode.Add;
@@ -205,6 +207,12 @@ public class MDL2 : MeshInstance {
 									GD.Print("Unkown Alpha Type ", materialProp.alphaType, " in ", path);
 									break;
 							}
+
+
+							mat.AlbedoColor = new Color(1, 1, 1, alpha);
+							// mat.AlbedoColor = materialProp.diffuse;
+							// mat.Emission = materialProp.emissive;
+							// mat.Roughness = materialProp.shine;
 
 							mat.AlbedoTexture = textures[blends[0].TextureID];
 							mesh.SurfaceSetMaterial(renderGroup, mat);
