@@ -224,17 +224,17 @@ public class MDL2 : MeshInstance {
 
 				case P2G0_MAGIC:
 					//I don't know what this is
-					GD.PrintErr("P2G0: ", modelPath);
+					// GD.PrintErr("P2G0: ", modelPath);
 					break;
 
 				case SHA0_MAGIC:
 					//I don't know what this is
-					GD.PrintErr("SHA0: ", modelPath);
+					// GD.PrintErr("SHA0: ", modelPath);
 					break;
 
 				case COLD_MAGIC:
 					//Collision
-					GD.PrintErr("COLD: ", modelPath);
+					// GD.PrintErr("COLD: ", modelPath);
 					break;
 
 				case 0:

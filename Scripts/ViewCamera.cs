@@ -3,7 +3,7 @@ using Godot;
 public class ViewCamera : Camera {
 	const float lookSpeed = 0.2f;
 	float moveSpeed = 100f;
-	public override void _Input(InputEvent inputEvent) {
+	public override void _UnhandledInput(InputEvent inputEvent) {
 		if (inputEvent is InputEventMouseButton) {
 			var mouseButton = (InputEventMouseButton)inputEvent;
 			if (mouseButton.ButtonIndex == (int)ButtonList.Right) {
