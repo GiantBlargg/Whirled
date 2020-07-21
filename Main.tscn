@@ -76,7 +76,9 @@ script = SubResource( 1 )
 margin_left = 51.0
 margin_right = 92.0
 margin_bottom = 20.0
+disabled = true
 text = "Save"
+script = SubResource( 2 )
 
 [node name="CloseButton" type="Button" parent="Control/VBoxContainer/PanelContainer/HBoxContainer"]
 margin_left = 96.0
@@ -165,12 +167,14 @@ transform = Transform( 0.586196, 0.251637, -0.770099, 0.178067, 0.887281, 0.4254
 [connection signal="Closed" from="." to="Control/VBoxContainer/HSplitContainer/PanelContainer/ScrollContainer/WRLEntryList" method="clear"]
 [connection signal="DataPathSet" from="." to="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton/FileDialog" method="_on_GameDataManager_DataPathSet"]
 [connection signal="DataPathSet" from="." to="Control/VBoxContainer/PanelContainer/HBoxContainer/PathButton/FileDialog" method="set_current_dir"]
+[connection signal="WRLLoaded" from="." to="Control/VBoxContainer/PanelContainer/HBoxContainer/SaveButton" method="onWRLLoaded"]
 [connection signal="WRLLoaded" from="." to="Control/VBoxContainer/PanelContainer/HBoxContainer/CloseButton" method="onWRLLoaded"]
 [connection signal="WRLLoaded" from="." to="Control/VBoxContainer/HSplitContainer/PanelContainer/ScrollContainer/WRLEntryList" method="onWRLLoaded"]
 [connection signal="pressed" from="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton" to="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton/FileDialog" method="popup_centered"]
 [connection signal="file_selected" from="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton/FileDialog" to="." method="Open"]
 [connection signal="pressed" from="Control/VBoxContainer/PanelContainer/HBoxContainer/SaveButton" to="." method="Save"]
 [connection signal="pressed" from="Control/VBoxContainer/PanelContainer/HBoxContainer/CloseButton" to="." method="Close"]
+[connection signal="pressed" from="Control/VBoxContainer/PanelContainer/HBoxContainer/CloseButton" to="Control/VBoxContainer/PanelContainer/HBoxContainer/SaveButton" method="set_disabled" binds= [ true ]]
 [connection signal="pressed" from="Control/VBoxContainer/PanelContainer/HBoxContainer/CloseButton" to="Control/VBoxContainer/PanelContainer/HBoxContainer/CloseButton" method="set_disabled" binds= [ true ]]
 [connection signal="pressed" from="Control/VBoxContainer/PanelContainer/HBoxContainer/PathButton" to="Control/VBoxContainer/PanelContainer/HBoxContainer/PathButton/FileDialog" method="popup_centered"]
 [connection signal="dir_selected" from="Control/VBoxContainer/PanelContainer/HBoxContainer/PathButton/FileDialog" to="." method="DataPathSelected"]
