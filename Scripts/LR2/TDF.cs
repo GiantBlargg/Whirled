@@ -168,7 +168,7 @@ public class TDF : Spatial {
 
 class TDFMaterialFactory {
 
-	static Shader shader = GD.Load<Shader>("res://scripts/LR2/TDF.shader");
+	static Shader shader = GD.Load<Shader>("res://Scripts/LR2/TDF.shader");
 
 	List<Texture> textures = new List<Texture>();
 	Dictionary<byte[], ShaderMaterial> materials = new Dictionary<byte[], ShaderMaterial>();
