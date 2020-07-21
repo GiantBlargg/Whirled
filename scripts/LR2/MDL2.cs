@@ -93,9 +93,13 @@ public class MDL2 : MeshInstance {
 				case MDL0_MAGIC:
 					// This isn't a chunked type, so I can't skip over it
 					// I'll just return
-					GD.PrintErr("MDL0 Encountered: ", modelPath);
+					GD.PrintErr("MDL0: ", modelPath);
 					file.Close();
 					return mesh;
+
+				case MDL1_MAGIC:
+					GD.PrintErr("MDL1: ", modelPath);
+					break;
 
 				case MDL2_MAGIC:
 					file.Seek(file.GetPosition() + 12 + 12 + 12 + 12 + 12 + 4 + 16 + 48);
@@ -212,14 +216,17 @@ public class MDL2 : MeshInstance {
 
 				case P2G0_MAGIC:
 					//I don't know what this is
+					GD.PrintErr("P2G0: ", modelPath);
 					break;
 
 				case SHA0_MAGIC:
 					//I don't know what this is
+					GD.PrintErr("SHA0: ", modelPath);
 					break;
 
 				case COLD_MAGIC:
 					//Collision
+					GD.PrintErr("COLD: ", modelPath);
 					break;
 
 				case 0:
