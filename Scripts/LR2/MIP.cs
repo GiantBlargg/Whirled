@@ -147,7 +147,7 @@ public static class MIP {
 		image.Unlock();
 		image.SavePng(path + ".png");
 		var texture = new ImageTexture();
-		texture.CreateFromImage(image);
+		texture.CreateFromImage(image, 31);
 		return texture;
 	}
 
@@ -158,7 +158,6 @@ public static class MIP {
 		regex.Compile("^(.*[\\/\\\\]).*$");
 		var result = regex.Search(path);
 		var dirPath = result.GetString(1);
-		regex.Compile("(\\S+)\\s(\\d+)");
 
 		var f = new File();
 		f.Open(path, File.ModeFlags.Read);
@@ -167,6 +166,7 @@ public static class MIP {
 
 		var texture = new AnimatedTexture();
 
+		regex.Compile("(\\S+)\\s(\\d+)");
 		var matches = regex.SearchAll(contents);
 		texture.Frames = matches.Count;
 		texture.Fps = 0;
