@@ -30,8 +30,9 @@ public class MDL2 : MeshInstance {
 	const uint MDL0_MAGIC = 0x304c444d;
 	const uint MDL1_MAGIC = 0x314c444d;
 	const uint MDL2_MAGIC = 0x324c444d;
-	const uint P2G0_MAGIC = 0x30473250;
+	const uint GEO0_MAGIC = 0x304f4547;
 	const uint GEO1_MAGIC = 0x314f4547;
+	const uint P2G0_MAGIC = 0x30473250;
 	const uint COLD_MAGIC = 0x444c4f43;
 	const uint SHA0_MAGIC = 0x30414853;
 
@@ -93,12 +94,12 @@ public class MDL2 : MeshInstance {
 				case MDL0_MAGIC:
 					// This isn't a chunked type, so I can't skip over it
 					// I'll just return
-					GD.PrintErr("MDL0: ", modelPath);
+					// GD.PrintErr("MDL0: ", modelPath);
 					file.Close();
 					return mesh;
 
 				case MDL1_MAGIC:
-					GD.PrintErr("MDL1: ", modelPath);
+					// GD.PrintErr("MDL1: ", modelPath);
 					break;
 
 				case MDL2_MAGIC:
@@ -132,6 +133,11 @@ public class MDL2 : MeshInstance {
 					}
 
 					break;
+
+				case GEO0_MAGIC:
+					// GD.PrintErr("GEO0: ", modelPath);
+					break;
+
 
 				case GEO1_MAGIC: {
 						var nDetailLevels = file.Get32();
@@ -202,9 +208,11 @@ public class MDL2 : MeshInstance {
 									break;
 								case 4:
 									mat.ParamsBlendMode = SpatialMaterial.BlendMode.Add;
+									mat.ParamsCullMode = SpatialMaterial.CullMode.Disabled;
+									mat.FlagsUnshaded = true;
 									break;
 								default:
-									GD.Print("Unkown Alpha Type ", materialProp.alphaType, " in ", path);
+									GD.PrintErr("Unkown Alpha Type ", materialProp.alphaType, " in ", path);
 									break;
 							}
 
