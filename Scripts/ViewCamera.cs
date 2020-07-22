@@ -3,10 +3,25 @@ using Godot;
 public class ViewCamera : Camera {
 	const float lookSpeed = 0.2f;
 	float moveSpeed = 100f;
+	bool Right, Middle;
+	SceneTree tree;
+
+	public override void _EnterTree() {
+		tree = GetTree();
+	}
+
+	public override void _Input(InputEvent inputEvent) {
+		if (Right || Middle) {
+			if (inputEvent is InputEventKey) {
+				tree.SetInputAsHandled();
+			}
+		}
+	}
 	public override void _UnhandledInput(InputEvent inputEvent) {
 		if (inputEvent is InputEventMouseButton) {
 			var mouseButton = (InputEventMouseButton)inputEvent;
 			if (mouseButton.ButtonIndex == (int)ButtonList.Right) {
+				Right = mouseButton.Pressed;
 				Input.SetMouseMode(mouseButton.Pressed ? Input.MouseMode.Captured : Input.MouseMode.Visible);
 			}
 		} else if (inputEvent is InputEventMouseMotion) {

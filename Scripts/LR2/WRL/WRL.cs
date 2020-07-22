@@ -121,7 +121,7 @@ public abstract class WRLEntry : Node {
 	public abstract string type { get; }
 	public abstract uint u { get; }
 	public abstract uint byteLength { get; }
-	public virtual Spatial GizmoTarget { get { return null; } }
+	public virtual GizmoTarget GizmoTarget { get { return null; } }
 	public virtual Control PropertyControl { get { return _PropertyControl; } }
 	static Control _PropertyControl = new Control();
 

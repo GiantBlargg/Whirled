@@ -9,10 +9,12 @@ public class PropertyContainer : ScrollContainer {
 
 	public override void _Ready() {
 		WRLItemList = (ItemList)GetNode(WRLItemListPath);
-		WRLItemList.Connect("multi_selected", this, nameof(UpdateProps));
+		WRLItemList.Connect("multi_selected", this, nameof(onSelect));
 	}
 
-	public void UpdateProps(int _, bool __) {
+	public void onSelect(int _, bool __) { UpdateProps(); }
+
+	public void UpdateProps() {
 		if (currentProps != null)
 			RemoveChild(currentProps);
 

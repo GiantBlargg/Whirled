@@ -19,7 +19,9 @@ public class ModelEntry : CommonWRL {
 
 	float u1, u2;
 
-	public override Spatial GizmoTarget { get { return model; } }
+	public override GizmoTarget GizmoTarget { get; }
+
+	public override Control PropertyControl { get; }
 
 	MDL2 model;
 
@@ -27,6 +29,14 @@ public class ModelEntry : CommonWRL {
 		if (type != "cGeneralStatic" && type != "cGoldenBrick")
 			GD.PrintErr("ModelEntry wrong type: ", type);
 		this.type = type;
+
+		GizmoTarget = new GizmoTarget();
+		AddChild(GizmoTarget);
+
+		PropertyControl = new VBoxContainer();
+		PropertyControl.SizeFlagsHorizontal = (int)Control.SizeFlags.ExpandFill;
+		var transformUI = new TransformUI(GizmoTarget);
+		PropertyControl.AddChild(transformUI);
 	}
 
 	public override void Load(File file, uint u, uint length) {
@@ -39,24 +49,24 @@ public class ModelEntry : CommonWRL {
 
 		LoadCommon(file);
 
-		model = new MDL2();
-
-		model.Transform = file.GetTransform();
+		GizmoTarget.Transform = file.GetTransform();
 
 		u1 = file.GetFloat();
 		u2 = file.GetFloat();
 
 		soundId = file.Get32();
 
+		model = new MDL2();
+
 		model.modelPath = file.GetFixedString(0x80);
 
-		AddChild(model);
+		GizmoTarget.AddChild(model);
 	}
 
 	public override void Save(File file) {
 		SaveCommon(file);
 
-		file.StoreTransform(model.Transform);
+		file.StoreTransform(GizmoTarget.Transform);
 
 		file.StoreFloat(u1);
 		file.StoreFloat(u2);
