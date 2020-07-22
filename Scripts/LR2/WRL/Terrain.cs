@@ -1,7 +1,7 @@
 using Godot;
 
 public class Terrain : CommonWRL {
-	public override string type { get; }
+	public override string type { get { return "cLegoTerrain"; } }
 	public override uint u { get { return 3; } }
 	public override uint byteLength { get { return 0x164; } }
 

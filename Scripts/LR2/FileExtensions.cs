@@ -37,10 +37,17 @@ public static class FileExtensions {
 		return new Quat(-file.GetFloat(), file.GetFloat(), file.GetFloat(), -file.GetFloat());
 	}
 	public static void StoreQuat(this File file, Quat quat) {
-		file.StoreFloat(-quat.x);
+		// This is ridiculous
+		// Terrain doesn't like it when saved with a negative w
+		quat.x = -quat.x;
+		quat.w = -quat.w;
+		quat = quat.Normalized();
+		var basis = new Basis(quat);
+		quat = new Quat(basis).Normalized();
+		file.StoreFloat(quat.x);
 		file.StoreFloat(quat.y);
 		file.StoreFloat(quat.z);
-		file.StoreFloat(-quat.w);
+		file.StoreFloat(quat.w);
 	}
 
 	public static Transform GetTransform(this File file) {
