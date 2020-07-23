@@ -18,6 +18,11 @@ public class GizmoTarget : Spatial {
 }
 
 public class TransformUI : VBoxContainer {
+	static Vector3 HandednessTransform = new Vector3(-1, 1, 1);
+	static Vector3 RotateHandednessTransform = new Vector3(1, -1, -1);
+	static float RadToDeg = 180 / Mathf.Pi;
+	static float DegToRad = Mathf.Pi / 180;
+
 	TransformUISubSection translate, rotation, scale;
 
 	GizmoTarget target;
@@ -46,19 +51,19 @@ public class TransformUI : VBoxContainer {
 	}
 
 	public void SetTransform(string _ = "") {
-		var basis = new Basis(rotation.value);
+		var basis = new Basis(rotation.value * RotateHandednessTransform * DegToRad);
 		if (target.AllowScale) {
-			basis = basis.Scaled(scale.value);
+			basis = basis.Scaled(scale.value * HandednessTransform);
 		}
-		var transform = new Transform(basis, translate.value);
+		var transform = new Transform(basis, translate.value * HandednessTransform);
 		target.Transform = transform;
 	}
 
 	public void Update(Transform transform) {
-		translate.Update(transform.origin);
-		rotation.Update(transform.basis.GetEuler());
+		translate.Update(transform.origin * HandednessTransform);
+		rotation.Update(transform.basis.GetEuler() * RotateHandednessTransform * RadToDeg);
 		if (target.AllowScale) {
-			scale.Update(transform.basis.Scale);
+			scale.Update(transform.basis.Scale * HandednessTransform);
 		}
 	}
 }
@@ -74,22 +79,28 @@ class TransformUISubSection : HBoxContainer {
 	}
 
 	LineEdit CreateComponent(TransformUI parent) {
-		var component = new LineEdit();
+		var component = new EnterReleaseFocusLineEdit();
 
 		component.SizeFlagsHorizontal = (int)Control.SizeFlags.ExpandFill;
 
-		component.Connect("text_changed", parent, nameof(TransformUI.SetTransform));
+		component.Connect("text_entered", parent, nameof(TransformUI.SetTransform));
 
 		AddChild(component);
 		return component;
 	}
 
+	float Parse(string v) {
+		float f;
+		if (float.TryParse(v, out f)) return f;
+		return 0;
+	}
+
 	public Vector3 value {
 		get {
 			return new Vector3(
-				float.Parse(x.Text),
-				float.Parse(y.Text),
-				float.Parse(z.Text)
+				Parse(x.Text),
+				Parse(y.Text),
+				Parse(z.Text)
 			);
 		}
 		set { Update(value); }
@@ -101,7 +112,15 @@ class TransformUISubSection : HBoxContainer {
 		UpdateComponent(z, vector.z);
 	}
 	static void UpdateComponent(LineEdit line, float value) {
-		if (!line.HasFocus())
-			line.Text = value.ToString();
+		line.Text = value.ToString();
+	}
+}
+
+class EnterReleaseFocusLineEdit : LineEdit {
+	public override void _Ready() {
+		Connect("text_entered", this, nameof(LoseFocus));
+	}
+	void LoseFocus(string _ = "") {
+		ReleaseFocus();
 	}
 }
