@@ -18,7 +18,7 @@ public class MDL2 : MeshInstance {
 
 	void LoadModel() {
 		if (IsInsideTree()) {
-			var gameDataManager = GetNode<GameDataManager>("/root/GameDataManager");
+			var gameDataManager = GetNode<GameDataManager>("/root/Main/GameDataManager");
 			System.Threading.Tasks.Task.Run(() => {
 				Mesh = LoadMesh(modelPath, gameDataManager);
 			});

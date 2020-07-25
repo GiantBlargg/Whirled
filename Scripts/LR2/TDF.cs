@@ -28,7 +28,7 @@ public class TDF : Spatial {
 
 	void LoadModel() {
 		if (IsInsideTree()) {
-			var gameDataManager = GetNode<GameDataManager>("/root/GameDataManager");
+			var gameDataManager = GetNode<GameDataManager>("/root/Main/GameDataManager");
 			System.Threading.Tasks.Task.Run(() => {
 				var meshes = LoadMesh(modelPath, textureScale, gameDataManager);
 				foreach (Node child in GetChildren()) {

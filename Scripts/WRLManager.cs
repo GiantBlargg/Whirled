@@ -7,6 +7,7 @@ public class WRLManager : Node {
 	public void New() {
 		path = null;
 		wrl.Clear();
+		wrl.rootMount = this;
 	}
 
 	public void Open(string _path) {

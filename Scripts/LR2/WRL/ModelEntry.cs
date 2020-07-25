@@ -5,6 +5,8 @@ public class cGeneralStatic : WRLEntry {
 	public override uint U => 0;
 	public override uint Length => 0xdc;
 
+	public override Node Node => model;
+
 	uint soundId;
 	float u1, u2;
 

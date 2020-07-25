@@ -9,6 +9,8 @@ public class WRL {
 
 	private List<WRLEntry> entries = new List<WRLEntry>();
 
+	public Node rootMount;
+
 	public void Clear() {
 		entries = new List<WRLEntry>();
 	}
@@ -74,6 +76,12 @@ public class WRL {
 
 			entries.Add(entry);
 
+			{//TODO: mount under binding's mount
+				var node = entry.Node;
+				if (node != null)
+					rootMount.AddChild(entry.Node);
+			}
+
 			if (file.GetPosition() != endPosition) {
 				GD.PrintErr("The WRLEntry for type \"", type, "\" didn't read the correct amount; correcting...");
 				file.Seek(endPosition);
@@ -120,9 +128,12 @@ public abstract class WRLEntry {
 	public virtual string Type { get; set; }
 	public virtual uint U { get; set; }
 	public virtual uint Length { get; set; }
-	public virtual uint Layer { get; set; }
-	public virtual string Name { get; set; }
-	public virtual string Binding { get; set; }
+	public uint Layer;
+	public string Name;
+	public string Binding;
+
+	public virtual Node Node => null;
+	public virtual Node Mount => Node;
 
 	protected const uint CommonLength = 52;
 
