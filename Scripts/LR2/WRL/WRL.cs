@@ -44,6 +44,9 @@ public class WRL {
 				case "cGoldenBrick":
 					entry = new cGoldenBrick();
 					break;
+				case "cLegoTerrain":
+					entry = new cLegoTerrain();
+					break;
 				default:
 					entry = new RawWRLEntry();
 					break;
