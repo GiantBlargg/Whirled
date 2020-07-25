@@ -19,6 +19,10 @@ script = ExtResource( 1 )
 
 [node name="WRLManager" type="Node" parent="."]
 script = ExtResource( 6 )
+rootMount = NodePath("RootMount")
+
+[node name="RootMount" type="Spatial" parent="WRLManager"]
+transform = Transform( -1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
 
 [node name="Control" type="Control" parent="."]
 anchor_right = 1.0

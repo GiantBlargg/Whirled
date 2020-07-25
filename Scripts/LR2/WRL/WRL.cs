@@ -9,10 +9,13 @@ public class WRL {
 
 	private List<WRLEntry> entries = new List<WRLEntry>();
 
-	public Node rootMount;
+	public Spatial rootMount;
 
 	public void Clear() {
 		entries = new List<WRLEntry>();
+		foreach (Node child in rootMount.GetChildren()) {
+			child.QueueFree();
+		}
 	}
 
 	public void Load(string path) {

@@ -21,10 +21,10 @@ public static class FileExtensions {
 	}
 
 	public static Vector3 GetVector3(this File file) {
-		return new Vector3(-file.GetFloat(), file.GetFloat(), file.GetFloat());
+		return new Vector3(file.GetFloat(), file.GetFloat(), file.GetFloat());
 	}
 	public static void StoreVector3(this File file, Vector3 vector) {
-		file.StoreFloat(-vector.x);
+		file.StoreFloat(vector.x);
 		file.StoreFloat(vector.y);
 		file.StoreFloat(vector.z);
 	}
@@ -34,16 +34,10 @@ public static class FileExtensions {
 	}
 
 	public static Quat GetQuat(this File file) {
-		return new Quat(-file.GetFloat(), file.GetFloat(), file.GetFloat(), -file.GetFloat());
+		return new Quat(file.GetFloat(), file.GetFloat(), file.GetFloat(), file.GetFloat());
 	}
 	public static void StoreQuat(this File file, Quat quat) {
-		// This is ridiculous
-		// Terrain doesn't like it when saved with a negative w
-		quat.x = -quat.x;
-		quat.w = -quat.w;
 		quat = quat.Normalized();
-		var basis = new Basis(quat);
-		quat = new Quat(basis).Normalized();
 		file.StoreFloat(quat.x);
 		file.StoreFloat(quat.y);
 		file.StoreFloat(quat.z);

@@ -4,10 +4,13 @@ public class WRLManager : Node {
 	WRL wrl = new WRL();
 	string path;
 
+	[Export]
+	public NodePath rootMount;
+
 	public void New() {
 		path = null;
+		wrl.rootMount = GetNode<Spatial>(rootMount);
 		wrl.Clear();
-		wrl.rootMount = this;
 	}
 
 	public void Open(string _path) {

@@ -189,6 +189,8 @@ public class MDL2 : MeshInstance {
 
 							var mat = new SpatialMaterial();
 
+							mat.ParamsCullMode = SpatialMaterial.CullMode.Front;
+
 							mat.ParamsDiffuseMode = SpatialMaterial.DiffuseMode.Lambert;
 							mat.ParamsSpecularMode = SpatialMaterial.SpecularMode.Disabled;
 
