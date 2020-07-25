@@ -20,7 +20,7 @@ public class PropertyContainer : ScrollContainer {
 
 		var selected = WRLItemList.GetSelectedItems();
 		if (selected.Length == 1) {
-			currentProps = ((WRLEntry)GetNode("/root/GameDataManager/WRL/" + WRLItemList.GetItemText(selected[0]))).PropertyControl;
+			currentProps = ((OldWRLEntry)GetNode("/root/GameDataManager/WRL/" + WRLItemList.GetItemText(selected[0]))).PropertyControl;
 			if (currentProps != null)
 				AddChild(currentProps);
 		}

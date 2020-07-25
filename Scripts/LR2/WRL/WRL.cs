@@ -1,15 +1,139 @@
 using Godot;
+using System;
+using System.Collections.Generic;
 
-public class WRL : Node {
+public class WRL {
+	const uint WRL_MAGIC = 0x57324352;
+	const uint WRL_VERSION = 0xb;
+	const uint OBMG_MAGIC = 0x474d424f;
+
+	private List<WRLEntry> entries = new List<WRLEntry>();
+
+	public void Clear() {
+		entries = new List<WRLEntry>();
+	}
+
+	public void Load(string path) {
+		var file = new File();
+		file.Open(path, File.ModeFlags.Read);
+
+		if (file.Get32() != WRL_MAGIC) {
+			throw new Exception("Wrong WRL Magic");
+		}
+		if (file.Get32() != WRL_VERSION) {
+			throw new Exception("Wrong Version");
+		}
+
+		var entries = new List<WRLEntry>();
+
+		while (file.GetLen() > file.GetPosition()) {
+			if (file.Get32() != OBMG_MAGIC) {
+				throw new Exception("Wrong OBGM Magic");
+			}
+
+			var type = file.GetFixedString(24);
+
+			WRLEntry entry;
+
+			switch (type) {
+				default:
+					entry = new RawWRLEntry();
+					break;
+			}
+
+			entry.Type = type;
+			entry.U = file.Get32();
+			var length = file.Get32();
+			entry.Length = length;
+
+			var endPosition = file.GetPosition() + length;
+
+			entry.Layer = file.Get32();
+			entry.Name = file.GetFixedString(24);
+			entry.Binding = file.GetFixedString(24);
+
+			entry.Load(file);
+
+			entries.Add(entry);
+
+			if (file.GetPosition() != endPosition) {
+				GD.PrintErr("The WRLEntry for type \"", type, "\" didn't read the correct amount; correcting...");
+				file.Seek(endPosition);
+			}
+		}
+
+		this.entries = entries;
+	}
+
+	public void Save(string path) {
+		var file = new File();
+		file.Open(path, File.ModeFlags.Write);
+
+		file.Store32(WRL_MAGIC);
+		file.Store32(WRL_VERSION);
+
+		foreach (var entry in entries) {
+			file.Store32(OBMG_MAGIC);
+			var type = entry.Type;
+			file.StoreFixedString(type, 24);
+			file.Store32(entry.U);
+			var length = entry.Length;
+			file.Store32(length);
+
+			var endPosition = file.GetPosition() + length;
+
+			file.Store32(entry.Layer);
+			file.StoreFixedString(entry.Name, 24);
+			file.StoreFixedString(entry.Binding, 24);
+
+			entry.Save(file);
+
+			if (file.GetPosition() != endPosition) {
+				GD.PrintErr("The WRLEntry for type \"", type, "\" didn't write the correct amount; correcting...");
+				file.Seek(endPosition);
+			}
+		}
+
+		file.Close();
+	}
+}
+
+public abstract class WRLEntry {
+	public string Type { get; set; }
+	public uint U { get; set; }
+	public uint Length { get; set; }
+	public uint Layer { get; set; }
+	public string Name { get; set; }
+	public string Binding { get; set; }
+
+	protected const uint CommonLength = 52;
+
+	public abstract void Load(File file);
+	public abstract void Save(File file);
+}
+
+class RawWRLEntry : WRLEntry {
+	byte[] data;
+	public override void Load(File file) {
+		data = file.GetBuffer((int)(Length - CommonLength));
+	}
+
+	public override void Save(File file) {
+		file.StoreBuffer(data);
+	}
+}
+
+public class OldWRL : Node {
 	readonly string path;
-	public WRL(string path) : base() {
+	public OldWRL(string path) : base() {
 		this.path = path;
 	}
 	const uint WRL_MAGIC = 0x57324352;
 	const uint WRL_VERSION = 0xb;
+	const uint OBMG_MAGIC = 0x474d424f;
 
 	[Signal]
-	public delegate void Loaded(WRL wrl);
+	public delegate void Loaded(OldWRL wrl);
 
 	public override void _Ready() {
 		var file = new File();
@@ -28,8 +152,8 @@ public class WRL : Node {
 		}
 
 		foreach (var child in GetChildren()) {
-			if (child is WRLEntry) {
-				var entry = (WRLEntry)child;
+			if (child is OldWRLEntry) {
+				var entry = (OldWRLEntry)child;
 				entry.WRLLoaded();
 			}
 		}
@@ -45,8 +169,8 @@ public class WRL : Node {
 		file.Store32(WRL_VERSION);
 
 		foreach (var child in GetChildren()) {
-			if (child is WRLEntry) {
-				var entry = (WRLEntry)child;
+			if (child is OldWRLEntry) {
+				var entry = (OldWRLEntry)child;
 				WRLEntryFactory.Save(file, entry);
 			}
 		}
@@ -58,14 +182,14 @@ public class WRL : Node {
 static class WRLEntryFactory {
 	const uint OBMG_MAGIC = 0x474d424f;
 
-	public static WRLEntry Load(File file) {
+	public static OldWRLEntry Load(File file) {
 		if (file.Get32() != OBMG_MAGIC) {
 			throw new System.Exception("Wrong Magic");
 		}
 
 		var type = file.GetFixedString(24);
 
-		WRLEntry entry;
+		OldWRLEntry entry;
 
 		switch (type) {
 			case "cGeneralStatic":
@@ -76,7 +200,7 @@ static class WRLEntryFactory {
 				entry = new Terrain();
 				break;
 			default:
-				entry = new RawWRLEntry(type);
+				entry = new OldRawWRLEntry(type);
 				break;
 		}
 
@@ -95,7 +219,7 @@ static class WRLEntryFactory {
 		return entry;
 	}
 
-	public static void Save(File file, WRLEntry entry) {
+	public static void Save(File file, OldWRLEntry entry) {
 		file.Store32(OBMG_MAGIC);
 
 		var type = entry.type;
@@ -117,7 +241,7 @@ static class WRLEntryFactory {
 	}
 }
 
-public abstract class WRLEntry : Node {
+public abstract class OldWRLEntry : Node {
 	public abstract string type { get; }
 	public abstract uint u { get; }
 	public abstract uint byteLength { get; }
@@ -130,11 +254,11 @@ public abstract class WRLEntry : Node {
 	public virtual void WRLLoaded() { }
 }
 
-public abstract class CommonWRL : WRLEntry {
+public abstract class CommonWRL : OldWRLEntry {
 	public uint CommonByteLength { get { return 52; } }
 	public uint Layer { get; set; }
 	string BindingName { get; set; }
-	public WRLEntry Binding { get; set; }
+	public OldWRLEntry Binding { get; set; }
 	protected uint LoadCommon(File file) {
 		Layer = file.Get32();
 		Name = file.GetFixedString(24);
@@ -144,7 +268,7 @@ public abstract class CommonWRL : WRLEntry {
 
 	public override void WRLLoaded() {
 		if (BindingName != "") {
-			Binding = GetNodeOrNull<WRLEntry>("../" + BindingName);
+			Binding = GetNodeOrNull<OldWRLEntry>("../" + BindingName);
 			if (Binding == null) {
 				GD.PrintErr("Couldn't find Binding \"", BindingName, "\" for ", Name);
 				return;
@@ -169,7 +293,7 @@ public abstract class CommonWRL : WRLEntry {
 	}
 }
 
-class RawWRLEntry : CommonWRL {
+class OldRawWRLEntry : CommonWRL {
 	public override string type { get; }
 	private uint _u;
 	public override uint u { get { return _u; } }
@@ -177,7 +301,7 @@ class RawWRLEntry : CommonWRL {
 
 	private byte[] data;
 
-	public RawWRLEntry(string type) {
+	public OldRawWRLEntry(string type) {
 		this.type = type;
 	}
 	public override void Load(File file, uint u, uint length) {

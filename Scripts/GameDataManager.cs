@@ -56,49 +56,13 @@ public class GameDataManager : Node {
 		return currentDir.GetCurrentDir() + "/" + next;
 	}
 
-	[Signal]
-	public delegate void WRLLoaded(WRL wrl);
-
-	public void onWRLLoaded(WRL wrl) {
-		if (wrl == this.wrl)
-			EmitSignal(nameof(WRLLoaded), wrl);
-	}
-
-	WRL wrl;
-
-	public void Open(string path) {
+	public void DeduceDataPath(string path) {
 		if (dataPath == "") {
 			var regex = new RegEx();
 			regex.Compile("^(.*[\\/\\\\]).*[\\/\\\\].*[\\/\\\\].*$");
 			var result = regex.Search(path);
 			var gamePath = result.GetString(1);
 			dataPath = gamePath;
-		}
-
-		Close();
-
-		wrl = new WRL(path);
-		wrl.Name = "WRL";
-		wrl.Connect(nameof(WRL.Loaded), this, nameof(onWRLLoaded));
-		AddChild(wrl);
-	}
-
-	[Signal]
-	public delegate void Closed();
-
-	public void Close() {
-		if (wrl != null) {
-			RemoveChild(wrl);
-			wrl.QueueFree();
-			wrl = null;
-
-			EmitSignal(nameof(Closed));
-		}
-	}
-
-	public void Save() {
-		if (wrl != null) {
-			wrl.Save();
 		}
 	}
 }
