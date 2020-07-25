@@ -167,6 +167,7 @@ WRLItemListPath = NodePath("../../../PanelContainer/ScrollContainer/WRLEntryList
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 100, 0 )
 current = true
 fov = 60.0
+near = 1.0
 far = 1500.0
 script = ExtResource( 2 )
 
