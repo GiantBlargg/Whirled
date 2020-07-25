@@ -36,15 +36,33 @@ public class WRL {
 			WRLEntry entry;
 
 			switch (type) {
+				case "cGeneralStatic":
+					entry = new cGeneralStatic();
+					break;
+				case "cGoldenBrick":
+					entry = new cGoldenBrick();
+					break;
 				default:
 					entry = new RawWRLEntry();
 					break;
 			}
 
 			entry.Type = type;
-			entry.U = file.Get32();
+			if (entry.Type != type) {
+				GD.PrintErr($"Type {type} not accepted.");
+			}
+
+			var u = file.Get32();
+			entry.U = u;
+			if (entry.U != u) {
+				GD.PrintErr($"U {u} not accepted by type {type}.");
+			}
+
 			var length = file.Get32();
 			entry.Length = length;
+			if (entry.Length != length) {
+				GD.PrintErr($"Length {length} not accepted by type {type}.");
+			}
 
 			var endPosition = file.GetPosition() + length;
 
@@ -99,12 +117,12 @@ public class WRL {
 }
 
 public abstract class WRLEntry {
-	public string Type { get; set; }
-	public uint U { get; set; }
-	public uint Length { get; set; }
-	public uint Layer { get; set; }
-	public string Name { get; set; }
-	public string Binding { get; set; }
+	public virtual string Type { get; set; }
+	public virtual uint U { get; set; }
+	public virtual uint Length { get; set; }
+	public virtual uint Layer { get; set; }
+	public virtual string Name { get; set; }
+	public virtual string Binding { get; set; }
 
 	protected const uint CommonLength = 52;
 
@@ -194,7 +212,7 @@ static class WRLEntryFactory {
 		switch (type) {
 			case "cGeneralStatic":
 			case "cGoldenBrick":
-				entry = new ModelEntry(type);
+				entry = new OldModelEntry(type);
 				break;
 			case "cLegoTerrain":
 				entry = new Terrain();
