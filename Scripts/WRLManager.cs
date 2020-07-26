@@ -1,5 +1,6 @@
 using Godot;
 using System.Collections.Generic;
+using LR2.WRL;
 
 public class WRLManager : Node {
 	WRL wrl = new WRL();
@@ -40,6 +41,18 @@ public class WRLManager : Node {
 	}
 
 	public List<NameTreeElem> NameTree => wrl.NameTree;
+
+	public List<PropertyType> GetProperties(string name) => wrl.GetProperties(name);
+
+	[Signal]
+	public delegate void PropertySet(Godot.Object value, string name, string prop);
+
+	public void SetProperty(object value, string name, string prop) {
+		wrl.SetProperty(value, name, prop);
+		EmitSignal(nameof(PropertySet), value, name, prop);
+	}
+
+	public object GetProperty(string name, string prop) => wrl.GetProperty(name, prop);
 }
 
 public struct NameTreeElem {

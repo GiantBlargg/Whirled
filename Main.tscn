@@ -132,10 +132,11 @@ margin_bottom = 689.0
 [node name="WRLTreeView" type="Tree" parent="Control/VBoxContainer/HSplitContainer/PanelContainer/ScrollContainer"]
 margin_right = 175.0
 margin_bottom = 682.0
+focus_mode = 0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 hide_root = true
-select_mode = 2
+select_mode = 1
 
 [node name="HSplitContainer" type="HSplitContainer" parent="Control/VBoxContainer/HSplitContainer"]
 margin_left = 201.0
