@@ -194,7 +194,7 @@ public class MDL2 : MeshInstance {
 							mat.ParamsDiffuseMode = SpatialMaterial.DiffuseMode.Lambert;
 							mat.ParamsSpecularMode = SpatialMaterial.SpecularMode.Disabled;
 
-							float alpha = 1;
+							float alpha = 1 - materialProp.alpha;
 
 							switch (materialProp.alphaType) {
 								case 0:
@@ -204,8 +204,6 @@ public class MDL2 : MeshInstance {
 								case 1:
 									mat.ParamsBlendMode = SpatialMaterial.BlendMode.Mix;
 									mat.FlagsTransparent = true;
-
-									alpha = materialProp.alpha;
 
 									break;
 								case 4:
