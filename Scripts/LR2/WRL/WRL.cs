@@ -8,11 +8,13 @@ public class WRL {
 	const uint OBMG_MAGIC = 0x474d424f;
 
 	private List<WRLEntry> entries = new List<WRLEntry>();
+	private Dictionary<string, WRLEntry> nameLookup = new Dictionary<string, WRLEntry>();
 
 	public Spatial rootMount;
 
 	public void Clear() {
 		entries = new List<WRLEntry>();
+		nameLookup = new Dictionary<string, WRLEntry>();
 		foreach (Node child in rootMount.GetChildren()) {
 			child.QueueFree();
 		}
@@ -30,6 +32,9 @@ public class WRL {
 		}
 
 		var entries = new List<WRLEntry>();
+		var nameLookup = new Dictionary<string, WRLEntry>();
+
+		var bindings = new List<(WRLEntry entry, string binding)>();
 
 		while (file.GetLen() > file.GetPosition()) {
 			if (file.Get32() != OBMG_MAGIC) {
@@ -76,11 +81,16 @@ public class WRL {
 
 			entry.Layer = file.Get32();
 			entry.Name = file.GetFixedString(24);
-			entry.Binding = file.GetFixedString(24);
+			var binding = file.GetFixedString(24);
 
 			entry.Load(file);
 
-			entries.Add(entry);
+			if (binding == "") {
+				entries.Add(entry);
+			} else {
+				bindings.Add((entry, binding));
+			}
+			nameLookup.Add(entry.Name, entry);
 
 			{//TODO: mount under binding's mount
 				var node = entry.Node;
@@ -94,7 +104,44 @@ public class WRL {
 			}
 		}
 
+		foreach (var b in bindings) {
+			var binding = nameLookup[b.binding];
+			binding.children.Add(b.entry);
+			b.entry.Binding = binding;
+		}
+
 		this.entries = entries;
+		this.nameLookup = nameLookup;
+	}
+
+	static void SaveEntry(File file, WRLEntry entry) {
+		file.Store32(OBMG_MAGIC);
+		var type = entry.Type;
+		file.StoreFixedString(type, 24);
+		file.Store32(entry.U);
+		var length = entry.Length;
+		file.Store32(length);
+
+		var endPosition = file.GetPosition() + length;
+
+		file.Store32(entry.Layer);
+		file.StoreFixedString(entry.Name, 24);
+
+		var binding = "";
+		if (entry.Binding != null)
+			binding = entry.Binding.Name;
+		file.StoreFixedString(binding, 24);
+
+		entry.Save(file);
+
+		if (file.GetPosition() != endPosition) {
+			GD.PrintErr("The WRLEntry for type \"", type, "\" didn't write the correct amount; correcting...");
+			file.Seek(endPosition);
+		}
+
+		foreach (var e in entry.children) {
+			SaveEntry(file, e);
+		}
 	}
 
 	public void Save(string path) {
@@ -105,25 +152,7 @@ public class WRL {
 		file.Store32(WRL_VERSION);
 
 		foreach (var entry in entries) {
-			file.Store32(OBMG_MAGIC);
-			var type = entry.Type;
-			file.StoreFixedString(type, 24);
-			file.Store32(entry.U);
-			var length = entry.Length;
-			file.Store32(length);
-
-			var endPosition = file.GetPosition() + length;
-
-			file.Store32(entry.Layer);
-			file.StoreFixedString(entry.Name, 24);
-			file.StoreFixedString(entry.Binding, 24);
-
-			entry.Save(file);
-
-			if (file.GetPosition() != endPosition) {
-				GD.PrintErr("The WRLEntry for type \"", type, "\" didn't write the correct amount; correcting...");
-				file.Seek(endPosition);
-			}
+			SaveEntry(file, entry);
 		}
 
 		file.Close();
@@ -136,7 +165,8 @@ public abstract class WRLEntry {
 	public virtual uint Length { get; set; }
 	public uint Layer;
 	public string Name;
-	public string Binding;
+	public WRLEntry Binding;
+	public List<WRLEntry> children = new List<WRLEntry>();
 
 	public virtual Node Node => null;
 	public virtual Node Mount => Node;
