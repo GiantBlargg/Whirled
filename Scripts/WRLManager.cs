@@ -1,4 +1,5 @@
 using Godot;
+using System.Collections.Generic;
 
 public class WRLManager : Node {
 	WRL wrl = new WRL();
@@ -7,16 +8,25 @@ public class WRLManager : Node {
 	[Export]
 	public NodePath rootMount;
 
-	public void New() {
-		path = null;
+	[Signal]
+	public delegate void Loaded();
+
+	void Clear() {
 		wrl.rootMount = GetNode<Spatial>(rootMount);
 		wrl.Clear();
 	}
 
+	public void New() {
+		path = null;
+		Clear();
+		EmitSignal(nameof(Loaded));
+	}
+
 	public void Open(string _path) {
-		New();
+		Clear();
 		path = _path;
 		wrl.Load(path);
+		EmitSignal(nameof(Loaded));
 	}
 
 	public void Save() {
@@ -28,4 +38,11 @@ public class WRLManager : Node {
 			path = _path;
 		wrl.Save(path);
 	}
+
+	public List<NameTreeElem> NameTree => wrl.NameTree;
+}
+
+public struct NameTreeElem {
+	public string Name;
+	public List<NameTreeElem> Children;
 }

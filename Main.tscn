@@ -1,7 +1,8 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://Scripts/GameDataManager.cs" type="Script" id=1]
 [ext_resource path="res://Scripts/ViewCamera.cs" type="Script" id=2]
+[ext_resource path="res://Scripts/SelectManager.cs" type="Script" id=3]
 [ext_resource path="res://theme.tres" type="Theme" id=5]
 [ext_resource path="res://Scripts/WRLManager.cs" type="Script" id=6]
 
@@ -13,6 +14,12 @@ func _on_GameDataManager_DataPathSet(path):
 "
 
 [node name="Main" type="Node"]
+
+[node name="SelectManager" type="Node" parent="."]
+script = ExtResource( 3 )
+WrlManager = NodePath("../WRLManager")
+WRLTreeView = NodePath("../Control/VBoxContainer/HSplitContainer/PanelContainer/ScrollContainer/WRLTreeView")
+PropertyContainer = NodePath("../Control/VBoxContainer/HSplitContainer/HSplitContainer/PanelContainer/PropertyContainer")
 
 [node name="GameDataManager" type="Node" parent="."]
 script = ExtResource( 1 )
@@ -105,50 +112,47 @@ current_dir = "/home/daniel/Projects/Whirled"
 current_path = "/home/daniel/Projects/Whirled/"
 
 [node name="HSplitContainer" type="HSplitContainer" parent="Control/VBoxContainer"]
-visible = false
 margin_top = 30.0
 margin_right = 1286.0
 margin_bottom = 726.0
 mouse_filter = 2
 size_flags_vertical = 3
-split_offset = 150
+split_offset = 175
 
 [node name="PanelContainer" type="PanelContainer" parent="Control/VBoxContainer/HSplitContainer"]
-margin_right = 164.0
+margin_right = 189.0
 margin_bottom = 696.0
 
 [node name="ScrollContainer" type="ScrollContainer" parent="Control/VBoxContainer/HSplitContainer/PanelContainer"]
 margin_left = 7.0
 margin_top = 7.0
-margin_right = 157.0
+margin_right = 182.0
 margin_bottom = 689.0
 
-[node name="WRLEntryList" type="ItemList" parent="Control/VBoxContainer/HSplitContainer/PanelContainer/ScrollContainer"]
-margin_right = 150.0
+[node name="WRLTreeView" type="Tree" parent="Control/VBoxContainer/HSplitContainer/PanelContainer/ScrollContainer"]
+margin_right = 175.0
 margin_bottom = 682.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
-select_mode = 1
-allow_reselect = true
-allow_rmb_select = true
-auto_height = true
+hide_root = true
+select_mode = 2
 
 [node name="HSplitContainer" type="HSplitContainer" parent="Control/VBoxContainer/HSplitContainer"]
-margin_left = 176.0
+margin_left = 201.0
 margin_right = 1286.0
 margin_bottom = 696.0
 mouse_filter = 2
 split_offset = -250
 
 [node name="Control" type="Control" parent="Control/VBoxContainer/HSplitContainer/HSplitContainer"]
-margin_right = 834.0
+margin_right = 809.0
 margin_bottom = 696.0
 mouse_filter = 2
 size_flags_horizontal = 3
 
 [node name="PanelContainer" type="PanelContainer" parent="Control/VBoxContainer/HSplitContainer/HSplitContainer"]
-margin_left = 846.0
-margin_right = 1110.0
+margin_left = 821.0
+margin_right = 1085.0
 margin_bottom = 696.0
 
 [node name="PropertyContainer" type="ScrollContainer" parent="Control/VBoxContainer/HSplitContainer/HSplitContainer/PanelContainer"]

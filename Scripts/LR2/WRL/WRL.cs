@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public class WRL {
 	const uint WRL_MAGIC = 0x57324352;
@@ -157,6 +158,15 @@ public class WRL {
 
 		file.Close();
 	}
+
+	static List<NameTreeElem> NameTreePart(List<WRLEntry> entries) =>
+	entries.Select(entry =>
+		new NameTreeElem() {
+			Name = entry.Name,
+			Children = NameTreePart(entry.children)
+		}).ToList();
+
+	public List<NameTreeElem> NameTree => NameTreePart(entries);
 }
 
 public abstract class WRLEntry {
