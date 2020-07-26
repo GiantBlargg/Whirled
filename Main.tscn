@@ -15,12 +15,6 @@ func _on_GameDataManager_DataPathSet(path):
 
 [node name="Main" type="Node"]
 
-[node name="SelectManager" type="Node" parent="."]
-script = ExtResource( 3 )
-WrlManager = NodePath("../WRLManager")
-WRLTreeView = NodePath("../Control/VBoxContainer/HSplitContainer/PanelContainer/ScrollContainer/WRLTreeView")
-PropertyContainer = NodePath("../Control/VBoxContainer/HSplitContainer/HSplitContainer/PanelContainer/PropertyContainer")
-
 [node name="GameDataManager" type="Node" parent="."]
 script = ExtResource( 1 )
 
@@ -30,6 +24,12 @@ rootMount = NodePath("RootMount")
 
 [node name="RootMount" type="Spatial" parent="WRLManager"]
 transform = Transform( -1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
+
+[node name="SelectManager" type="Node" parent="."]
+script = ExtResource( 3 )
+WrlManager = NodePath("../WRLManager")
+WRLTreeView = NodePath("../Control/VBoxContainer/HSplitContainer/PanelContainer/ScrollContainer/WRLTreeView")
+PropertyContainer = NodePath("../Control/VBoxContainer/HSplitContainer/HSplitContainer/PanelContainer/PropertyContainer")
 
 [node name="Control" type="Control" parent="."]
 anchor_right = 1.0
