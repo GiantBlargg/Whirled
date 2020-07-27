@@ -1,5 +1,4 @@
 image: barichello/godot-ci:mono-3.2.2
-pull_policy: if-not-present
 
 # Cache imported assets between runs
 cache:
