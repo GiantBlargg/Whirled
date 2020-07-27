@@ -28,7 +28,7 @@ transform = Transform( -1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
 [node name="SelectManager" type="Node" parent="."]
 script = ExtResource( 3 )
 WrlManager = NodePath("../WRLManager")
-WRLTreeView = NodePath("../Control/VBoxContainer/HSplitContainer/PanelContainer/ScrollContainer/WRLTreeView")
+WRLTreeView = NodePath("../Control/VBoxContainer/HSplitContainer/PanelContainer/WRLTreeView")
 PropertyContainer = NodePath("../Control/VBoxContainer/HSplitContainer/HSplitContainer/PanelContainer/PropertyContainer")
 
 [node name="Control" type="Control" parent="."]
@@ -120,40 +120,37 @@ size_flags_vertical = 3
 split_offset = 175
 
 [node name="PanelContainer" type="PanelContainer" parent="Control/VBoxContainer/HSplitContainer"]
-margin_right = 189.0
+margin_right = 190.0
 margin_bottom = 696.0
 
-[node name="ScrollContainer" type="ScrollContainer" parent="Control/VBoxContainer/HSplitContainer/PanelContainer"]
+[node name="WRLTreeView" type="Tree" parent="Control/VBoxContainer/HSplitContainer/PanelContainer"]
 margin_left = 7.0
 margin_top = 7.0
-margin_right = 182.0
+margin_right = 183.0
 margin_bottom = 689.0
-
-[node name="WRLTreeView" type="Tree" parent="Control/VBoxContainer/HSplitContainer/PanelContainer/ScrollContainer"]
-margin_right = 175.0
-margin_bottom = 682.0
 focus_mode = 0
 size_flags_horizontal = 3
 size_flags_vertical = 3
+allow_reselect = true
 hide_root = true
 select_mode = 1
 
 [node name="HSplitContainer" type="HSplitContainer" parent="Control/VBoxContainer/HSplitContainer"]
-margin_left = 201.0
+margin_left = 202.0
 margin_right = 1286.0
 margin_bottom = 696.0
 mouse_filter = 2
 split_offset = -250
 
 [node name="Control" type="Control" parent="Control/VBoxContainer/HSplitContainer/HSplitContainer"]
-margin_right = 809.0
+margin_right = 808.0
 margin_bottom = 696.0
 mouse_filter = 2
 size_flags_horizontal = 3
 
 [node name="PanelContainer" type="PanelContainer" parent="Control/VBoxContainer/HSplitContainer/HSplitContainer"]
-margin_left = 821.0
-margin_right = 1085.0
+margin_left = 820.0
+margin_right = 1084.0
 margin_bottom = 696.0
 
 [node name="PropertyContainer" type="ScrollContainer" parent="Control/VBoxContainer/HSplitContainer/HSplitContainer/PanelContainer"]
@@ -172,8 +169,12 @@ script = ExtResource( 2 )
 
 [node name="DirectionalLight" type="DirectionalLight" parent="."]
 transform = Transform( 0.586196, 0.251637, -0.770099, 0.178067, 0.88728, 0.425471, 0.790358, -0.386539, 0.475312, 0, 0, 0 )
+
+[node name="MeshInstance" type="MeshInstance" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.35339, 0 )
 [connection signal="DataPathSet" from="GameDataManager" to="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton/FileDialog" method="_on_GameDataManager_DataPathSet"]
 [connection signal="DataPathSet" from="GameDataManager" to="Control/VBoxContainer/PanelContainer/HBoxContainer/PathButton/FileDialog" method="set_current_dir"]
+[connection signal="Clicked" from="WRLManager" to="SelectManager" method="Select"]
 [connection signal="pressed" from="Control/VBoxContainer/PanelContainer/HBoxContainer/NewButton" to="WRLManager" method="New"]
 [connection signal="pressed" from="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton" to="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton/FileDialog" method="popup_centered"]
 [connection signal="file_selected" from="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton/FileDialog" to="WRLManager" method="Open"]

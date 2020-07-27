@@ -8,6 +8,7 @@ namespace LR2.WRL {
 		public override uint Length => 0xdc;
 
 		public override Node Node => model;
+		public override CollisionObject selectCollider => model.collider;
 
 		[WRLProperty(flags = PropertyFlags.Safe)]
 		public Transform transform { get { return model.Transform; } set { model.Transform = value; } }

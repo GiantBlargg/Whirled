@@ -66,7 +66,7 @@ namespace Controls {
 		}
 
 		LineEdit CreateComponent(TransformControl parent) {
-			var component = new EnterReleaseLineEdit();
+			var component = new LineEdit();
 
 			component.SizeFlagsHorizontal = (int)Control.SizeFlags.ExpandFill;
 
@@ -100,15 +100,6 @@ namespace Controls {
 		}
 		static void UpdateComponent(LineEdit line, float value) {
 			line.Text = value.ToString();
-		}
-	}
-
-	class EnterReleaseLineEdit : LineEdit {
-		public override void _Ready() {
-			Connect("text_entered", this, nameof(LoseFocus));
-		}
-		void LoseFocus(string _ = "") {
-			ReleaseFocus();
 		}
 	}
 }

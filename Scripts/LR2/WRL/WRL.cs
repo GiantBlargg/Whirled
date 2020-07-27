@@ -11,17 +11,15 @@ namespace LR2.WRL {
 		const uint WRL_VERSION = 0xb;
 		const uint OBMG_MAGIC = 0x474d424f;
 
-		private List<WRLEntry> entries = new List<WRLEntry>();
-		private Dictionary<string, WRLEntry> nameLookup = new Dictionary<string, WRLEntry>();
+		public List<WRLEntry> entries = new List<WRLEntry>();
+		public Dictionary<string, WRLEntry> nameLookup = new Dictionary<string, WRLEntry>();
 
-		public Spatial rootMount;
+		public delegate void EntryAddedFunc(WRLEntry entry);
+		public EntryAddedFunc EntryAdded;
 
 		public void Clear() {
 			entries = new List<WRLEntry>();
 			nameLookup = new Dictionary<string, WRLEntry>();
-			foreach (Node child in rootMount.GetChildren()) {
-				child.QueueFree();
-			}
 		}
 
 		public void Load(string path) {
@@ -96,16 +94,13 @@ namespace LR2.WRL {
 				}
 				nameLookup.Add(entry.Name, entry);
 
-				{//TODO: mount under binding's mount
-					var node = entry.Node;
-					if (node != null)
-						rootMount.AddChild(entry.Node);
-				}
-
 				if (file.GetPosition() != endPosition) {
 					GD.PrintErr("The WRLEntry for type \"", type, "\" didn't read the correct amount; correcting...");
 					file.Seek(endPosition);
 				}
+
+				EntryAdded(entry);
+
 			}
 
 			foreach (var b in bindings) {
@@ -224,6 +219,7 @@ namespace LR2.WRL {
 
 		public virtual Node Node => null;
 		public virtual Node Mount => Node;
+		public virtual CollisionObject selectCollider => null;
 
 		protected const uint CommonLength = 52;
 

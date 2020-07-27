@@ -15,6 +15,8 @@ public class SelectManager : Node {
 
 	Control currentControl;
 
+	Dictionary<string, TreeItem> nameLookup;
+
 	public override void _Ready() {
 		wrl = GetNode<WRLManager>(WrlManager);
 		tree = GetNode<Tree>(WRLTreeView);
@@ -31,11 +33,13 @@ public class SelectManager : Node {
 			child.SetText(0, elem.Name);
 			PopulateSubTree(child, elem.Children);
 			child.Collapsed = true;
+			nameLookup[elem.Name] = child;
 		}
 	}
 
 	public void PopulateTree() {
 		tree.Clear();
+		nameLookup = new Dictionary<string, TreeItem>();
 
 		var nameTree = wrl.NameTree;
 
@@ -51,6 +55,12 @@ public class SelectManager : Node {
 		var c = namedControls[prop];
 		if (c == null) return;
 		c.Update(value);
+	}
+
+	public void Select(string name) {
+		var item = nameLookup[name];
+		item.Select(0);
+		tree.EnsureCursorIsVisible();
 	}
 
 	public void DisplayControls() {

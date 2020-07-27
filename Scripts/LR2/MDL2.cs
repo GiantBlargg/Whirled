@@ -16,11 +16,24 @@ public class MDL2 : MeshInstance {
 			LoadModel();
 	}
 
+	//Not the COLD Section
+	//Generated from mesh
+	public CollisionObject collider = new Area();
+	public CollisionShape shape = new CollisionShape();
+
+	public override void _Ready() {
+		collider.AddChild(shape);
+		AddChild(collider);
+	}
+
+
 	void LoadModel() {
 		if (IsInsideTree()) {
 			var gameDataManager = GetNode<GameDataManager>("/root/Main/GameDataManager");
 			System.Threading.Tasks.Task.Run(() => {
-				Mesh = LoadMesh(modelPath, gameDataManager);
+				var m = LoadMesh(modelPath, gameDataManager);
+				shape.Shape = m.CreateTrimeshShape();
+				Mesh = m;
 			});
 		} else {
 			delayedLoad = true;

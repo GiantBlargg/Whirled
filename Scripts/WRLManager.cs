@@ -12,9 +12,35 @@ public class WRLManager : Node {
 	[Signal]
 	public delegate void Loaded();
 
+	[Signal]
+	public delegate void Clicked(string name);
+
+	public void Input(object camera, InputEvent ev, Vector3 click_position, Vector3 click_normal, int shape_idx, string name) {
+		if (ev.IsPressed()) {
+			EmitSignal(nameof(Clicked), name);
+		}
+	}
+
+	public override void _Ready() {
+		var root = GetNode<Spatial>(rootMount);
+		wrl.EntryAdded = (entry) => {
+			//TODO: mount under binding's mount
+			var node = entry.Node;
+			if (node != null)
+				root.AddChild(entry.Node);
+
+			var collider = entry.selectCollider;
+			if (collider != null) {
+				collider.Connect("input_event", this, nameof(Input), new Godot.Collections.Array(new string[] { entry.Name }));
+			}
+		};
+	}
+
 	void Clear() {
-		wrl.rootMount = GetNode<Spatial>(rootMount);
 		wrl.Clear();
+		foreach (Node child in GetNode(rootMount).GetChildren()) {
+			child.QueueFree();
+		}
 	}
 
 	public void New() {
