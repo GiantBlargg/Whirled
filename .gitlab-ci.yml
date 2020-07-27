@@ -13,7 +13,7 @@ linux:
   stage: export
   script:
     - mkdir -v -p build/linux
-    - godot -v --export "Linux/X11" ../build/linux/$CI_PROJECT_NAME.x86_64
+    - godot -v --export "Linux/X11" ./build/linux/$CI_PROJECT_NAME.x86_64
   artifacts:
     name: $CI_PROJECT_NAME-$CI_JOB_NAME
     paths:
@@ -23,7 +23,7 @@ windows:
   stage: export
   script:
     - mkdir -v -p build/windows
-    - godot -v --export "Windows Desktop" ../build/windows/$CI_PROJECT_NAME.exe
+    - godot -v --export "Windows Desktop" ./build/windows/$CI_PROJECT_NAME.exe
   artifacts:
     name: $CI_PROJECT_NAME-$CI_JOB_NAME
     paths:
