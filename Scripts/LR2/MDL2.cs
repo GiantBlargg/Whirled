@@ -1,4 +1,5 @@
 using Godot;
+using System.Collections.Generic;
 
 public class MDL2 : MeshInstance {
 	public string modelPath {
@@ -31,9 +32,7 @@ public class MDL2 : MeshInstance {
 		if (IsInsideTree()) {
 			var gameDataManager = GetNode<GameDataManager>("/root/Main/GameDataManager");
 			System.Threading.Tasks.Task.Run(() => {
-				var m = LoadMesh(modelPath, gameDataManager);
-				shape.Shape = m.CreateTrimeshShape();
-				Mesh = m;
+				(Mesh, shape.Shape) = LoadMesh(modelPath, gameDataManager);
 			});
 		} else {
 			delayedLoad = true;
@@ -82,13 +81,14 @@ public class MDL2 : MeshInstance {
 		public string animName;
 	}
 
-	static Mesh LoadMesh(string modelPath, GameDataManager gameDataManager) {
+	static (Mesh, Shape) LoadMesh(string modelPath, GameDataManager gameDataManager) {
 		var path = gameDataManager.ResolvePath(modelPath);
 
 		File file = new File();
 		file.Open(path, File.ModeFlags.Read);
 
 		ArrayMesh mesh = new ArrayMesh();
+		var shape = new List<Vector3>();
 
 		Texture[] textures = new Texture[0];
 		MaterialProps[] materialProps = new MaterialProps[0];
@@ -107,9 +107,9 @@ public class MDL2 : MeshInstance {
 				case MDL0_MAGIC:
 					// This isn't a chunked type, so I can't skip over it
 					// I'll just return
-					// GD.PrintErr("MDL0: ", modelPath);
+					GD.PrintErr("MDL0: ", modelPath);
 					file.Close();
-					return mesh;
+					return (mesh, new BoxShape());
 
 				case MDL1_MAGIC:
 					// GD.PrintErr("MDL1: ", modelPath);
@@ -178,7 +178,8 @@ public class MDL2 : MeshInstance {
 							var groupArrays = new Godot.Collections.Array();
 							groupArrays.Resize((int)ArrayMesh.ArrayType.Max);
 
-							LoadVertices(file, ref groupArrays);
+							var verts = new List<Vector3>();
+							LoadVertices(file, ref groupArrays, ref verts);
 
 							var fillSelectablePrimBlocks = file.Get32();
 							var fillType = file.Get32();
@@ -188,6 +189,7 @@ public class MDL2 : MeshInstance {
 
 							for (int index = 0; index < nIndices; index++) {
 								indices[index] = (int)file.Get16();
+								shape.Add(verts[indices[index]]);
 							}
 
 							groupArrays[(int)ArrayMesh.ArrayType.Index] = indices;
@@ -197,6 +199,9 @@ public class MDL2 : MeshInstance {
 								mesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, groupArrays);
 							else
 								mesh.AddSurfaceFromArrays(Mesh.PrimitiveType.TriangleStrip, groupArrays);
+
+							if (fillType != 0)
+								GD.PrintErr("Triangle Strip surface! Collision will be incorrect!");
 
 							var materialProp = materialProps[materialID];
 
@@ -262,13 +267,15 @@ public class MDL2 : MeshInstance {
 					// End of File
 					// Do final work here
 					file.Close();
-					return mesh;
+					var c = new ConcavePolygonShape();
+					c.Data = shape.ToArray();
+					return (mesh, c);
 			}
 			file.Seek(nextChunkPosition);
 		}
 	}
 
-	static void LoadVertices(File file, ref Godot.Collections.Array groupArrays) {
+	static void LoadVertices(File file, ref Godot.Collections.Array groupArrays, ref List<Vector3> shape) {
 		var vertexOffsetVector = file.Get32();
 		var vertexOffsetNormal = file.Get32();
 		var vertexOffsetColour = file.Get32();
@@ -315,8 +322,10 @@ public class MDL2 : MeshInstance {
 			}
 		}
 
-		if ((flags & VERTEX_HAS_VECTOR) != 0)
+		if ((flags & VERTEX_HAS_VECTOR) != 0) {
 			groupArrays[(int)ArrayMesh.ArrayType.Vertex] = vectors;
+			shape.AddRange(vectors);
+		}
 		if ((flags & VERTEX_HAS_NORMAL) != 0)
 			groupArrays[(int)ArrayMesh.ArrayType.Normal] = normals;
 		if ((flags & VERTEX_HAS_COLOUR) != 0)
