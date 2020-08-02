@@ -65,6 +65,11 @@ ui_down={
  ]
 }
 
+[layer_names]
+
+3d_render/layer_19="Skybox"
+3d_render/layer_20="Gizmo"
+
 [rendering]
 
 quality/shading/force_vertex_shading=true

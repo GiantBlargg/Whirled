@@ -48,13 +48,14 @@ public class SelectManager : Node {
 		PopulateSubTree(root, nameTree);
 	}
 
-	Dictionary<string, IControl> namedControls;
+	Dictionary<string, List<IControl>> namedControls;
 
 	public void UpdateControls(object value, string name, string prop) {
 		if (name != tree.GetSelected().GetText(0)) return;
 		var c = namedControls[prop];
 		if (c == null) return;
-		c.Update(value);
+
+		c.ForEach(con => con.Update(value));
 	}
 
 	public void Select(string name) {
@@ -64,35 +65,51 @@ public class SelectManager : Node {
 	}
 
 	public void DisplayControls() {
+		if (namedControls != null)
+			foreach (var c in namedControls) {
+				c.Value.ForEach(o => ((Node)o).QueueFree());
+			}
 		if (currentControl != null)
 			currentControl.QueueFree();
 
 		currentControl = new HBoxContainer();
 		currentControl.SizeFlagsHorizontal = (int)Control.SizeFlags.ExpandFill;
-		namedControls = new Dictionary<string, IControl>();
+		namedControls = new Dictionary<string, List<IControl>>();
 
 		var name = tree.GetSelected().GetText(0);
 		var props = wrl.GetProperties(name);
+
 		foreach (var prop in props) {
-			Control control;
+			args = new string[] { name, prop.name };
 			if (prop.type == typeof(Transform)) {
-				control = new TransformControl(prop.flags.HasFlag(LR2.WRL.PropertyFlags.Scale));
+				AddControl(new TransformControl(prop.flags.HasFlag(LR2.WRL.PropertyFlags.Scale)));
+				AddControl(Gizmo.scene.Instance(), wrl.ResolveParent(name));
 			} else {
 				GD.PrintErr($"Unkown type {prop.type} on member {prop.name}");
 				continue;
 			}
-			var args = new Godot.Collections.Array(new string[] { name, prop.name });
-			control.Connect("ValueSet", wrl, nameof(WRLManager.SetProperty), args);
-			currentControl.AddChild(control);
-			if (control is IControl) {
-				(control as IControl).Update(wrl.GetProperty(name, prop.name));
-				namedControls[prop.name] = control as IControl;
-			} else {
-				GD.PrintErr("Not IControl");
-			}
 		}
+		args = null;
 
 		propContainer.AddChild(currentControl);
+	}
+
+	string[] args = null;
+
+	void AddControl(Node control, Node mountPoint = null) {
+		if (mountPoint == null)
+			mountPoint = currentControl;
+
+		control.Connect("ValueSet", wrl, nameof(WRLManager.SetProperty), new Godot.Collections.Array(args));
+		mountPoint.AddChild(control);
+		if (control is IControl) {
+			(control as IControl).Update(wrl.GetProperty(args[0], args[1]));
+			if (!namedControls.ContainsKey(args[1]))
+				namedControls[args[1]] = new List<IControl>();
+			namedControls[args[1]].Add(control as IControl);
+		} else {
+			GD.PrintErr("Not IControl");
+		}
 	}
 }
 

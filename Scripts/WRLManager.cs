@@ -6,6 +6,8 @@ public class WRLManager : Node {
 	WRL wrl = new WRL();
 	string path;
 
+	Node root;
+
 	[Export]
 	public NodePath rootMount;
 
@@ -21,13 +23,20 @@ public class WRLManager : Node {
 		}
 	}
 
+	public Node ResolveParent(string name) => ResolveParent(wrl.nameLookup[name]);
+	Node ResolveParent(WRLEntry entry) {
+		if (entry.Binding != null && entry.Binding.Node != null)
+			return entry.Binding.Node;
+		return root;
+	}
+
 	public override void _Ready() {
-		var root = GetNode<Spatial>(rootMount);
+		root = GetNode<Spatial>(rootMount);
 		wrl.EntryAdded = (entry) => {
 			//TODO: mount under binding's mount
 			var node = entry.Node;
 			if (node != null)
-				root.AddChild(entry.Node);
+				ResolveParent(entry).AddChild(entry.Node);
 
 			var collider = entry.selectCollider;
 			if (collider != null) {
