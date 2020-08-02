@@ -166,9 +166,6 @@ script = ExtResource( 2 )
 
 [node name="DirectionalLight" type="DirectionalLight" parent="."]
 
-[node name="MeshInstance" type="MeshInstance" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.35339, 0 )
-
 [node name="PriorityMouse" type="Node" parent="."]
 script = ExtResource( 7 )
 [connection signal="DataPathSet" from="GameDataManager" to="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton/FileDialog" method="_on_GameDataManager_DataPathSet"]
@@ -176,8 +173,8 @@ script = ExtResource( 7 )
 [connection signal="Clicked" from="WRLManager" to="SelectManager" method="Select"]
 [connection signal="pressed" from="Control/VBoxContainer/PanelContainer/HBoxContainer/NewButton" to="WRLManager" method="New"]
 [connection signal="pressed" from="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton" to="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton/FileDialog" method="popup_centered"]
-[connection signal="file_selected" from="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton/FileDialog" to="WRLManager" method="Open"]
 [connection signal="file_selected" from="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton/FileDialog" to="GameDataManager" method="DeduceDataPath"]
+[connection signal="file_selected" from="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton/FileDialog" to="WRLManager" method="Open"]
 [connection signal="pressed" from="Control/VBoxContainer/PanelContainer/HBoxContainer/SaveButton" to="WRLManager" method="Save"]
 [connection signal="pressed" from="Control/VBoxContainer/PanelContainer/HBoxContainer/PathButton" to="Control/VBoxContainer/PanelContainer/HBoxContainer/PathButton/FileDialog" method="popup_centered"]
 [connection signal="dir_selected" from="Control/VBoxContainer/PanelContainer/HBoxContainer/PathButton/FileDialog" to="GameDataManager" method="DataPathSelected"]
