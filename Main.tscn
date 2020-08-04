@@ -86,8 +86,8 @@ resizable = true
 mode = 0
 access = 2
 filters = PoolStringArray( "*.WRL; LR2 Worlds" )
-current_dir = "/home/daniel/Projects/Whirled"
-current_path = "/home/daniel/Projects/Whirled/"
+current_dir = "/"
+current_path = "/"
 script = SubResource( 1 )
 
 [node name="SaveButton" type="Button" parent="Control/VBoxContainer/PanelContainer/HBoxContainer"]
@@ -109,8 +109,8 @@ window_title = "Open a Directory"
 resizable = true
 mode = 2
 access = 2
-current_dir = "/home/daniel/Projects/Whirled"
-current_path = "/home/daniel/Projects/Whirled/"
+current_dir = "/"
+current_path = "/"
 
 [node name="HSplitContainer" type="HSplitContainer" parent="Control/VBoxContainer"]
 margin_top = 30.0
