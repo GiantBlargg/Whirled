@@ -32,16 +32,16 @@ namespace Controls {
 			}
 		}
 
-		[Signal]
-		public delegate void ValueSet(Godot.Object transform);
+		public event ValueSet ValueSet;
 
-		public void SetTransform(string _ = "") {
+		public void SetTransform(string _) => SetTransform();
+		public void SetTransform() {
 			var basis = new Basis(rotation.value * DegToRad);
 			if (AllowScale) {
 				basis = basis.Scaled(scale.value);
 			}
 			var transform = new Transform(basis, translate.value);
-			EmitSignal(nameof(ValueSet), transform);
+			ValueSet(transform);
 		}
 
 		public void Update(object value) => Update((Transform)value);
@@ -71,6 +71,7 @@ namespace Controls {
 			component.SizeFlagsHorizontal = (int)Control.SizeFlags.ExpandFill;
 
 			component.Connect("text_entered", parent, nameof(TransformControl.SetTransform));
+			component.Connect("focus_exited", parent, nameof(TransformControl.SetTransform));
 
 			AddChild(component);
 			return component;

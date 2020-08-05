@@ -1,4 +1,5 @@
 using Godot;
+using System;
 using System.Collections.Generic;
 using Controls;
 
@@ -66,13 +67,13 @@ public class SelectManager : Node {
 
 	public void DisplayControls() {
 		if (namedControls != null)
-			foreach (var c in namedControls) {
-				c.Value.ForEach(o => ((Node)o).QueueFree());
+			foreach (var c in namedControls.Values) {
+				c.ForEach(o => o.QueueFree());
 			}
 		if (currentControl != null)
 			currentControl.QueueFree();
 
-		currentControl = new HBoxContainer();
+		currentControl = new VBoxContainer();
 		currentControl.SizeFlagsHorizontal = (int)Control.SizeFlags.ExpandFill;
 		namedControls = new Dictionary<string, List<IControl>>();
 
@@ -84,6 +85,8 @@ public class SelectManager : Node {
 			if (prop.type == typeof(Transform)) {
 				AddControl(new TransformControl(prop.flags.HasFlag(LR2.WRL.PropertyFlags.Scale)));
 				AddControl(Gizmo.scene.Instance(), wrl.ResolveParent(name));
+			} else if (typeof(IConvertible).IsAssignableFrom(prop.type)) {
+				AddControl(new Number(prop.type));
 			} else {
 				GD.PrintErr($"Unkown type {prop.type} on member {prop.name}");
 				continue;
@@ -97,22 +100,33 @@ public class SelectManager : Node {
 	string[] args = null;
 
 	void AddControl(Node control, Node mountPoint = null) {
+		var nodeName = args[0];
+		var paramName = args[1];
 		if (mountPoint == null)
 			mountPoint = currentControl;
 
-		control.Connect("ValueSet", wrl, nameof(WRLManager.SetProperty), new Godot.Collections.Array(args));
 		mountPoint.AddChild(control);
+		control.Name = paramName;
 		if (control is IControl) {
-			(control as IControl).Update(wrl.GetProperty(args[0], args[1]));
-			if (!namedControls.ContainsKey(args[1]))
-				namedControls[args[1]] = new List<IControl>();
-			namedControls[args[1]].Add(control as IControl);
+			var c = control as IControl;
+			c.ValueSet += value => wrl.SetProperty(value, nodeName, paramName);
+			c.Update(wrl.GetProperty(nodeName, paramName));
+			if (!namedControls.ContainsKey(paramName))
+				namedControls[paramName] = new List<IControl>();
+			namedControls[paramName].Add(c);
 		} else {
 			GD.PrintErr("Not IControl");
 		}
 	}
 }
 
-interface IControl {
-	void Update(object value);
+namespace Controls {
+
+	public delegate void ValueSet(object value);
+
+	interface IControl {
+		void Update(object value);
+		void QueueFree();
+		event ValueSet ValueSet;
+	}
 }

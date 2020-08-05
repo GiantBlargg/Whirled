@@ -166,8 +166,9 @@ namespace LR2.WRL {
 
 		public List<NameTreeElem> NameTree => NameTreePart(entries);
 
-		public List<PropertyType> GetProperties(string name) =>
-			nameLookup[name].GetType().GetProperties()
+		public List<PropertyType> GetProperties(string name) {
+			var targetType = nameLookup[name].GetType();
+			var properties = targetType.GetProperties()
 				.Where(prop => Attribute.IsDefined(prop, typeof(WRLPropertyAttribute)))
 				.Select(prop => {
 					var flags = (prop.GetCustomAttribute(typeof(WRLPropertyAttribute)) as WRLPropertyAttribute).flags;
@@ -176,7 +177,9 @@ namespace LR2.WRL {
 						type = prop.PropertyType,
 						flags = flags
 					};
-				}).ToList();
+				});
+			return properties.ToList();
+		}
 
 		public void SetProperty(object value, string name, string prop) {
 			var target = nameLookup[name];
@@ -212,8 +215,9 @@ namespace LR2.WRL {
 		public virtual string Type { get; set; }
 		public virtual uint U { get; set; }
 		public virtual uint Length { get; set; }
-		public uint Layer;
-		public string Name;
+		[WRLProperty]
+		public uint Layer { get; set; }
+		public string Name { get; set; }
 		public WRLEntry Binding;
 		public List<WRLEntry> children = new List<WRLEntry>();
 

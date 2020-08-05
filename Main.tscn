@@ -16,6 +16,14 @@ func _on_GameDataManager_DataPathSet(path):
 
 [node name="Main" type="Node"]
 
+[node name="ViewCamera" type="Camera" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 100, 0 )
+current = true
+fov = 60.0
+near = 1.0
+far = 1500.0
+script = ExtResource( 2 )
+
 [node name="GameDataManager" type="Node" parent="."]
 script = ExtResource( 1 )
 
@@ -159,14 +167,6 @@ margin_left = 7.0
 margin_top = 7.0
 margin_right = 307.0
 margin_bottom = 689.0
-
-[node name="ViewCamera" type="Camera" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 100, 0 )
-current = true
-fov = 60.0
-near = 1.0
-far = 1500.0
-script = ExtResource( 2 )
 
 [node name="DirectionalLight" type="DirectionalLight" parent="."]
 transform = Transform( 0.760395, -0.406999, 0.506114, 0, 0.779283, 0.626672, -0.649461, -0.476518, 0.592563, 0, 0, 0 )

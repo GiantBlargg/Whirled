@@ -1,4 +1,5 @@
 using Godot;
+using Controls;
 
 public class Gizmo : Spatial, IControl {
 	public static PackedScene scene = GD.Load<PackedScene>("res://Gizmo/Gizmo.tscn");
@@ -10,8 +11,8 @@ public class Gizmo : Spatial, IControl {
 		get => _targetTransform;
 		set {
 			_targetTransform = value;
-			EmitSignal(nameof(ValueSet), _targetTransform);
 			Translation = _targetTransform.origin;
+			ValueSet(_targetTransform);
 		}
 	}
 
@@ -20,8 +21,7 @@ public class Gizmo : Spatial, IControl {
 		_targetTransform = (Transform)value;
 	}
 
-	[Signal]
-	public delegate void ValueSet(Godot.Object transform);
+	public event ValueSet ValueSet;
 
 	public override void _Ready() {
 		camera = GetViewport().GetCamera();
