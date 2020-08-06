@@ -25,7 +25,6 @@ public class SelectManager : Node {
 
 		wrl.Connect(nameof(WRLManager.Loaded), this, nameof(PopulateTree));
 		tree.Connect("item_selected", this, nameof(DisplayControls));
-		wrl.Connect(nameof(WRLManager.PropertySet), this, nameof(UpdateControls));
 	}
 
 	void PopulateSubTree(TreeItem root, List<NameTreeElem> nameTree) {
@@ -49,15 +48,7 @@ public class SelectManager : Node {
 		PopulateSubTree(root, nameTree);
 	}
 
-	Dictionary<string, List<IControl>> namedControls;
-
-	public void UpdateControls(object value, string name, string prop) {
-		if (name != tree.GetSelected().GetText(0)) return;
-		var c = namedControls[prop];
-		if (c == null) return;
-
-		c.ForEach(con => con.Update(value));
-	}
+	List<IControl> controls = new List<IControl>();
 
 	public void Select(string name) {
 		var item = nameLookup[name];
@@ -66,67 +57,70 @@ public class SelectManager : Node {
 	}
 
 	public void DisplayControls() {
-		if (namedControls != null)
-			foreach (var c in namedControls.Values) {
-				c.ForEach(o => o.QueueFree());
-			}
+		if (controls != null) controls.ForEach(c => c.QueueFree());
+		controls.Clear();
+
 		if (currentControl != null)
 			currentControl.QueueFree();
 
 		currentControl = new VBoxContainer();
 		currentControl.SizeFlagsHorizontal = (int)Control.SizeFlags.ExpandFill;
-		namedControls = new Dictionary<string, List<IControl>>();
 
 		var name = tree.GetSelected().GetText(0);
 		var props = wrl.GetProperties(name);
 
+		var label = new Label();
+		label.Text = (string)wrl.GetProperty(name, "Type");
+		currentControl.AddChild(label);
+
 		foreach (var prop in props) {
-			args = new string[] { name, prop.name };
-			if (prop.type == typeof(Transform)) {
-				AddControl(new TransformControl(prop.flags.HasFlag(LR2.WRL.PropertyFlags.Scale)));
-				AddControl(Gizmo.scene.Instance(), wrl.ResolveParent(name));
-			} else if (typeof(IConvertible).IsAssignableFrom(prop.type)) {
-				AddControl(new Number(prop.type));
+			if (prop is ObjectProperty<Transform>) {
+				AddControl(prop as ObjectProperty<Transform>, new TransformControl(/*prop.flags.HasFlag(LR2.WRL.PropertyFlags.Scale)*/));
+				AddControl(prop as ObjectProperty<Transform>, Gizmo.scene.Instance() as Gizmo, wrl.ResolveParent(name));
+			} else if (prop is ObjectProperty<string>) {
+				AddControl(prop as ObjectProperty<string>, new Controls.String());
+			} else if (prop is ObjectProperty<int>) {
+				AddControl(prop as ObjectProperty<int>, new Number<int>());
+			} else if (prop is ObjectProperty<uint>) {
+				AddControl(prop as ObjectProperty<uint>, new Number<uint>());
+			} else if (prop is ObjectProperty<float>) {
+				AddControl(prop as ObjectProperty<float>, new Number<float>());
 			} else {
-				GD.PrintErr($"Unkown type {prop.type} on member {prop.name}");
+				GD.PrintErr($"Unkown type {prop.Type} on member {prop.Name}");
 				continue;
 			}
+
 		}
-		args = null;
 
 		propContainer.AddChild(currentControl);
 	}
 
-	string[] args = null;
-
-	void AddControl(Node control, Node mountPoint = null) {
-		var nodeName = args[0];
-		var paramName = args[1];
+	void AddControl<T>(ObjectProperty<T> property, IControl<T> control, Node mountPoint = null) {
 		if (mountPoint == null)
 			mountPoint = currentControl;
 
-		mountPoint.AddChild(control);
-		control.Name = paramName;
-		if (control is IControl) {
-			var c = control as IControl;
-			c.ValueSet += value => wrl.SetProperty(value, nodeName, paramName);
-			c.Update(wrl.GetProperty(nodeName, paramName));
-			if (!namedControls.ContainsKey(paramName))
-				namedControls[paramName] = new List<IControl>();
-			namedControls[paramName].Add(c);
-		} else {
-			GD.PrintErr("Not IControl");
-		}
+		if (control is Node)
+			mountPoint.AddChild(control as Node);
+
+		control.Name = property.Name;
+
+		control.ValueSet += property.Set;
+		property.Update += control.Update;
+		control.Update(property.Value);
+		controls.Add(control);
 	}
 }
 
 namespace Controls {
 
-	public delegate void ValueSet(object value);
+	public delegate void ValueSet<T>(T value, bool updateHistory = true);
 
-	interface IControl {
-		void Update(object value);
+	public interface IControl {
+		string Name { get; set; }
 		void QueueFree();
-		event ValueSet ValueSet;
+	}
+	public interface IControl<T> : IControl {
+		void Update(T value);
+		event ValueSet<T> ValueSet;
 	}
 }

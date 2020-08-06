@@ -1,4 +1,5 @@
 using Godot;
+using System.Collections.Generic;
 
 namespace LR2.WRL {
 
@@ -10,35 +11,40 @@ namespace LR2.WRL {
 		public override Node Node => model;
 		public override CollisionObject selectCollider => model.collider;
 
-		[WRLProperty(flags = PropertyFlags.Safe)]
-		public Transform transform { get { return model.Transform; } set { model.Transform = value; } }
-
-		uint soundId;
 		float u1, u2;
+		uint SoundId;
 
 		MDL2 model = new MDL2();
 
 		public override void Load(File file) {
-			var transform = file.GetTransform();
-			model.Transform = transform;
+			model.Transform = file.GetTransform();
 
 			u1 = file.GetFloat();
 			u2 = file.GetFloat();
-			soundId = file.Get32();
+			SoundId = file.Get32();
 
 			model.modelPath = file.GetFixedString(0x80);
 		}
 
 		public override void Save(File file) {
-			var transform = model.Transform;
-			file.StoreTransform(transform);
+			file.StoreTransform(model.Transform);
 
 			file.StoreFloat(u1);
 			file.StoreFloat(u2);
 
-			file.Store32(soundId);
+			file.Store32(SoundId);
 
 			file.StoreFixedString(model.modelPath, 0x80);
+		}
+
+		public override List<ObjectProperty> GetProperties() {
+			var p = base.GetProperties();
+			p.Add(new ObjectProperty<Transform>(() => model.Transform));
+			p.Add(new ObjectProperty<float>(() => u1));
+			p.Add(new ObjectProperty<float>(() => u2));
+			p.Add(new ObjectProperty<uint>(() => SoundId));
+			p.Add(new ObjectProperty<string>(() => model.modelPath));
+			return p;
 		}
 	}
 

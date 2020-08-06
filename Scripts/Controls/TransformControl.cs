@@ -1,7 +1,7 @@
 using Godot;
 
 namespace Controls {
-	public class TransformControl : VBoxContainer, IControl {
+	public class TransformControl : VBoxContainer, IControl<Transform> {
 		static float RadToDeg = 180 / Mathf.Pi;
 		static float DegToRad = Mathf.Pi / 180;
 
@@ -9,7 +9,7 @@ namespace Controls {
 
 		bool AllowScale;
 
-		public TransformControl(bool _AllowScale) {
+		public TransformControl(bool _AllowScale = false) {
 			AllowScale = _AllowScale;
 
 			SizeFlagsHorizontal = (int)Control.SizeFlags.ExpandFill;
@@ -32,7 +32,7 @@ namespace Controls {
 			}
 		}
 
-		public event ValueSet ValueSet;
+		public event ValueSet<Transform> ValueSet;
 
 		public void SetTransform(string _) => SetTransform();
 		public void SetTransform() {

@@ -137,7 +137,6 @@ margin_left = 7.0
 margin_top = 7.0
 margin_right = 183.0
 margin_bottom = 689.0
-focus_mode = 0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 allow_reselect = true

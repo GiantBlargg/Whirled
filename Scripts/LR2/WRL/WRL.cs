@@ -166,25 +166,7 @@ namespace LR2.WRL {
 
 		public List<NameTreeElem> NameTree => NameTreePart(entries);
 
-		public List<PropertyType> GetProperties(string name) {
-			var targetType = nameLookup[name].GetType();
-			var properties = targetType.GetProperties()
-				.Where(prop => Attribute.IsDefined(prop, typeof(WRLPropertyAttribute)))
-				.Select(prop => {
-					var flags = (prop.GetCustomAttribute(typeof(WRLPropertyAttribute)) as WRLPropertyAttribute).flags;
-					return new PropertyType() {
-						name = prop.Name,
-						type = prop.PropertyType,
-						flags = flags
-					};
-				});
-			return properties.ToList();
-		}
-
-		public void SetProperty(object value, string name, string prop) {
-			var target = nameLookup[name];
-			target.GetType().GetProperty(prop).SetValue(target, value);
-		}
+		public List<ObjectProperty> GetProperties(string name) => nameLookup[name].GetProperties();
 
 		public object GetProperty(string name, string propName) {
 			var target = nameLookup[name];
@@ -229,6 +211,14 @@ namespace LR2.WRL {
 
 		public abstract void Load(File file);
 		public abstract void Save(File file);
+
+		public virtual List<ObjectProperty> GetProperties() {
+			var props = new List<ObjectProperty>();
+
+			props.Add(new ObjectProperty<uint>(() => Layer));
+
+			return props;
+		}
 	}
 
 	class RawWRLEntry : WRLEntry {

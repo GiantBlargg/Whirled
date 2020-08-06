@@ -1,9 +1,8 @@
 using Godot;
-using System;
 
 namespace Controls {
-	public class Number<T> : HBoxContainer, IControl<T> where T : IConvertible {
-		public event ValueSet<T> ValueSet;
+	public class String : HBoxContainer, IControl<string> {
+		public event ValueSet<string> ValueSet;
 
 		LineEdit line = new LineEdit();
 
@@ -23,13 +22,8 @@ namespace Controls {
 
 		public void ValueEntered(string _) => ValueEntered();
 		public void ValueEntered() {
-			var value = Parse(line.Text);
-			ValueSet(value);
+			ValueSet(line.Text);
 		}
-		public void Update(T value) => line.Text = value.ToString();
-
-		T Parse(string v) {
-			return (T)Convert.ChangeType(v, typeof(T));
-		}
+		public void Update(string value) => line.Text = value;
 	}
 }

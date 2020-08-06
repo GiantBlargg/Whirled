@@ -77,16 +77,9 @@ public class WRLManager : Node {
 
 	public List<NameTreeElem> NameTree => wrl.NameTree;
 
-	public List<PropertyType> GetProperties(string name) => wrl.GetProperties(name);
+	public List<ObjectProperty> GetProperties(string name) => wrl.GetProperties(name);
 
-	[Signal]
-	public delegate void PropertySet(Godot.Object value, string name, string prop);
-
-	public void SetProperty(object value, string name, string prop) {
-		wrl.SetProperty(value, name, prop);
-		EmitSignal(nameof(PropertySet), value, name, prop);
-	}
-
+	[System.Obsolete]
 	public object GetProperty(string name, string prop) => wrl.GetProperty(name, prop);
 }
 
