@@ -1,10 +1,8 @@
 using Godot;
 
 namespace Controls {
-	public class String : HBoxContainer, IControl<string> {
-		public event ValueSet<string> ValueSet;
-
-		LineEdit line = new LineEdit();
+	public abstract class StringBase : HBoxContainer {
+		protected LineEdit line = new LineEdit();
 
 		public override void _Ready() {
 
@@ -21,7 +19,13 @@ namespace Controls {
 		}
 
 		public void ValueEntered(string _) => ValueEntered();
-		public void ValueEntered() {
+		public abstract void ValueEntered();
+	}
+
+	public class StringControl : StringBase, IControl<string> {
+		public event ValueSet<string> ValueSet;
+
+		public override void ValueEntered() {
 			ValueSet(line.Text);
 		}
 		public void Update(string value) => line.Text = value;

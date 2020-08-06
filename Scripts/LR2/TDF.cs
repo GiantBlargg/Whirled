@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 public class TDF : Spatial {
 	private string _modelPath;
-	public string modelPath {
+	public string ModelPath {
 		get { return _modelPath; }
 		set {
 			_modelPath = value;
@@ -30,7 +30,7 @@ public class TDF : Spatial {
 		if (IsInsideTree()) {
 			var gameDataManager = GetNode<GameDataManager>("/root/Main/GameDataManager");
 			System.Threading.Tasks.Task.Run(() => {
-				var meshes = LoadMesh(modelPath, textureScale, gameDataManager);
+				var meshes = LoadMesh(ModelPath, textureScale, gameDataManager);
 				foreach (Node child in GetChildren()) {
 					child.QueueFree();
 				}

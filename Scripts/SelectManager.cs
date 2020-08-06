@@ -78,7 +78,7 @@ public class SelectManager : Node {
 				AddControl(prop as ObjectProperty<Transform>, new TransformControl(/*prop.flags.HasFlag(LR2.WRL.PropertyFlags.Scale)*/));
 				AddControl(prop as ObjectProperty<Transform>, Gizmo.scene.Instance() as Gizmo, wrl.ResolveParent(name));
 			} else if (prop is ObjectProperty<string>) {
-				AddControl(prop as ObjectProperty<string>, new Controls.String());
+				AddControl(prop as ObjectProperty<string>, new StringControl());
 			} else if (prop is ObjectProperty<int>) {
 				AddControl(prop as ObjectProperty<int>, new Number<int>());
 			} else if (prop is ObjectProperty<uint>) {
