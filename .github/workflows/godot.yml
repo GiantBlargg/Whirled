@@ -1,0 +1,99 @@
+name: "godot-ci export"
+on:
+  push:
+    branch:
+      - master
+
+env:
+  XDG_DATA_HOME: /root/.local/share/
+
+jobs:
+  export-linux:
+    name: Linux Export
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:mono-3.2.2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Linux Build
+        run: |
+          mkdir -v -p build/linux
+          godot -v --export "Linux/X11" ./build/linux/Whirled.x86_64
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: linux
+          path: build/linux
+
+  export-windows:
+    name: Windows Export
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:mono-3.2.2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Windows Build
+        run: |
+          mkdir -v -p build/windows
+          godot -v --export "Windows Desktop" ./build/windows/Whirled.exe
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: windows
+          path: build/windows
+
+  release:
+    needs: [export-linux, export-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Calculate BUILD_NUMBER
+        run: echo "::set-env name=BUILD_NUMBER::$(date +%C%m%d%H)"
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.BUILD_NUMBER }}
+          release_name: ${{ env.BUILD_NUMBER }}
+          draft: false
+          prerelease: true
+
+      - name: Download Linux Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: linux
+          path: Whirled_Linux
+      - name: Zip Linux
+        run: zip Whirled_Linux.zip -r Whirled_Linux
+      - name: Upload Linux Release Asset
+        id: upload-lin-release-asset 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./Whirled_Linux.zip
+          asset_name: Whirled_Linux.zip
+          asset_content_type: application/zip
+
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: windows
+          path: Whirled_Windows
+      - name: Zip Windows
+        run: zip Whirled_Windows.zip -r Whirled_Windows
+      - name: Upload Windows Release Asset
+        id: upload-win-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./Whirled_Windows.zip
+          asset_name: Whirled_Windows.zip
+          asset_content_type: application/zip
+
