@@ -48,11 +48,20 @@ namespace LR2.WRL {
 				WRLEntry entry;
 
 				switch (type) {
+					case "cRaceStartPos":
+						entry = new cRaceStartPos();
+						break;
+					case "cFoyerStartPos":
+						entry = new cFoyerStartPos();
+						break;
 					case "cGeneralStatic":
 						entry = new cGeneralStatic();
 						break;
 					case "cGoldenBrick":
 						entry = new cGoldenBrick();
+						break;
+					case "cGeneralMobile":
+						entry = new cGeneralMobile();
 						break;
 					case "cLegoTerrain":
 						entry = new cLegoTerrain();
@@ -188,16 +197,10 @@ namespace LR2.WRL {
 		public PropertyFlags flags;
 	}
 
-	[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
-	public class WRLPropertyAttribute : Attribute {
-		public PropertyFlags flags;
-	}
-
 	public abstract class WRLEntry {
 		public virtual string Type { get; set; }
 		public virtual uint U { get; set; }
 		public virtual uint Length { get; set; }
-		[WRLProperty]
 		public uint Layer { get; set; }
 		public string Name { get; set; }
 		public WRLEntry Binding;

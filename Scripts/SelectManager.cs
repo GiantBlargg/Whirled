@@ -38,6 +38,12 @@ public class SelectManager : Node {
 	}
 
 	public void PopulateTree() {
+		if (controls != null) controls.ForEach(c => c.QueueFree());
+		controls.Clear();
+
+		if (currentControl != null)
+			currentControl.QueueFree();
+
 		tree.Clear();
 		nameLookup = new Dictionary<string, TreeItem>();
 
