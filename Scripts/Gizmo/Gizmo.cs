@@ -12,15 +12,16 @@ public class Gizmo : Spatial, IControl<Transform> {
 		set {
 			_targetTransform = value;
 			Translation = _targetTransform.origin;
-			ValueSet(_targetTransform);
+			ValueSet();
 		}
 	}
 
-	public void Update(Transform value) {
-		_targetTransform = value;
+	public Transform Value {
+		get => _targetTransform;
+		set => _targetTransform = value;
 	}
 
-	public event ValueSet<Transform> ValueSet;
+	public event ValueSet ValueSet;
 
 	public override void _Ready() {
 		camera = GetViewport().GetCamera();

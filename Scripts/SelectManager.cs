@@ -85,6 +85,10 @@ public class SelectManager : Node {
 				AddControl(prop as ObjectProperty<uint>, new Number<uint>());
 			} else if (prop is ObjectProperty<float>) {
 				AddControl(prop as ObjectProperty<float>, new Number<float>());
+			} else if (prop is ObjectProperty<Vector2>) {
+				AddControl(prop as ObjectProperty<Vector2>, new Vector2Control());
+			} else if (prop is ObjectProperty<Vector3>) {
+				AddControl(prop as ObjectProperty<Vector3>, new Vector3Control());
 			} else {
 				GD.PrintErr($"Unkown type {prop.Type} on member {prop.Name}");
 				continue;
@@ -104,23 +108,23 @@ public class SelectManager : Node {
 
 		control.Name = property.Name;
 
-		control.ValueSet += property.Set;
-		property.Update += control.Update;
-		control.Update(property.Value);
+		control.ValueSet += h => property.Set(control.Value, h);
+		property.Update += v => control.Value = v;
+		control.Value = property.Value;
 		controls.Add(control);
 	}
 }
 
 namespace Controls {
 
-	public delegate void ValueSet<T>(T value, bool updateHistory = true);
+	public delegate void ValueSet(bool updateHistory = true);
 
 	public interface IControl {
 		string Name { get; set; }
 		void QueueFree();
+		event ValueSet ValueSet;
 	}
 	public interface IControl<T> : IControl {
-		void Update(T value);
-		event ValueSet<T> ValueSet;
+		T Value { get; set; }
 	}
 }

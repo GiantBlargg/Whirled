@@ -1,14 +1,18 @@
 using Godot;
+using System;
 
 namespace Controls {
 	public abstract class StringBase : HBoxContainer {
+
 		protected LineEdit line = new LineEdit();
 
 		public override void _Ready() {
 
-			var label = new Label();
-			label.Text = Name;
-			AddChild(label);
+			if (Name != "" && Name[0] != '@') {
+				var label = new Label();
+				label.Text = Name;
+				AddChild(label);
+			}
 
 			line.SizeFlagsHorizontal = (int)Control.SizeFlags.ExpandFill;
 
@@ -18,16 +22,23 @@ namespace Controls {
 			AddChild(line);
 		}
 
-		public void ValueEntered(string _) => ValueEntered();
-		public abstract void ValueEntered();
+		public event ValueSet ValueSet;
+
+		public void ValueEntered(string _) => ValueSet();
+		public void ValueEntered() => ValueSet();
 	}
 
 	public class StringControl : StringBase, IControl<string> {
-		public event ValueSet<string> ValueSet;
-
-		public override void ValueEntered() {
-			ValueSet(line.Text);
+		public string Value {
+			get => line.Text;
+			set => line.Text = value;
 		}
-		public void Update(string value) => line.Text = value;
+	}
+
+	public class Number<T> : StringBase, IControl<T> where T : IConvertible {
+		public T Value {
+			get => (T)Convert.ChangeType(line.Text, typeof(T));
+			set => line.Text = value.ToString();
+		}
 	}
 }

@@ -32,25 +32,25 @@ namespace Controls {
 			}
 		}
 
-		public event ValueSet<Transform> ValueSet;
+		public event ValueSet ValueSet;
 
-		public void SetTransform(string _) => SetTransform();
-		public void SetTransform() {
-			var basis = new Basis(rotation.value * DegToRad);
-			if (AllowScale) {
-				basis = basis.Scaled(scale.value);
+		public void SetTransform(string _) => ValueSet();
+		public void SetTransform() => ValueSet();
+
+		public Transform Value {
+			get {
+				var basis = new Basis(rotation.value * DegToRad);
+				if (AllowScale) {
+					basis = basis.Scaled(scale.value);
+				}
+				return new Transform(basis, translate.value);
 			}
-			var transform = new Transform(basis, translate.value);
-			ValueSet(transform);
-		}
-
-		public void Update(object value) => Update((Transform)value);
-
-		public void Update(Transform transform) {
-			translate.Update(transform.origin);
-			rotation.Update(transform.basis.GetEuler() * RadToDeg);
-			if (AllowScale) {
-				scale.Update(transform.basis.Scale);
+			set {
+				translate.Update(value.origin);
+				rotation.Update(value.basis.GetEuler() * RadToDeg);
+				if (AllowScale) {
+					scale.Update(value.basis.Scale);
+				}
 			}
 		}
 	}
