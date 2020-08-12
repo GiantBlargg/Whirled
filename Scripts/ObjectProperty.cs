@@ -12,24 +12,23 @@ public class ObjectProperty<T> : ObjectProperty {
 
 	public override Type Type => typeof(T);
 
-	public ObjectProperty(Expression<Func<T>> propertyExpression) :
-		this(propertyExpression.Body as MemberExpression) { }
+	public ObjectProperty(Expression<Func<T>> propertyExpression, string name = null) :
+		this(propertyExpression.Body, name) { }
 
-
-	public ObjectProperty(MemberExpression propertyExpression, string name = null) {
-		Name = name == null ? DetermineName(propertyExpression) : name;
+	public ObjectProperty(Expression propertyExpression, string name = null) {
+		Name = name ?? DetermineName(propertyExpression as MemberExpression);
 		getter = GenerateGetter(propertyExpression);
 		setter = GenerateSetter(propertyExpression);
 	}
 
 	static string DetermineName(MemberExpression propertyExpression) => propertyExpression.Member.Name;
 
-	static Func<T> GenerateGetter(MemberExpression propertyExpression) {
+	static Func<T> GenerateGetter(Expression propertyExpression) {
 		var getter = Expression.Lambda<Func<T>>(propertyExpression);
 		return getter.Compile();
 	}
 
-	static Action<T> GenerateSetter(MemberExpression propertyExpression) {
+	static Action<T> GenerateSetter(Expression propertyExpression) {
 		var value = Expression.Parameter(typeof(T));
 		var assign = Expression.Assign(propertyExpression, value);
 		var setter = Expression.Lambda<Action<T>>(assign, value);

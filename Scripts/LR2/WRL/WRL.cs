@@ -65,6 +65,9 @@ namespace LR2.WRL {
 					case "cLegoTerrain":
 						entry = new cLegoTerrain();
 						break;
+					case "cCheckPoint":
+						entry = new cCheckPoint();
+						break;
 					default:
 						entry = new RawWRLEntry();
 						break;
@@ -236,6 +239,11 @@ namespace LR2.WRL {
 
 		public override void Save(File file) {
 			file.StoreBuffer(data);
+		}
+		public override List<ObjectProperty> GetProperties() {
+			var p = base.GetProperties();
+			p.Add(new ObjectProperty<byte[]>(() => data));
+			return p;
 		}
 	}
 }
