@@ -36,7 +36,7 @@ public class WRLManager : Node {
 			//TODO: mount under binding's mount
 			var node = entry.Node;
 			if (node != null)
-				ResolveParent(entry).AddChild(entry.Node);
+				ResolveParent(entry).AddChild(node);
 
 			var collider = entry.selectCollider;
 			if (collider != null) {

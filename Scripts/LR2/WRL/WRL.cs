@@ -14,8 +14,7 @@ namespace LR2.WRL {
 		public List<WRLEntry> entries = new List<WRLEntry>();
 		public Dictionary<string, WRLEntry> nameLookup = new Dictionary<string, WRLEntry>();
 
-		public delegate void EntryAddedFunc(WRLEntry entry);
-		public EntryAddedFunc EntryAdded;
+		public Action<WRLEntry> EntryAdded;
 
 		public void Clear() {
 			entries = new List<WRLEntry>();
@@ -108,8 +107,6 @@ namespace LR2.WRL {
 					file.Seek(endPosition);
 				}
 
-				EntryAdded(entry);
-
 			}
 
 			foreach (var b in bindings) {
@@ -120,6 +117,13 @@ namespace LR2.WRL {
 
 			this.entries = entries;
 			this.nameLookup = nameLookup;
+
+			this.entries.ForEach(HandleEntryAdded);
+		}
+
+		void HandleEntryAdded(WRLEntry entry) {
+			EntryAdded(entry);
+			entry.children.ForEach(HandleEntryAdded);
 		}
 
 		static void SaveEntry(File file, WRLEntry entry) {
