@@ -58,6 +58,9 @@ public class SelectManager : Node {
 
 	public void Select(string name) {
 		var item = nameLookup[name];
+		for (var i = item.GetParent(); i.GetParent() != null; i = i.GetParent()) {
+			i.Collapsed = false;
+		}
 		item.Select(0);
 		tree.EnsureCursorIsVisible();
 	}
