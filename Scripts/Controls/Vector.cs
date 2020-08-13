@@ -4,9 +4,11 @@ namespace Controls {
 	public abstract class VectorBase : VBoxContainer {
 		HBoxContainer hBox = new HBoxContainer();
 		public override void _Ready() {
-			var label = new Label();
-			label.Text = Name;
-			AddChild(label);
+			if (Name != "" && Name[0] != '@') {
+				var label = new Label();
+				label.Text = Name;
+				AddChild(label);
+			}
 			AddChild(hBox);
 		}
 		protected Number<float> CreateComponent() {

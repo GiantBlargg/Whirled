@@ -46,14 +46,14 @@ namespace LR2.WRL {
 
 			u3 = file.GetBuffer(0x18);
 
-			Quad[0] = file.GetVector3();
-			Quad[1] = file.GetVector3();
-			Quad[2] = file.GetVector3();
-			Quad[3] = file.GetVector3();
+			Quad[0] = model.Transform.XformInv(file.GetVector3());
+			Quad[1] = model.Transform.XformInv(file.GetVector3());
+			Quad[2] = model.Transform.XformInv(file.GetVector3());
+			Quad[3] = model.Transform.XformInv(file.GetVector3());
 
 			u4 = file.GetBuffer(0x54);
 
-			Arrow = file.GetVector3();
+			Arrow = model.Transform.XformInv(file.GetVector3());
 
 			u5 = file.GetFloat();
 		}
@@ -74,14 +74,14 @@ namespace LR2.WRL {
 
 			file.StoreBuffer(u3);
 
-			file.StoreVector3(Quad[0]);
-			file.StoreVector3(Quad[1]);
-			file.StoreVector3(Quad[2]);
-			file.StoreVector3(Quad[3]);
+			file.StoreVector3(model.Transform.Xform(Quad[0]));
+			file.StoreVector3(model.Transform.Xform(Quad[1]));
+			file.StoreVector3(model.Transform.Xform(Quad[2]));
+			file.StoreVector3(model.Transform.Xform(Quad[3]));
 
 			file.StoreBuffer(u4);
 
-			file.StoreVector3(Arrow);
+			file.StoreVector3(model.Transform.Xform(Arrow));
 
 			file.StoreFloat(u5);
 		}

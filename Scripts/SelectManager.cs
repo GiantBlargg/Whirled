@@ -83,25 +83,43 @@ public class SelectManager : Node {
 		currentControl.AddChild(label);
 
 		foreach (var prop in props) {
-			if (prop is ObjectProperty<Transform>) {
-				AddControl(prop as ObjectProperty<Transform>, new TransformControl(/*prop.flags.HasFlag(LR2.WRL.PropertyFlags.Scale)*/));
-				AddControl(prop as ObjectProperty<Transform>, Gizmo.scene.Instance() as Gizmo, wrl.ResolveParent(name));
-			} else if (prop is ObjectProperty<string>) {
-				AddControl(prop as ObjectProperty<string>, new StringControl());
-			} else if (prop is ObjectProperty<int>) {
-				AddControl(prop as ObjectProperty<int>, new Number<int>());
-			} else if (prop is ObjectProperty<uint>) {
-				AddControl(prop as ObjectProperty<uint>, new Number<uint>());
-			} else if (prop is ObjectProperty<float>) {
-				AddControl(prop as ObjectProperty<float>, new Number<float>());
-			} else if (prop is ObjectProperty<Vector2>) {
-				AddControl(prop as ObjectProperty<Vector2>, new Vector2Control());
-			} else if (prop is ObjectProperty<Vector3>) {
-				AddControl(prop as ObjectProperty<Vector3>, new Vector3Control());
-			} else {
-				GD.PrintErr($"Unkown type {prop.Type} on member {prop.Name}");
-				continue;
+			switch (prop) {
+				case ObjectProperty<Transform> p:
+					AddControl(p, new TransformControl(/*prop.flags.HasFlag(LR2.WRL.PropertyFlags.Scale)*/));
+					AddControl(p, Gizmo.scene.Instance() as Gizmo, wrl.ResolveParent(name));
+					break;
+				case ObjectProperty<string> p:
+					AddControl(p, new StringControl());
+					break;
+				case ObjectProperty<int> p:
+					AddControl(p, new Number<int>());
+					break;
+				case ObjectProperty<uint> p:
+					AddControl(p, new Number<uint>());
+					break;
+				case ObjectProperty<float> p:
+					AddControl(p, new Number<float>());
+					break;
+				case ObjectProperty<Vector2> p:
+					AddControl(p, new Vector2Control());
+					break;
+				case ObjectProperty<Vector3> p:
+					AddControl(p, new Vector3Control());
+					break;
+				case ObjectProperty<byte[]> p:
+					AddControl(p, new ArrayControl<byte>(p.Get().Length, () => new Number<byte>()));
+					break;
+				case ObjectProperty<uint[]> p:
+					AddControl(p, new ArrayControl<uint>(p.Get().Length, () => new Number<uint>()));
+					break;
+				case ObjectProperty<Vector3[]> p:
+					AddControl(p, new ArrayControl<Vector3>(p.Get().Length, () => new Vector3Control()));
+					break;
+				default:
+					GD.PrintErr($"Unkown type {prop.Type} on member {prop.Name}");
+					continue;
 			}
+
 
 		}
 
