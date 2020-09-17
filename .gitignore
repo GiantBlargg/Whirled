@@ -12,3 +12,7 @@ data_*/
 mono_crash.*
 
 .vscode/
+
+__pycache__
+
+*.o
