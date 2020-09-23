@@ -16,3 +16,5 @@ mono_crash.*
 __pycache__
 
 *.o
+
+/build/

@@ -1,99 +1,371 @@
-name: "godot-ci export"
+name: "Godot Build & Project Export"
 on:
   push:
     branch:
       - master
 
 env:
-  XDG_DATA_HOME: /root/.local/share/
+  SCONS_CACHE: scons_cache
+  MONO_SOURCE_ROOT: mono
+  MONO_VERSION: 6.10.0.105
 
 jobs:
+  mono-linux:
+    name: Build Mono (Linux)
+    runs-on: ubuntu-20.04
+    steps:
+      - id: cache
+        uses: actions/cache@v2
+        with:
+          path: ~/mono-installs
+          key: mono-linux-${{ env.MONO_VERSION }}
+      - uses: actions/checkout@v2
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          repository: godotengine/godot-mono-builds
+      - uses: actions/checkout@v2
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          repository: mono/mono
+          ref: mono-${{ env.MONO_VERSION }}
+          path: mono
+          submodules: true
+      - run: python3 ./patch_mono.py
+        if: steps.cache.outputs.cache-hit != 'true'
+      - run: python3 ./linux.py configure --target=x86_64
+        if: steps.cache.outputs.cache-hit != 'true'
+      - run: python3 ./linux.py make --target=x86_64
+        if: steps.cache.outputs.cache-hit != 'true'
+      - uses: actions/upload-artifact@v2
+        with:
+          name: mono-linux
+          path: ~/mono-installs/desktop-linux-x86_64-release
+
+  mono-bcl-desktop:
+    name: Build Mono BCL (Desktop)
+    runs-on: ubuntu-20.04
+    steps:
+      - id: cache
+        uses: actions/cache@v2
+        with:
+          path: ~/mono-installs/
+          key: mono-bcl-desktop-${{ env.MONO_VERSION }}
+      - uses: actions/checkout@v2
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          repository: godotengine/godot-mono-builds
+      - uses: actions/checkout@v2
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          repository: mono/mono
+          ref: mono-${{ env.MONO_VERSION }}
+          path: mono
+          submodules: true
+      - run: python3 ./patch_mono.py
+        if: steps.cache.outputs.cache-hit != 'true'
+      - run: python3 ./bcl.py make --product=desktop
+        if: steps.cache.outputs.cache-hit != 'true'
+      - uses: actions/upload-artifact@v2
+        with:
+          name: mono-bcl-desktop
+          path: ~/mono-installs/desktop-bcl/net_4_x
+
+  mono-windows:
+    name: Build Mono (Windows)
+    runs-on: ubuntu-20.04
+    steps:
+      - id: cache
+        uses: actions/cache@v2
+        with:
+          path: ~/mono-installs
+          key: mono-windows-${{ env.MONO_VERSION }}
+      - run: sudo apt-get install mingw-w64 gettext
+        if: steps.cache.outputs.cache-hit != 'true'
+      - uses: actions/checkout@v2
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          repository: godotengine/godot-mono-builds
+      - uses: actions/checkout@v2
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          repository: mono/mono
+          ref: mono-${{ env.MONO_VERSION }}
+          path: mono
+          submodules: true
+      - run: python3 ./patch_mono.py
+        if: steps.cache.outputs.cache-hit != 'true'
+      - run: python3 ./windows.py configure --target=x86_64 --mxe-prefix=/usr
+        if: steps.cache.outputs.cache-hit != 'true'
+      - run: python3 ./windows.py make --target=x86_64 --mxe-prefix=/usr
+        if: steps.cache.outputs.cache-hit != 'true'
+      - uses: actions/upload-artifact@v2
+        with:
+          name: mono-windows
+          path: ~/mono-installs/desktop-windows-x86_64-release
+
+  mono-bcl-desktop-win32:
+    name: Build Mono BCL (Windows)
+    runs-on: ubuntu-20.04
+    steps:
+      - id: cache
+        uses: actions/cache@v2
+        with:
+          path: ~/mono-installs/
+          key: mono-bcl-desktop-win32-${{ env.MONO_VERSION }}
+      - uses: actions/checkout@v2
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          repository: godotengine/godot-mono-builds
+      - uses: actions/checkout@v2
+        if: steps.cache.outputs.cache-hit != 'true'
+        with:
+          repository: mono/mono
+          ref: mono-${{ env.MONO_VERSION }}
+          path: mono
+          submodules: true
+      - run: python3 ./patch_mono.py
+        if: steps.cache.outputs.cache-hit != 'true'
+      - run: python3 ./bcl.py make --product=desktop
+        if: steps.cache.outputs.cache-hit != 'true'
+      - run: python3 ./bcl.py make --product=desktop-win32
+        if: steps.cache.outputs.cache-hit != 'true'
+      - uses: actions/upload-artifact@v2
+        with:
+          name: mono-bcl-desktop-win32
+          path: ~/mono-installs/desktop-win32-bcl/net_4_x-win32
+
+  godot-server:
+    name: Build Godot (Server)
+    runs-on: ubuntu-20.04
+    needs: [mono-linux, mono-bcl-desktop]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Cache build files
+        id: cache-build
+        uses: actions/cache@v2
+        with:
+          path: godot/godot/scons_cache
+          key: godot-server-${{ github.sha }}
+          restore-keys: godot-server-
+      - run: sudo apt-get install scons libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev
+      - uses: actions/download-artifact@v2
+        with:
+          name: mono-linux
+          path: ~/mono-installs/desktop-linux-x86_64-release
+      - uses: actions/download-artifact@v2
+        with:
+          name: mono-bcl-desktop
+          path: ~/mono-installs/desktop-linux-x86_64-release/lib/mono/4.5
+      - name: Build Temporary Godot Tools
+        run: scons -C godot/godot -j$(nproc) custom_modules=../modules mono_static=yes mono_prefix=~/mono-installs/desktop-linux-x86_64-release copy_mono_root=yes module_mono_enabled=yes p=server target=debug tools=yes mono_glue=no
+      - name: Generate Mono Glue
+        run: godot/godot/bin/godot_server.x11.tools.64.mono --generate-mono-glue godot/godot/modules/mono/glue
+      - name: Build Godot Tools
+        run: scons -C godot/godot -j$(nproc) custom_modules=../modules mono_static=yes mono_prefix=~/mono-installs/desktop-linux-x86_64-release copy_mono_root=yes module_mono_enabled=yes p=server target=debug tools=yes
+      - uses: actions/upload-artifact@v2
+        with:
+          name: godot-server
+          path: | 
+            godot/godot/bin/godot_server.x11.tools.64.mono
+            godot/godot/bin/GodotSharp
+
+  godot-linux:
+    name: Build Godot (Linux)
+    runs-on: ubuntu-20.04
+    needs: [godot-server, mono-linux, mono-bcl-desktop]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Cache build files
+        id: cache-build
+        uses: actions/cache@v2
+        with:
+          path: godot/godot/scons_cache
+          key: godot-linux-${{ github.sha }}
+          restore-keys: godot-linux-
+      - run: sudo apt-get install scons libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev
+      - uses: actions/download-artifact@v2
+        with:
+          name: mono-linux
+          path: ~/mono-installs/desktop-linux-x86_64-release
+      - uses: actions/download-artifact@v2
+        with:
+          name: mono-bcl-desktop
+          path: ~/mono-installs/desktop-linux-x86_64-release/lib/mono/4.5
+      - uses: actions/download-artifact@v2
+        with:
+          name: godot-server
+          path: godot/godot/bin
+      - name: Generate Mono Glue
+        run: | 
+          chmod +x godot/godot/bin/godot_server.x11.tools.64.mono
+          godot/godot/bin/godot_server.x11.tools.64.mono --generate-mono-glue godot/godot/modules/mono/glue
+      - name: Build Godot Linux
+        run: scons -C godot/godot -j$(nproc) custom_modules=../modules mono_static=yes mono_prefix=~/mono-installs/desktop-linux-x86_64-release module_mono_enabled=yes p=x11 target=release tools=no
+      - run: mv godot/godot/bin/godot.x11.opt.64.mono godot/godot/bin/linux_x11_64_release
+      - uses: actions/upload-artifact@v2
+        with:
+          name: godot-linux
+          path: | 
+            godot/godot/bin/linux_x11_64_release
+            godot/godot/bin/data.mono.x11.64.release
+
+  godot-windows:
+    name: Build Godot (Windows)
+    runs-on: ubuntu-20.04
+    needs: [godot-server, mono-windows, mono-bcl-desktop-win32]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Cache build files
+        id: cache-build
+        uses: actions/cache@v2
+        with:
+          path: godot/godot/scons_cache
+          key: godot-windows-${{ github.sha }}
+          restore-keys: godot-windows-
+      - run: | 
+          sudo apt-get install mingw-w64 scons
+          sudo update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
+          sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+      - uses: actions/download-artifact@v2
+        with:
+          name: mono-windows
+          path: ~/mono-installs/desktop-windows-x86_64-release
+      - uses: actions/download-artifact@v2
+        with:
+          name: mono-bcl-desktop-win32
+          path: ~/mono-installs/desktop-windows-x86_64-release/lib/mono/4.5
+      - uses: actions/download-artifact@v2
+        with:
+          name: godot-server
+          path: godot/godot/bin
+      - name: Generate Mono Glue
+        run: | 
+          chmod +x godot/godot/bin/godot_server.x11.tools.64.mono
+          godot/godot/bin/godot_server.x11.tools.64.mono --generate-mono-glue godot/godot/modules/mono/glue
+      - name: Build Godot Windows
+        run: scons -C godot/godot -j$(nproc) custom_modules=../modules mono_static=yes mono_prefix=~/mono-installs/desktop-windows-x86_64-release module_mono_enabled=yes p=windows target=release tools=no
+      - run: mv godot/godot/bin/godot.windows.opt.64.mono.exe godot/godot/bin/windows_64_release.exe
+      - uses: actions/upload-artifact@v2
+        with:
+          name: godot-windows
+          path: | 
+            godot/godot/bin/windows_64_release.exe
+            godot/godot/bin/data.mono.windows.64.release
+
   export-linux:
     name: Linux Export
-    runs-on: ubuntu-latest
-    container:
-      image: barichello/godot-ci:mono-3.2.2
+    runs-on: ubuntu-20.04
+    needs: [godot-linux, godot-server, mono-bcl-desktop]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v2
+        with:
+          name: godot-server
+          path: godot/godot/bin
+      - uses: actions/download-artifact@v2
+        with:
+          name: godot-linux
+          path: ~/.local/share/godot/templates/3.2.3.stable.mono
+      - uses: actions/download-artifact@v2
+        with:
+          name: mono-bcl-desktop
+          path: ~/.local/share/godot/templates/3.2.3.stable.mono/bcl/net_4_x
       - name: Linux Build
         run: |
           mkdir -v -p build/linux
-          godot -v --export "Linux/X11" ./build/linux/Whirled.x86_64
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v2
+          chmod +x godot/godot/bin/godot_server.x11.tools.64.mono
+          godot/godot/bin/godot_server.x11.tools.64.mono -v --export "Linux/X11" ./build/linux/Whirled.x86_64
+      - uses: actions/upload-artifact@v2
         with:
           name: linux
           path: build/linux
 
   export-windows:
     name: Windows Export
-    runs-on: ubuntu-latest
-    container:
-      image: barichello/godot-ci:mono-3.2.2
+    runs-on: ubuntu-20.04
+    needs: [godot-windows, godot-server, mono-bcl-desktop]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v2
+        with:
+          name: godot-server
+          path: godot/godot/bin
+      - uses: actions/download-artifact@v2
+        with:
+          name: godot-windows
+          path: ~/.local/share/godot/templates/3.2.3.stable.mono
+      - uses: actions/download-artifact@v2
+        with:
+          name: mono-bcl-desktop
+          path: ~/.local/share/godot/templates/3.2.3.stable.mono/bcl/net_4_x_win
       - name: Windows Build
         run: |
           mkdir -v -p build/windows
-          godot -v --export "Windows Desktop" ./build/windows/Whirled.exe
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v2
+          chmod +x godot/godot/bin/godot_server.x11.tools.64.mono
+          godot/godot/bin/godot_server.x11.tools.64.mono -v --export "Windows Desktop" ./build/windows/Whirled.exe
+      - uses: actions/upload-artifact@v2
         with:
           name: windows
           path: build/windows
 
-  release:
-    needs: [export-linux, export-windows]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Calculate BUILD_NUMBER
-        run: echo "::set-env name=BUILD_NUMBER::$(date +%C%m%d%H)"
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ env.BUILD_NUMBER }}
-          release_name: ${{ env.BUILD_NUMBER }}
-          draft: false
-          prerelease: true
+  # release:
+  #   needs: [export-linux, export-windows]
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #     - name: Calculate BUILD_NUMBER
+  #       run: echo "::set-env name=BUILD_NUMBER::$(date +%C%m%d%H)"
+  #     - name: Create Release
+  #       id: create_release
+  #       uses: actions/create-release@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         tag_name: ${{ env.BUILD_NUMBER }}
+  #         release_name: ${{ env.BUILD_NUMBER }}
+  #         draft: false
+  #         prerelease: true
 
-      - name: Download Linux Artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: linux
-          path: Whirled_Linux
-      - name: Zip Linux
-        run: zip Whirled_Linux.zip -r Whirled_Linux
-      - name: Upload Linux Release Asset
-        id: upload-lin-release-asset 
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./Whirled_Linux.zip
-          asset_name: Whirled_Linux.zip
-          asset_content_type: application/zip
+  #     - name: Download Linux Artifact
+  #       uses: actions/download-artifact@v2
+  #       with:
+  #         name: linux
+  #         path: Whirled_Linux
+  #     - name: Zip Linux
+  #       run: | 
+  #         chmod +x Whirled_Linux/Whirled.x86_64
+  #         zip Whirled_Linux.zip -r Whirled_Linux
+  #     - name: Upload Linux Release Asset
+  #       id: upload-lin-release-asset 
+  #       uses: actions/upload-release-asset@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         upload_url: ${{ steps.create_release.outputs.upload_url }}
+  #         asset_path: ./Whirled_Linux.zip
+  #         asset_name: Whirled_Linux.zip
+  #         asset_content_type: application/zip
 
-      - name: Download Windows Artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: windows
-          path: Whirled_Windows
-      - name: Zip Windows
-        run: zip Whirled_Windows.zip -r Whirled_Windows
-      - name: Upload Windows Release Asset
-        id: upload-win-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./Whirled_Windows.zip
-          asset_name: Whirled_Windows.zip
-          asset_content_type: application/zip
+  #     - name: Download Windows Artifact
+  #       uses: actions/download-artifact@v2
+  #       with:
+  #         name: windows
+  #         path: Whirled_Windows
+  #     - name: Zip Windows
+  #       run: zip Whirled_Windows.zip -r Whirled_Windows
+  #     - name: Upload Windows Release Asset
+  #       id: upload-win-release-asset
+  #       uses: actions/upload-release-asset@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         upload_url: ${{ steps.create_release.outputs.upload_url }}
+  #         asset_path: ./Whirled_Windows.zip
+  #         asset_name: Whirled_Windows.zip
+  #         asset_content_type: application/zip
 
