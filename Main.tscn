@@ -3,9 +3,9 @@
 [ext_resource path="res://Scripts/GameDataManager.cs" type="Script" id=1]
 [ext_resource path="res://Scripts/ViewCamera.cs" type="Script" id=2]
 [ext_resource path="res://Scripts/SelectManager.cs" type="Script" id=3]
+[ext_resource path="res://Gizmo/Gizmo.tscn" type="PackedScene" id=4]
 [ext_resource path="res://theme.tres" type="Theme" id=5]
 [ext_resource path="res://Scripts/WRLManager.cs" type="Script" id=6]
-[ext_resource path="res://Scripts/PriorityMouse.cs" type="Script" id=7]
 
 [sub_resource type="GDScript" id=1]
 script/source = "extends FileDialog
@@ -15,8 +15,9 @@ func _on_GameDataManager_DataPathSet(path):
 "
 
 [node name="Main" type="Node"]
+script = null
 
-[node name="ViewCamera" type="Camera" parent="."]
+[node name="ViewCamera" type="Camera3D" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 100, 0 )
 current = true
 fov = 60.0
@@ -31,8 +32,9 @@ script = ExtResource( 1 )
 script = ExtResource( 6 )
 rootMount = NodePath("RootMount")
 
-[node name="RootMount" type="Spatial" parent="WRLManager"]
+[node name="RootMount" type="Node3D" parent="WRLManager"]
 transform = Transform( -1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
+script = null
 
 [node name="SelectManager" type="Node" parent="."]
 script = ExtResource( 3 )
@@ -49,6 +51,7 @@ margin_right = 3.0
 margin_bottom = 3.0
 mouse_filter = 2
 theme = ExtResource( 5 )
+script = null
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -58,13 +61,15 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 custom_constants/separation = -4
+script = null
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="PanelContainer" type="PanelContainer" parent="Control/VBoxContainer"]
 margin_right = 1286.0
-margin_bottom = 34.0
+margin_bottom = 38.0
+script = null
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -73,112 +78,121 @@ __meta__ = {
 margin_left = 7.0
 margin_top = 7.0
 margin_right = 1279.0
-margin_bottom = 27.0
+margin_bottom = 31.0
+script = null
 
 [node name="NewButton" type="Button" parent="Control/VBoxContainer/PanelContainer/HBoxContainer"]
-margin_right = 40.0
-margin_bottom = 20.0
+margin_right = 42.0
+margin_bottom = 24.0
 text = "New"
+script = null
 
 [node name="OpenButton" type="Button" parent="Control/VBoxContainer/PanelContainer/HBoxContainer"]
-margin_left = 44.0
-margin_right = 91.0
-margin_bottom = 20.0
+margin_left = 46.0
+margin_right = 95.0
+margin_bottom = 24.0
 text = "Open"
+script = null
 
 [node name="FileDialog" type="FileDialog" parent="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton"]
-margin_right = 500.0
-margin_bottom = 300.0
-window_title = "Open a File"
-resizable = true
-mode = 0
+title = "Open a File"
+size = Vector2i( 500, 300 )
+file_mode = 0
 access = 2
-filters = PoolStringArray( "*.WRL; LR2 Worlds" )
+filters = PackedStringArray( "*.WRL; LR2 Worlds" )
 current_dir = "/"
 current_path = "/"
 script = SubResource( 1 )
 
 [node name="SaveButton" type="Button" parent="Control/VBoxContainer/PanelContainer/HBoxContainer"]
-margin_left = 95.0
-margin_right = 136.0
-margin_bottom = 20.0
+margin_left = 99.0
+margin_right = 142.0
+margin_bottom = 24.0
 text = "Save"
+script = null
 
 [node name="PathButton" type="Button" parent="Control/VBoxContainer/PanelContainer/HBoxContainer"]
-margin_left = 140.0
-margin_right = 222.0
-margin_bottom = 20.0
+margin_left = 146.0
+margin_right = 231.0
+margin_bottom = 24.0
 text = "Game Path"
+script = null
 
 [node name="FileDialog" type="FileDialog" parent="Control/VBoxContainer/PanelContainer/HBoxContainer/PathButton"]
-margin_right = 500.0
-margin_bottom = 300.0
-window_title = "Open a Directory"
-resizable = true
-mode = 2
+title = "Open a Directory"
+size = Vector2i( 500, 300 )
+file_mode = 2
 access = 2
 current_dir = "/"
 current_path = "/"
+script = null
 
 [node name="HSplitContainer" type="HSplitContainer" parent="Control/VBoxContainer"]
-margin_top = 30.0
+margin_top = 34.0
 margin_right = 1286.0
 margin_bottom = 726.0
 mouse_filter = 2
 size_flags_vertical = 3
 split_offset = 175
+script = null
 
 [node name="PanelContainer" type="PanelContainer" parent="Control/VBoxContainer/HSplitContainer"]
 margin_right = 190.0
-margin_bottom = 696.0
+margin_bottom = 692.0
+script = null
 
 [node name="WRLTreeView" type="Tree" parent="Control/VBoxContainer/HSplitContainer/PanelContainer"]
 margin_left = 7.0
 margin_top = 7.0
 margin_right = 183.0
-margin_bottom = 689.0
+margin_bottom = 685.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 allow_reselect = true
 hide_root = true
 select_mode = 1
+script = null
 
 [node name="HSplitContainer" type="HSplitContainer" parent="Control/VBoxContainer/HSplitContainer"]
 margin_left = 202.0
 margin_right = 1286.0
-margin_bottom = 696.0
+margin_bottom = 692.0
 mouse_filter = 2
 split_offset = -300
+script = null
 
 [node name="Control" type="Control" parent="Control/VBoxContainer/HSplitContainer/HSplitContainer"]
 margin_right = 758.0
-margin_bottom = 696.0
+margin_bottom = 692.0
 mouse_filter = 2
 size_flags_horizontal = 3
+script = null
 
 [node name="PanelContainer" type="PanelContainer" parent="Control/VBoxContainer/HSplitContainer/HSplitContainer"]
 margin_left = 770.0
 margin_right = 1084.0
-margin_bottom = 696.0
+margin_bottom = 692.0
+script = null
 
 [node name="PropertyContainer" type="ScrollContainer" parent="Control/VBoxContainer/HSplitContainer/HSplitContainer/PanelContainer"]
 margin_left = 7.0
 margin_top = 7.0
 margin_right = 307.0
-margin_bottom = 689.0
+margin_bottom = 685.0
+script = null
 
-[node name="DirectionalLight" type="DirectionalLight" parent="."]
+[node name="DirectionalLight" type="DirectionalLight3D" parent="."]
 transform = Transform( 0.760395, -0.406999, 0.506114, 0, 0.779283, 0.626672, -0.649461, -0.476518, 0.592563, 0, 0, 0 )
+script = null
 
-[node name="PriorityMouse" type="Node" parent="."]
-script = ExtResource( 7 )
+[node name="Gizmo" parent="." instance=ExtResource( 4 )]
 [connection signal="DataPathSet" from="GameDataManager" to="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton/FileDialog" method="_on_GameDataManager_DataPathSet"]
 [connection signal="DataPathSet" from="GameDataManager" to="Control/VBoxContainer/PanelContainer/HBoxContainer/PathButton/FileDialog" method="set_current_dir"]
 [connection signal="Clicked" from="WRLManager" to="SelectManager" method="Select"]
 [connection signal="pressed" from="Control/VBoxContainer/PanelContainer/HBoxContainer/NewButton" to="WRLManager" method="New"]
 [connection signal="pressed" from="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton" to="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton/FileDialog" method="popup_centered"]
-[connection signal="file_selected" from="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton/FileDialog" to="WRLManager" method="Open"]
 [connection signal="file_selected" from="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton/FileDialog" to="GameDataManager" method="DeduceDataPath"]
+[connection signal="file_selected" from="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton/FileDialog" to="WRLManager" method="Open"]
 [connection signal="pressed" from="Control/VBoxContainer/PanelContainer/HBoxContainer/SaveButton" to="WRLManager" method="Save"]
 [connection signal="pressed" from="Control/VBoxContainer/PanelContainer/HBoxContainer/PathButton" to="Control/VBoxContainer/PanelContainer/HBoxContainer/PathButton/FileDialog" method="popup_centered"]
 [connection signal="dir_selected" from="Control/VBoxContainer/PanelContainer/HBoxContainer/PathButton/FileDialog" to="GameDataManager" method="DataPathSelected"]

@@ -31,7 +31,7 @@ public class WRLManager : Node {
 	}
 
 	public override void _Ready() {
-		root = GetNode<Spatial>(rootMount);
+		root = GetNode<Node3D>(rootMount);
 		wrl.EntryAdded = (entry) => {
 			//TODO: mount under binding's mount
 			var node = entry.Node;
@@ -40,7 +40,7 @@ public class WRLManager : Node {
 
 			var collider = entry.selectCollider;
 			if (collider != null) {
-				collider.Connect("input_event", this, nameof(Input), new Godot.Collections.Array(new string[] { entry.Name }));
+				collider.Connect("input_event", new Callable(this, nameof(Input)), new Godot.Collections.Array(new string[] { entry.Name }));
 			}
 		};
 	}

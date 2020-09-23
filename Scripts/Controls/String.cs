@@ -8,7 +8,7 @@ namespace Controls {
 
 		public override void _Ready() {
 
-			if (Name != "" && Name[0] != '@') {
+			if (Name != "" && ((string)Name)[0] != '@') {
 				var label = new Label();
 				label.Text = Name;
 				AddChild(label);
@@ -16,8 +16,8 @@ namespace Controls {
 
 			line.SizeFlagsHorizontal = (int)Control.SizeFlags.ExpandFill;
 
-			line.Connect("text_entered", this, nameof(ValueEntered));
-			line.Connect("focus_exited", this, nameof(ValueEntered));
+			line.TextEntered += ValueEntered;
+			line.FocusExited += ValueEntered;
 
 			AddChild(line);
 		}

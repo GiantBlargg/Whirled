@@ -23,8 +23,8 @@ public class SelectManager : Node {
 		tree = GetNode<Tree>(WRLTreeView);
 		propContainer = GetNode<ScrollContainer>(PropertyContainer);
 
-		wrl.Connect(nameof(WRLManager.Loaded), this, nameof(PopulateTree));
-		tree.Connect("item_selected", this, nameof(DisplayControls));
+		wrl.Connect(nameof(WRLManager.Loaded), new Callable(this, nameof(PopulateTree)));
+		tree.ItemSelected += DisplayControls;
 	}
 
 	void PopulateSubTree(TreeItem root, List<NameTreeElem> nameTree) {
@@ -147,7 +147,7 @@ namespace Controls {
 	public delegate void ValueSet(bool updateHistory = true);
 
 	public interface IControl {
-		string Name { get; set; }
+		StringName Name { get; set; }
 		void QueueFree();
 		event ValueSet ValueSet;
 	}

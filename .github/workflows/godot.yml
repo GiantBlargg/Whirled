@@ -8,6 +8,7 @@ env:
   SCONS_CACHE: scons_cache
   MONO_SOURCE_ROOT: mono
   MONO_VERSION: 6.10.0.105
+  GODOT_VERSION: 4.0.dev.mono
 
 jobs:
   mono-linux:
@@ -271,11 +272,11 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: godot-linux
-          path: ~/.local/share/godot/templates/3.2.3.stable.mono
+          path: ~/.local/share/godot/templates/${{ env.GODOT_VERSION }}
       - uses: actions/download-artifact@v2
         with:
           name: mono-bcl-desktop
-          path: ~/.local/share/godot/templates/3.2.3.stable.mono/bcl/net_4_x
+          path: ~/.local/share/godot/templates/${{ env.GODOT_VERSION }}/bcl/net_4_x
       - name: Linux Build
         run: |
           mkdir -v -p build/linux
@@ -299,11 +300,11 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: godot-windows
-          path: ~/.local/share/godot/templates/3.2.3.stable.mono
+          path: ~/.local/share/godot/templates/${{ env.GODOT_VERSION }}
       - uses: actions/download-artifact@v2
         with:
           name: mono-bcl-desktop
-          path: ~/.local/share/godot/templates/3.2.3.stable.mono/bcl/net_4_x_win
+          path: ~/.local/share/godot/templates/${{ env.GODOT_VERSION }}/bcl/net_4_x_win
       - name: Windows Build
         run: |
           mkdir -v -p build/windows

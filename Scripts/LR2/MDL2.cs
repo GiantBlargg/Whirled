@@ -1,7 +1,7 @@
 using Godot;
 using System.Collections.Generic;
 
-public class MDL2 : MeshInstance {
+public class MDL2 : MeshInstance3D {
 	public string modelPath {
 		get { return _modelPath; }
 		set {
@@ -19,8 +19,8 @@ public class MDL2 : MeshInstance {
 
 	//Not the COLD Section
 	//Generated from mesh
-	public CollisionObject collider = new Area();
-	public CollisionShape shape = new CollisionShape();
+	public CollisionObject3D collider = new Area3D();
+	public CollisionShape3D shape = new CollisionShape3D();
 
 	public override void _Ready() {
 		collider.AddChild(shape);
@@ -31,9 +31,9 @@ public class MDL2 : MeshInstance {
 	void LoadModel() {
 		if (IsInsideTree()) {
 			var gameDataManager = GetNode<GameDataManager>("/root/Main/GameDataManager");
-			System.Threading.Tasks.Task.Run(() => {
-				(Mesh, shape.Shape) = LoadMesh(modelPath, gameDataManager);
-			});
+			// System.Threading.Tasks.Task.Run(() => {
+			(Mesh, shape.Shape) = LoadMesh(modelPath, gameDataManager);
+			// });
 		} else {
 			delayedLoad = true;
 		}
@@ -81,7 +81,7 @@ public class MDL2 : MeshInstance {
 		public string animName;
 	}
 
-	static (Mesh, Shape) LoadMesh(string modelPath, GameDataManager gameDataManager) {
+	static (Mesh, Shape3D) LoadMesh(string modelPath, GameDataManager gameDataManager) {
 		var path = gameDataManager.ResolvePath(modelPath);
 
 		File file = new File();
@@ -90,7 +90,7 @@ public class MDL2 : MeshInstance {
 		ArrayMesh mesh = new ArrayMesh();
 		var shape = new List<Vector3>();
 
-		Texture[] textures = new Texture[0];
+		Texture2D[] textures = new Texture2D[0];
 		MaterialProps[] materialProps = new MaterialProps[0];
 
 		while (true) {
@@ -109,7 +109,7 @@ public class MDL2 : MeshInstance {
 					// I'll just return
 					GD.PrintErr("MDL0: ", modelPath);
 					file.Close();
-					return (mesh, new BoxShape());
+					return (mesh, new BoxShape3D());
 
 				case MDL1_MAGIC:
 					// GD.PrintErr("MDL1: ", modelPath);
@@ -119,7 +119,7 @@ public class MDL2 : MeshInstance {
 					file.Seek(file.GetPosition() + 12 + 12 + 12 + 12 + 12 + 4 + 16 + 48);
 
 					var nTextures = file.Get32();
-					textures = new Texture[nTextures];
+					textures = new Texture2D[nTextures];
 
 					for (int i = 0; i < nTextures; i++) {
 						var texturePath = file.GetFixedString(256);
@@ -205,29 +205,28 @@ public class MDL2 : MeshInstance {
 
 							var materialProp = materialProps[materialID];
 
-							var mat = new SpatialMaterial();
+							var mat = new StandardMaterial3D();
 
-							mat.ParamsCullMode = SpatialMaterial.CullMode.Front;
+							mat.CullMode = BaseMaterial3D.CullModeEnum.Front;
 
-							mat.ParamsDiffuseMode = SpatialMaterial.DiffuseMode.Lambert;
-							mat.ParamsSpecularMode = SpatialMaterial.SpecularMode.Disabled;
+							mat.DiffuseMode = BaseMaterial3D.DiffuseModeEnum.Lambert;
+							mat.SpecularMode = BaseMaterial3D.SpecularModeEnum.Disabled;
 
 							float alpha = 1 - materialProp.alpha;
 
 							switch (materialProp.alphaType) {
 								case 0:
-									mat.ParamsUseAlphaScissor = true;
-									mat.ParamsAlphaScissorThreshold = 0.5f;
+									mat.Transparency = BaseMaterial3D.TransparencyEnum.AlphaScissor;
+									mat.AlphaScissorThreshold = 0.5f;
 									break;
 								case 1:
-									mat.ParamsBlendMode = SpatialMaterial.BlendMode.Mix;
-									mat.FlagsTransparent = true;
-
+									mat.BlendMode = BaseMaterial3D.BlendModeEnum.Mix;
+									mat.Transparency = BaseMaterial3D.TransparencyEnum.Alpha;
 									break;
 								case 4:
-									mat.ParamsBlendMode = SpatialMaterial.BlendMode.Add;
-									mat.ParamsCullMode = SpatialMaterial.CullMode.Disabled;
-									mat.FlagsUnshaded = true;
+									mat.BlendMode = BaseMaterial3D.BlendModeEnum.Add;
+									mat.CullMode = BaseMaterial3D.CullModeEnum.Disabled;
+									mat.ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded;
 									break;
 								default:
 									GD.PrintErr("Unkown Alpha Type ", materialProp.alphaType, " in ", path);
@@ -267,7 +266,7 @@ public class MDL2 : MeshInstance {
 					// End of File
 					// Do final work here
 					file.Close();
-					var c = new ConcavePolygonShape();
+					var c = new ConcavePolygonShape3D();
 					c.Data = shape.ToArray();
 					return (mesh, c);
 			}

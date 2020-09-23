@@ -1,31 +1,31 @@
 using Godot;
 
-public abstract class GizmoBase : StaticBody {
+public abstract class GizmoBase : StaticBody3D {
 	[Export]
 	public Color color;
 
 	protected Gizmo parent;
 
-	protected Camera camera;
+	protected Camera3D camera;
 
-	protected SceneTree tree;
+	protected Window window;
 
 	public override void _Ready() {
-		var mesh = GetChild<MeshInstance>(0);
-		var mat = mesh.GetSurfaceMaterial(0).Duplicate() as SpatialMaterial;
+		var mesh = GetChild<MeshInstance3D>(0);
+		var mat = mesh.GetSurfaceMaterial(0).Duplicate() as BaseMaterial3D;
 		mat.AlbedoColor = color * mat.AlbedoColor;
 		mesh.SetSurfaceMaterial(0, mat);
 
 		parent = GetParent<Gizmo>();
 		camera = GetViewport().GetCamera();
 
-		tree = GetTree();
+		window = GetTree().Root;
 
 		SetProcessInput(false);
 		SetProcessUnhandledInput(false);
 
-		Connect("mouse_entered", this, nameof(MouseEnter));
-		Connect("mouse_exited", this, nameof(MouseExit));
+		MouseEntered += MouseEnter;
+		MouseExited += MouseExit;
 	}
 
 	public float skewCalc(Vector2 mousePos) {
@@ -71,7 +71,7 @@ public abstract class GizmoBase : StaticBody {
 				if (buttonEvent.Pressed) {
 					InteractStart(buttonEvent);
 					SetProcessInput(true);
-					tree.SetInputAsHandled();
+					window.SetInputAsHandled();
 				}
 			}
 		}

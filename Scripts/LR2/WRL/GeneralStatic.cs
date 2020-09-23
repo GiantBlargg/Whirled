@@ -9,7 +9,7 @@ namespace LR2.WRL {
 		public override uint Length => 0xdc;
 
 		public override Node Node => model;
-		public override CollisionObject selectCollider => model.collider;
+		public override CollisionObject3D selectCollider => model.collider;
 
 		float u1, u2;
 		uint SoundId;

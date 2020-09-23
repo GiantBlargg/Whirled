@@ -1,10 +1,10 @@
 using Godot;
 using Controls;
 
-public class Gizmo : Spatial, IControl<Transform> {
+public class Gizmo : Node3D, IControl<Transform> {
 	public static PackedScene scene = GD.Load<PackedScene>("res://Gizmo/Gizmo.tscn");
 
-	Camera camera;
+	Camera3D camera;
 
 	Transform _targetTransform;
 	public Transform targetTransform {

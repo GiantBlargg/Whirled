@@ -11,6 +11,5 @@ void register_lr2_types() {
 }
 
 void unregister_lr2_types() {
-
 	memdelete(image_loader_mip);
 }

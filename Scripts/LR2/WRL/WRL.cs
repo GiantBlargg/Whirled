@@ -215,7 +215,7 @@ namespace LR2.WRL {
 
 		public virtual Node Node => null;
 		public virtual Node Mount => Node;
-		public virtual CollisionObject selectCollider => null;
+		public virtual CollisionObject3D selectCollider => null;
 
 		protected const uint CommonLength = 52;
 

@@ -2,7 +2,7 @@ using Godot;
 
 public static class MIP {
 
-	public static Texture LoadTexture(string path, GameDataManager gameDataManager) {
+	public static Texture2D LoadTexture(string path, GameDataManager gameDataManager) {
 		switch (path.Substring(path.Length - 3).ToLower()) {
 			case "tga": {
 					var resolvedPath = gameDataManager.ResolvePath(path.Remove(path.Length - 3) + "mip");
@@ -27,7 +27,7 @@ public static class MIP {
 		}
 	}
 
-	static Texture Garbage() {
+	static Texture2D Garbage() {
 		var texture = new GradientTexture();
 		var g = new Gradient();
 		g.Colors = new Color[] { new Color(1, 0, 0), new Color(0, 1, 0) };
@@ -52,19 +52,20 @@ public static class MIP {
 		return color;
 	}
 
-	static Texture LoadMIP(string path) {
+	static Texture2D LoadMIP(string path) {
 		var image = new Image();
 		image.Load(path);
 		image.FlipY();
 
 		var texture = new ImageTexture();
-		texture.CreateFromImage(image, 31);
+		// texture.CreateFromImage(image, 31);
+		texture.CreateFromImage(image);
 		return texture;
 	}
 
 	const float delayTime = 1f / 30f;
 
-	static Texture LoadIFL(string path) {
+	static Texture2D LoadIFL(string path) {
 		var regex = new RegEx();
 		regex.Compile("^(.*[\\/\\\\]).*$");
 		var result = regex.Search(path);

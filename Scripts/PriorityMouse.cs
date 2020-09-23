@@ -2,14 +2,14 @@ using Godot;
 using System;
 
 public class PriorityMouse : Node {
-	Camera camera;
-	PhysicsDirectSpaceState space;
-	CollisionObject lastCollider = null;
+	Camera3D camera;
+	PhysicsDirectSpaceState3D space;
+	CollisionObject3D lastCollider = null;
 
 	public override void _Ready() {
 		var viewport = GetViewport();
 		camera = viewport.GetCamera();
-		space = PhysicsServer.SpaceGetDirectState(viewport.World.Space);
+		space = viewport.World3d.DirectSpaceState;
 	}
 	public override void _UnhandledInput(InputEvent e) {
 		if (e is InputEventMouseMotion) {
@@ -19,9 +19,9 @@ public class PriorityMouse : Node {
 
 			var result = space.IntersectRay(from, from + dir * camera.Far, collisionMask: 0x80000);
 
-			CollisionObject collider = null;
+			CollisionObject3D collider = null;
 			if (result.Contains("collider")) {
-				collider = (CollisionObject)result["collider"];
+				collider = (CollisionObject3D)result["collider"];
 			}
 
 			if (collider != lastCollider) {

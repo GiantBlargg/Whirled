@@ -20,7 +20,7 @@ namespace Controls {
 		}
 
 		public override void _Ready() {
-			if (Name != "" && Name[0] != '@') {
+			if (Name != "" && ((string)Name)[0] != '@') {
 				var label = new Label();
 				label.Text = Name;
 				AddChild(label);

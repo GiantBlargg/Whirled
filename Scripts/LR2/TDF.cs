@@ -1,7 +1,7 @@
 using Godot;
 using System.Collections.Generic;
 
-public class TDF : Spatial {
+public class TDF : Node3D {
 	private string _modelPath;
 	public string ModelPath {
 		get { return _modelPath; }
@@ -35,7 +35,7 @@ public class TDF : Spatial {
 					child.QueueFree();
 				}
 				foreach (var mesh in meshes) {
-					var meshInstance = new MeshInstance();
+					var meshInstance = new MeshInstance3D();
 					meshInstance.Mesh = mesh;
 					AddChild(meshInstance);
 				}

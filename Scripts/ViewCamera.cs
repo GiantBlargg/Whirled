@@ -1,19 +1,19 @@
 using Godot;
 
-public class ViewCamera : Camera {
+public class ViewCamera : Camera3D {
 	const float lookSpeed = 0.2f;
 	float moveSpeed = 100f;
 	bool Right, Middle;
-	SceneTree tree;
+	Window window;
 
 	public override void _EnterTree() {
-		tree = GetTree();
+		window = GetTree().Root;
 	}
 
 	public override void _Input(InputEvent inputEvent) {
 		if (Right || Middle) {
 			if (inputEvent is InputEventKey) {
-				tree.SetInputAsHandled();
+				window.SetInputAsHandled();
 			}
 		}
 	}

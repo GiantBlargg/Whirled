@@ -1,8 +1,8 @@
-[gd_resource type="SpatialMaterial" format=2]
+[gd_resource type="StandardMaterial3D" format=2]
 
 [resource]
-flags_transparent = true
-flags_unshaded = true
-flags_no_depth_test = true
-params_cull_mode = 2
+transparency = 1
+cull_mode = 2
+no_depth_test = true
+shading_mode = 0
 albedo_color = Color( 1, 1, 1, 0.74902 )
