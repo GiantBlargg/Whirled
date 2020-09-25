@@ -30,7 +30,7 @@ public class TDF : Node3D {
 		if (IsInsideTree()) {
 			var gameDataManager = GetNode<GameDataManager>("/root/Main/GameDataManager");
 			System.Threading.Tasks.Task.Run(() => {
-				var meshes = LoadMesh(ModelPath, textureScale, gameDataManager);
+				var meshes = LoadMesh(ModelPath, textureScale);
 				foreach (Node child in GetChildren()) {
 					child.QueueFree();
 				}
@@ -122,11 +122,11 @@ public class TDF : Node3D {
 		mesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, array);
 	}
 
-	static Mesh[] LoadMesh(string modelPath, Vector2 textureScale, GameDataManager gameDataManager) {
+	static Mesh[] LoadMesh(string modelPath, Vector2 textureScale) {
 
-		TDFMaterialFactory materialFactory = new TDFMaterialFactory(modelPath, gameDataManager);
+		TDFMaterialFactory materialFactory = new TDFMaterialFactory(modelPath);
 
-		var terrDataPath = gameDataManager.ResolvePath(modelPath + "/TERRDATA.TDF");
+		var terrDataPath = LR2Dir.ResolvePath(modelPath + "/TERRDATA.TDF");
 		var file = new File();
 		file.Open(terrDataPath, File.ModeFlags.Read);
 
@@ -173,10 +173,10 @@ class TDFMaterialFactory {
 	List<Texture> textures = new List<Texture>();
 	Dictionary<byte[], ShaderMaterial> materials = new Dictionary<byte[], ShaderMaterial>();
 
-	public TDFMaterialFactory(string modelPath, GameDataManager gameDataManager) {
+	public TDFMaterialFactory(string modelPath) {
 		int i = 0;
 		while (true) {
-			var tex = MIP.LoadTexture(modelPath + "/TEXTURE" + (i + 1) + ".TGA", gameDataManager);
+			var tex = MIP.LoadTexture(modelPath + "/TEXTURE" + (i + 1) + ".TGA");
 			if (tex == null) break;
 			textures.Add(tex);
 			i++;

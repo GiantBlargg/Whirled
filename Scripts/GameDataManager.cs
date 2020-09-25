@@ -1,38 +1,33 @@
 using Godot;
 
 public class GameDataManager : Node {
-	ConfigFile config;
-	const string configPath = "user://settings.cfg";
-	public override void _Ready() {
-		config = new ConfigFile();
-		config.Load(configPath);
-		GD.Print(config.GetValue(section, key, ""));
-		EmitSignal(nameof(DataPathSet), config.GetValue(section, key, ""));
-	}
+	// ConfigFile config;
+	// const string configPath = "user://settings.cfg";
+	// public override void _Ready() {
+	// 	config = new ConfigFile();
+	// 	config.Load(configPath);
+	// 	GD.Print(config.GetValue(section, key, ""));
+	// 	EmitSignal(nameof(DataPathSet), config.GetValue(section, key, ""));
+	// }
 
-	private const string section = "", key = "GamePath";
+	// private const string section = "", key = "GamePath";
 
-	[Signal]
-	public delegate void DataPathSet(string path);
+	// [Signal]
+	// public delegate void DataPathSet(string path);
 
-	public string dataPath {
-		get {
-			return (string)config.GetValue(section, key, "");
-		}
-		set {
-			config.SetValue(section, key, value);
-			config.Save(configPath);
-		}
-	}
+	// public string dataPath {
+	// 	get => LR2Dir.Path;
+	// 	set {
+	// 		LR2Dir.Path = value;
+	// 	}
+	// }
 
-	public void DataPathSelected(string path) {
-		dataPath = path;
-		EmitSignal(nameof(DataPathSet), path);
-	}
+	// public void DataPathSelected(string path) {
+	// 	dataPath = path;
+	// 	EmitSignal(nameof(DataPathSet), path);
+	// }
 
-	public string ResolvePath(string path) {
-		return ResolvePathStatic(dataPath, path);
-	}
+	// public string ResolvePath(string path) => LR2Dir.ResolvePath(path);
 
 	//This function corrects the case sensitivity of filenames, not needed on windows but I couldn't be bothered to disable it
 	public static string ResolvePathStatic(string dataPath, string path) {
@@ -57,12 +52,12 @@ public class GameDataManager : Node {
 	}
 
 	public void DeduceDataPath(string path) {
-		if (dataPath == "") {
+		if (LR2Dir.Path == "") {
 			var regex = new RegEx();
 			regex.Compile("^(.*[\\/\\\\]).*[\\/\\\\].*[\\/\\\\].*$");
 			var result = regex.Search(path);
 			var gamePath = result.GetString(1);
-			dataPath = gamePath;
+			LR2Dir.Path = gamePath;
 		}
 	}
 }

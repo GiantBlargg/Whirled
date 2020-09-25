@@ -2,21 +2,22 @@ using Godot;
 
 public static class MIP {
 
-	public static Texture2D LoadTexture(string path, GameDataManager gameDataManager) {
+	public static Texture2D LoadTexture(string path) {
 		switch (path.Substring(path.Length - 3).ToLower()) {
 			case "tga": {
-					var resolvedPath = gameDataManager.ResolvePath(path.Remove(path.Length - 3) + "mip");
-					if (resolvedPath == null) return null;
-					return LoadMIP(resolvedPath);
+					// var resolvedPath = LR2Dir.ResolvePath(path.Remove(path.Length - 3) + "mip");
+					// if (resolvedPath == null) return null;
+					// return LoadMIP(resolvedPath);
+					return LoadMIP("lr2://" + path.Remove(path.Length - 3) + "mip");
 				}
 			case "ifl": {
-					var resolvedPath = gameDataManager.ResolvePath(path);
+					var resolvedPath = LR2Dir.ResolvePath(path);
 					if (resolvedPath == null) return null;
 					return LoadIFL(resolvedPath);
 				}
 			case "mip": {
 					GD.PrintErr("Huh... Okay: ", path);
-					var resolvedPath = gameDataManager.ResolvePath(path);
+					var resolvedPath = LR2Dir.ResolvePath(path);
 					if (resolvedPath == null) return null;
 					return LoadMIP(resolvedPath);
 				}
@@ -53,14 +54,7 @@ public static class MIP {
 	}
 
 	static Texture2D LoadMIP(string path) {
-		var image = new Image();
-		image.Load(path);
-		image.FlipY();
-
-		var texture = new ImageTexture();
-		// texture.CreateFromImage(image, 31);
-		texture.CreateFromImage(image);
-		return texture;
+		return ResourceLoader.Load<ImageTexture>(path);
 	}
 
 	const float delayTime = 1f / 30f;

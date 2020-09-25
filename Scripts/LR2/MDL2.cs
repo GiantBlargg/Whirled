@@ -32,7 +32,7 @@ public class MDL2 : MeshInstance3D {
 		if (IsInsideTree()) {
 			var gameDataManager = GetNode<GameDataManager>("/root/Main/GameDataManager");
 			// System.Threading.Tasks.Task.Run(() => {
-			(Mesh, shape.Shape) = LoadMesh(modelPath, gameDataManager);
+			(Mesh, shape.Shape) = LoadMesh(modelPath);
 			// });
 		} else {
 			delayedLoad = true;
@@ -81,8 +81,8 @@ public class MDL2 : MeshInstance3D {
 		public string animName;
 	}
 
-	static (Mesh, Shape3D) LoadMesh(string modelPath, GameDataManager gameDataManager) {
-		var path = gameDataManager.ResolvePath(modelPath);
+	static (Mesh, Shape3D) LoadMesh(string modelPath) {
+		var path = LR2Dir.ResolvePath(modelPath);
 
 		File file = new File();
 		file.Open(path, File.ModeFlags.Read);
@@ -123,7 +123,7 @@ public class MDL2 : MeshInstance3D {
 
 					for (int i = 0; i < nTextures; i++) {
 						var texturePath = file.GetFixedString(256);
-						textures[i] = MIP.LoadTexture(texturePath, gameDataManager);
+						textures[i] = MIP.LoadTexture(texturePath);
 						file.Get32();
 						file.Get32();
 					}
