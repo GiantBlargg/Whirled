@@ -1,32 +1,41 @@
 #include "register_types.h"
 
+#include "core/engine.h"
+#include "lr2_dir.h"
 #include "image_loader_mip.h"
 #include "image_texture_loader.h"
-#include "lr2_dir.h"
+#include "ifl.h"
 
+static LR2Dir* lr2_dir = NULL;
 static ImageLoaderMIP* image_loader_mip = NULL;
 static Ref<ImageTextureLoader> image_texture_loader;
-static LR2Dir* lr2_dir = NULL;
+static Ref<IFLLoader> ifl_loader;
 
 void register_lr2_types() {
+	ClassDB::register_class<LR2Dir>();
+	lr2_dir = memnew(LR2Dir);
+	lr2_dir->init();
+	Engine::get_singleton()->add_singleton(Engine::Singleton("LR2Dir", LR2Dir::get_singleton()));
+
 	image_loader_mip = memnew(ImageLoaderMIP);
 	ImageLoader::add_image_format_loader(image_loader_mip);
 
 	image_texture_loader.instance();
 	ResourceLoader::add_resource_format_loader(image_texture_loader);
 
-	ClassDB::register_class<LR2Dir>();
-	lr2_dir = memnew(LR2Dir);
-	lr2_dir->init();
-	Engine::get_singleton()->add_singleton(Engine::Singleton("LR2Dir", LR2Dir::get_singleton()));
+	ifl_loader.instance();
+	ResourceLoader::add_resource_format_loader(ifl_loader);
 }
 
 void unregister_lr2_types() {
+	memdelete(lr2_dir);
+
 	ImageLoader::remove_image_format_loader(image_loader_mip);
 	memdelete(image_loader_mip);
 
 	ResourceLoader::remove_resource_format_loader(image_texture_loader);
 	image_texture_loader.unref();
 
-	memdelete(lr2_dir);
+	ResourceLoader::remove_resource_format_loader(ifl_loader);
+	ifl_loader.unref();
 }

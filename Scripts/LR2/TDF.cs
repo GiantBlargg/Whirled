@@ -170,17 +170,11 @@ class TDFMaterialFactory {
 
 	static Shader shader = GD.Load<Shader>("res://Scripts/LR2/TDF.shader");
 
-	List<Texture> textures = new List<Texture>();
 	Dictionary<byte[], ShaderMaterial> materials = new Dictionary<byte[], ShaderMaterial>();
+	string modelPath;
 
 	public TDFMaterialFactory(string modelPath) {
-		int i = 0;
-		while (true) {
-			var tex = MIP.LoadTexture(modelPath + "/TEXTURE" + (i + 1) + ".TGA");
-			if (tex == null) break;
-			textures.Add(tex);
-			i++;
-		}
+		this.modelPath = modelPath;
 	}
 	public ShaderMaterial GetMaterial(byte[] textureIDs) {
 		if (!materials.ContainsKey(textureIDs)) {
@@ -190,7 +184,7 @@ class TDFMaterialFactory {
 			for (int i = 0; i < 4; i++) {
 				if (textureIDs[i] == 0xff) break;
 
-				mat.SetShaderParam($"tex{i}", textures[textureIDs[i]]);
+				mat.SetShaderParam($"tex{i}", ResourceLoader.Load<Texture2D>($"lr2://{modelPath}/texture{textureIDs[i] + 1}.tga"));
 			}
 
 			materials[textureIDs] = mat;

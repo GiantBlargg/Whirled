@@ -123,7 +123,7 @@ public class MDL2 : MeshInstance3D {
 
 					for (int i = 0; i < nTextures; i++) {
 						var texturePath = file.GetFixedString(256);
-						textures[i] = MIP.LoadTexture(texturePath);
+						textures[i] = ResourceLoader.Load<Texture2D>("lr2://" + texturePath);
 						file.Get32();
 						file.Get32();
 					}

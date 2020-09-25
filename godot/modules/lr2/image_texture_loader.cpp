@@ -1,16 +1,12 @@
 #include "image_texture_loader.h"
 
 #include "core/io/image_loader.h"
+#include "scene/resources/texture.h"
 
 RES ImageTextureLoader::load(
 	const String &p_path, const String &p_original_path,
 	Error *r_error, bool p_use_sub_threads,
 	float *r_progress, bool p_no_cache) {
-
-	if (!FileAccess::exists(p_path)) {
-		if (r_error) *r_error = ERR_FILE_NOT_FOUND;
-		return NULL;
-	}
 
 	Ref<Image> image;
 	image.instance();
