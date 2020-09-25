@@ -7,14 +7,21 @@ RES ImageTextureLoader::load(
 	Error *r_error, bool p_use_sub_threads,
 	float *r_progress, bool p_no_cache) {
 
-	Ref<Image> image = memnew(Image);
-	image->load(p_path);
-	image->flip_y();
-
-	if (image->empty()){
+	if (!FileAccess::exists(p_path)) {
 		if (r_error) *r_error = ERR_FILE_NOT_FOUND;
 		return NULL;
 	}
+
+	Ref<Image> image;
+	image.instance();
+	image->load(p_path);
+
+	if (image->empty()) {
+		if (r_error) *r_error = ERR_FILE_CANT_READ;
+		return NULL;
+	}
+
+	image->flip_y();
 
 	Ref<ImageTexture> texture = memnew(ImageTexture);
 	texture->create_from_image(image);

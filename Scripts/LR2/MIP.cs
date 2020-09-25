@@ -4,22 +4,13 @@ public static class MIP {
 
 	public static Texture2D LoadTexture(string path) {
 		switch (path.Substring(path.Length - 3).ToLower()) {
-			case "tga": {
-					// var resolvedPath = LR2Dir.ResolvePath(path.Remove(path.Length - 3) + "mip");
-					// if (resolvedPath == null) return null;
-					// return LoadMIP(resolvedPath);
-					return LoadMIP("lr2://" + path.Remove(path.Length - 3) + "mip");
-				}
+			case "mip":
+			case "tga":
+				return ResourceLoader.Load<ImageTexture>("lr2://" + path);
 			case "ifl": {
 					var resolvedPath = LR2Dir.ResolvePath(path);
 					if (resolvedPath == null) return null;
 					return LoadIFL(resolvedPath);
-				}
-			case "mip": {
-					GD.PrintErr("Huh... Okay: ", path);
-					var resolvedPath = LR2Dir.ResolvePath(path);
-					if (resolvedPath == null) return null;
-					return LoadMIP(resolvedPath);
 				}
 			default: {
 					GD.PrintErr("Unsupported Texture Type: ", path);
@@ -34,23 +25,6 @@ public static class MIP {
 		g.Colors = new Color[] { new Color(1, 0, 0), new Color(0, 1, 0) };
 		texture.Gradient = g;
 		return texture;
-	}
-
-	static Color GetColorBGRA8(this File file) {
-		var color = new Color();
-		color.b8 = file.Get8();
-		color.g8 = file.Get8();
-		color.r8 = file.Get8();
-		color.a8 = file.Get8();
-		return color;
-	}
-
-	static Color GetColorBGR8(this File file) {
-		var color = new Color();
-		color.b8 = file.Get8();
-		color.g8 = file.Get8();
-		color.r8 = file.Get8();
-		return color;
 	}
 
 	static Texture2D LoadMIP(string path) {
