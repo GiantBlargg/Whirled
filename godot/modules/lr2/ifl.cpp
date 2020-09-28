@@ -44,7 +44,7 @@ void IFLLoader::get_recognized_extensions(List<String> *p_extensions) const {
 }
 
 bool IFLLoader::handles_type(const String &p_type) const {
-	return ClassDB::is_parent_class(p_type, "Texture2D");
+	return p_type == "AnimatedTexture";
 }
 
 String IFLLoader::get_resource_type(const String &p_path) const {

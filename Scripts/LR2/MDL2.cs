@@ -30,7 +30,6 @@ public class MDL2 : MeshInstance3D {
 
 	void LoadModel() {
 		if (IsInsideTree()) {
-			var gameDataManager = GetNode<GameDataManager>("/root/Main/GameDataManager");
 			// System.Threading.Tasks.Task.Run(() => {
 			(Mesh, shape.Shape) = LoadMesh(modelPath);
 			// });
