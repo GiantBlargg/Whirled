@@ -21,7 +21,10 @@ public static class FileExtensions {
 	}
 
 	public static Vector3 GetVector3(this File file) {
-		return new Vector3(file.GetFloat(), file.GetFloat(), file.GetFloat());
+		float x = file.GetFloat();
+		float y = file.GetFloat();
+		float z = file.GetFloat();
+		return new Vector3(x, y, z);
 	}
 	public static void StoreVector3(this File file, Vector3 vector) {
 		file.StoreFloat(vector.x);

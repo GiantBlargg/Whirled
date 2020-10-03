@@ -5,11 +5,13 @@
 #include "image_loader_mip.h"
 #include "image_texture_loader.h"
 #include "ifl.h"
+#include "mdl2.h"
 
 static LR2Dir* lr2_dir = NULL;
 static ImageLoaderMIP* image_loader_mip = NULL;
 static Ref<ImageTextureLoader> image_texture_loader;
 static Ref<IFLLoader> ifl_loader;
+static Ref<MDL2Loader> mdl2_loader;
 
 void register_lr2_types() {
 	ClassDB::register_class<LR2Dir>();
@@ -25,6 +27,9 @@ void register_lr2_types() {
 
 	ifl_loader.instance();
 	ResourceLoader::add_resource_format_loader(ifl_loader);
+
+	mdl2_loader.instance();
+	ResourceLoader::add_resource_format_loader(mdl2_loader);
 }
 
 void unregister_lr2_types() {
@@ -38,4 +43,7 @@ void unregister_lr2_types() {
 
 	ResourceLoader::remove_resource_format_loader(ifl_loader);
 	ifl_loader.unref();
+
+	ResourceLoader::add_resource_format_loader(mdl2_loader);
+	mdl2_loader.unref();
 }

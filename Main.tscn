@@ -196,7 +196,7 @@ script = null
 [node name="DirectionalLight" type="DirectionalLight3D" parent="."]
 transform = Transform( 0.760395, -0.406999, 0.506114, 0, 0.779283, 0.626672, -0.649461, -0.476518, 0.592563, 0, 0, 0 )
 script = null
-[connection signal="Clicked" from="WRLManager" to="SelectManager" method="Select"]
+
 [connection signal="pressed" from="Control/VBoxContainer/PanelContainer/HBoxContainer/NewButton" to="WRLManager" method="New"]
 [connection signal="pressed" from="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton" to="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton/FileDialog" method="popup_centered"]
 [connection signal="file_selected" from="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton/FileDialog" to="GameDataManager" method="DeduceDataPath"]

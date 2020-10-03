@@ -30,26 +30,26 @@ public class GameDataManager : Node {
 	// public string ResolvePath(string path) => LR2Dir.ResolvePath(path);
 
 	//This function corrects the case sensitivity of filenames, not needed on windows but I couldn't be bothered to disable it
-	public static string ResolvePathStatic(string dataPath, string path) {
-		Directory currentDir = new Directory();
-		currentDir.Open(dataPath);
+	// public static string ResolvePathStatic(string dataPath, string path) {
+	// 	Directory currentDir = new Directory();
+	// 	currentDir.Open(dataPath);
 
-		string next = "";
+	// 	string next = "";
 
-		foreach (var pathDir in path.Split(new char[] { '/', '\\' })) {
-			currentDir.ListDirBegin(true, true);
-			do {
-				next = currentDir.GetNext();
-				if (next == "") {
-					GD.PrintErr("Unable to resolve \"" + path + "\" with dataPath \"" + dataPath + "\"");
-					return null;
-				}
-			} while (next.ToLower() != pathDir.ToLower());
-			currentDir.ListDirEnd();
-			currentDir.ChangeDir(next);
-		}
-		return currentDir.GetCurrentDir() + "/" + next;
-	}
+	// 	foreach (var pathDir in path.Split(new char[] { '/', '\\' })) {
+	// 		currentDir.ListDirBegin(true, true);
+	// 		do {
+	// 			next = currentDir.GetNext();
+	// 			if (next == "") {
+	// 				GD.PrintErr("Unable to resolve \"" + path + "\" with dataPath \"" + dataPath + "\"");
+	// 				return null;
+	// 			}
+	// 		} while (next.ToLower() != pathDir.ToLower());
+	// 		currentDir.ListDirEnd();
+	// 		currentDir.ChangeDir(next);
+	// 	}
+	// 	return currentDir.GetCurrentDir() + "/" + next;
+	// }
 
 	public void DeduceDataPath(string path) {
 		if (LR2Dir.Path == "") {

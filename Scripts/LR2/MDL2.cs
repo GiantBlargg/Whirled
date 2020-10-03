@@ -10,12 +10,6 @@ public class MDL2 : MeshInstance3D {
 		}
 	}
 	private string _modelPath;
-	private bool delayedLoad = false;
-
-	public override void _EnterTree() {
-		if (delayedLoad)
-			LoadModel();
-	}
 
 	//Not the COLD Section
 	//Generated from mesh
@@ -27,15 +21,32 @@ public class MDL2 : MeshInstance3D {
 		AddChild(collider);
 	}
 
-
 	void LoadModel() {
-		if (IsInsideTree()) {
-			// System.Threading.Tasks.Task.Run(() => {
-			(Mesh, shape.Shape) = LoadMesh(modelPath);
-			// });
-		} else {
-			delayedLoad = true;
+		ResourceLoader.LoadThreadedRequest("lr2://" + modelPath, useSubThreads: true);
+		SetProcess(true);
+	}
+
+	public override void _Process(float delta) {
+		if (modelPath == null || modelPath == "" || (Mesh != null && "lr2://" + modelPath == Mesh.ResourcePath)) {
+			SetProcess(false);
+			return;
 		}
+		var status = ResourceLoader.LoadThreadedGetStatus("lr2://" + modelPath);
+		switch (status) {
+			case ResourceLoader.ThreadLoadStatus.InvalidResource:
+			case ResourceLoader.ThreadLoadStatus.Failed:
+				SetProcess(false);
+				return;
+			case ResourceLoader.ThreadLoadStatus.InProgress:
+				return;
+			case ResourceLoader.ThreadLoadStatus.Loaded:
+				Mesh = ResourceLoader.LoadThreadedGet("lr2://" + modelPath) as Mesh;
+				SetProcess(false);
+				return;
+		}
+
+		GD.PrintErr("This shouldn't be happening");
+
 	}
 
 	const uint MDL0_MAGIC = 0x304c444d;
