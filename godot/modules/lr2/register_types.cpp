@@ -1,6 +1,6 @@
 #include "register_types.h"
 
-#include "core/engine.h"
+#include "core/config/engine.h"
 #include "lr2_dir.h"
 #include "image_loader_mip.h"
 #include "image_texture_loader.h"

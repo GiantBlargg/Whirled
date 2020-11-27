@@ -1,6 +1,5 @@
 #pragma once
 
-#include "core/object.h"
 #include "core/io/config_file.h"
 
 class LR2Dir : public Object{
