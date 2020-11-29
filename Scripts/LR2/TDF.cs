@@ -19,30 +19,18 @@ public class TDF : Node3D {
 		}
 	}
 
-	private bool delayedLoad = false;
-
-	public override void _EnterTree() {
-		if (delayedLoad)
-			LoadModel();
-	}
-
 	void LoadModel() {
-		if (IsInsideTree()) {
-			var gameDataManager = GetNode<GameDataManager>("/root/Main/GameDataManager");
-			System.Threading.Tasks.Task.Run(() => {
-				var meshes = LoadMesh(ModelPath, textureScale);
-				foreach (Node child in GetChildren()) {
-					child.QueueFree();
-				}
-				foreach (var mesh in meshes) {
-					var meshInstance = new MeshInstance3D();
-					meshInstance.Mesh = mesh;
-					AddChild(meshInstance);
-				}
-			});
-		} else {
-			delayedLoad = true;
+		// System.Threading.Tasks.Task.Run(() => {
+		var meshes = LoadMesh(ModelPath, textureScale);
+		foreach (Node child in GetChildren()) {
+			child.QueueFree();
 		}
+		foreach (var mesh in meshes) {
+			var meshInstance = new MeshInstance3D();
+			meshInstance.Mesh = mesh;
+			AddChild(meshInstance);
+		}
+		// });
 	}
 
 	const int CHUNK_WIDTH = 16;

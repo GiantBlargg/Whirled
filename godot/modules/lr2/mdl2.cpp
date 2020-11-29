@@ -134,6 +134,7 @@ void load_vertices(FileAccess* f, Array* group_arrays) {
 			}
 		}
 	}
+
 	if (has_flag(flags, VertexFlag::Vector)) {
 		group_arrays->set(Mesh::ArrayType::ARRAY_VERTEX, vectors);
 	}
@@ -176,8 +177,15 @@ RES MDL2Loader::load(
 		default:
 			print_error("Unknown chunk");
 			break;
+
+		case MDL2Chunk::MDL1:
 		case MDL2Chunk::MDL2: {
-			f->seek(f->get_position() + 12 + 12 + 12 + 12 + 12 + 4 + 16 + 48);
+			f->seek(f->get_position() + 12 + 8);
+			uint32_t has_bounding_box = f->get_32();
+			if(has_bounding_box)
+				f->seek(f->get_position() + 12 + 12 + 12 + 4);
+			f->seek(f->get_position() + 16 + 48);
+
 			textures.resize(f->get_32());
 
 			auto texture_start = f->get_position();
@@ -195,15 +203,25 @@ RES MDL2Loader::load(
 			material_props.resize(f->get_32());
 			for (int i = 0; i < material_props.size(); i++) {
 				MDL2Material m;
-				m.ambient = get_colour(f);
-				m.diffuse = get_colour(f);
-				m.specular = get_colour(f);
-				m.emissive = get_colour(f);
-				m.shine = f->get_float();
-				m.alpha = f->get_float();
-				m.alpha_type = f->get_32();
-				m.bitfield = f->get_32();
-				m.anim_name = f->get_64();
+				if (type == MDL2Chunk::MDL2) {
+					m.ambient = get_colour(f);
+					m.diffuse = get_colour(f);
+					m.specular = get_colour(f);
+					m.emissive = get_colour(f);
+					m.shine = f->get_float();
+					m.alpha = f->get_float();
+					m.alpha_type = f->get_32();
+					m.bitfield = f->get_32();
+					m.anim_name = f->get_64();
+				} else {
+					m.alpha_type = f->get_32();
+					auto u1 = f->get_float();
+					auto u2 = f->get_float();
+					auto u3 = f->get_float();
+					auto u4 = f->get_float();
+					auto u5 = f->get_float();
+					auto u6 = f->get_float();
+				}
 				material_props.set(i, m);
 			}
 		} break;
@@ -298,7 +316,6 @@ RES MDL2Loader::load(
 			return mesh;
 		} break;
 		case MDL2Chunk::MDL0:
-		case MDL2Chunk::MDL1:
 		case MDL2Chunk::GEO0:
 		case MDL2Chunk::P2G0:
 		case MDL2Chunk::COLD:
