@@ -1,0 +1,13 @@
+[package]
+name = "whirled"
+version = "0.1.0"
+authors = ["Daniel Doran <ddoran3@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+env_logger = "0.8.3"
+log = "0.4.14"
+gfx-hal = "0.7.0"
+gfx-backend-vulkan = "0.7.0"
+raw-window-handle = "0.3.3"
+winit = "0.24.0"
