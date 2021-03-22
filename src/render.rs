@@ -194,14 +194,15 @@ impl<B: Backend> Render<B> {
 			}
 			Ordering::Equal => {}
 			Ordering::Less => {
-				let to_delete: Vec<PerFrame<B>> = self.per_frame.drain(image_count..).collect();
-				to_delete.into_iter().for_each(|per_frame| unsafe {
-					self.device
-						.destroy_fence(per_frame.submission_complete_fence);
-					self.device
-						.destroy_semaphore(per_frame.rendering_complete_semaphore);
-					self.device.destroy_command_pool(per_frame.command_pool);
-				});
+				for per_frame in self.per_frame.drain(image_count..) {
+					unsafe {
+						self.device
+							.destroy_fence(per_frame.submission_complete_fence);
+						self.device
+							.destroy_semaphore(per_frame.rendering_complete_semaphore);
+						self.device.destroy_command_pool(per_frame.command_pool);
+					}
+				}
 			}
 		}
 	}
@@ -217,17 +218,11 @@ impl<B: Backend> Render<B> {
 				&caps,
 				self.surface_colour_format,
 				self.surface_extent,
-			);
+			)
+			.with_present_mode(gfx_hal::window::PresentMode::FIFO);
 
 			self.surface_extent = swapchain_config.extent;
 
-			let image_count = swapchain_config.image_count;
-
-			unsafe {
-				self.surface
-					.configure_swapchain(&self.device, swapchain_config)
-					.unwrap();
-			}
 			unsafe {
 				self.device
 					.destroy_framebuffer(ManuallyDrop::take(&mut self.framebuffer));
@@ -236,11 +231,7 @@ impl<B: Backend> Render<B> {
 				self.device
 					.create_framebuffer(
 						&self.render_pass,
-						iter::once(FramebufferAttachment {
-							usage: DEFAULT_USAGE,
-							view_caps: ViewCapabilities::empty(),
-							format: self.surface_colour_format,
-						}),
+						iter::once(swapchain_config.framebuffer_attachment()),
 						Extent {
 							width: self.surface_extent.width,
 							height: self.surface_extent.height,
@@ -250,7 +241,13 @@ impl<B: Backend> Render<B> {
 					.unwrap()
 			});
 
-			self.resize_per_frame(image_count as usize);
+			self.resize_per_frame(swapchain_config.image_count as usize);
+
+			unsafe {
+				self.surface
+					.configure_swapchain(&self.device, swapchain_config)
+					.unwrap();
+			}
 		}
 
 		let surface_image = match unsafe { self.surface.acquire_image(!0) } {
