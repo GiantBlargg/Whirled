@@ -10,25 +10,25 @@ use winit::{
 use crate::render::Render;
 
 fn main() {
-	env_logger::init();
+	env_logger::Builder::from_env("WHIRLED_LOG")
+		.filter(None, log::LevelFilter::Debug)
+		.init();
 
 	let event_loop = EventLoop::new();
 
 	let window = WindowBuilder::new()
 		.with_title("Whirled")
-		// .with_maximized(true)
+		.with_visible(false)
 		.build(&event_loop)
 		.unwrap();
 
 	let mut render: Render<gfx_backend_vulkan::Backend> = Render::new(&window);
 
-	let size = window.inner_size();
-	render.resize(Extent2D {
-		width: size.width,
-		height: size.height,
-	});
-
 	event_loop.run(move |event, _, control_flow| match event {
+		Event::NewEvents(winit::event::StartCause::Init) => {
+			window.set_visible(true);
+			window.set_maximized(true);
+		}
 		Event::WindowEvent { event, .. } => match event {
 			WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
 			WindowEvent::Resized(size) => render.resize(Extent2D {
