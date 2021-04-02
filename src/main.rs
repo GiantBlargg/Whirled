@@ -1,5 +1,11 @@
+mod assets;
+mod file;
+mod models;
 mod render;
 
+use std::iter;
+
+use assets::{LR2Assets, LR2Model};
 use gfx_hal::window::Extent2D;
 use winit::{
 	event::{Event, WindowEvent},
@@ -24,6 +30,8 @@ fn main() {
 
 	let mut render: Render<gfx_backend_vulkan::Backend> = Render::new(&window);
 
+	let mut lr2_assets = LR2Assets::new();
+
 	event_loop.run(move |event, _, control_flow| match event {
 		Event::NewEvents(winit::event::StartCause::Init) => {
 			window.set_visible(true);
@@ -41,7 +49,15 @@ fn main() {
 			}),
 			_ => (),
 		},
-		Event::MainEventsCleared => render.render(),
+		Event::MainEventsCleared => {
+			let scene = iter::once(LR2Model {
+				path: String::from("game data/ADVENTURERS/OBJECTS/MODELS/ADV_FOYER.MD2"),
+				pos: glam::Vec3::ZERO,
+				quat: glam::Quat::IDENTITY,
+			});
+			lr2_assets.process_models(scene);
+			render.render()
+		}
 		_ => (),
 	})
 }

@@ -404,6 +404,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "glam"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "27e6eecbd94ac86b2e1f3b0065ed5f17c097c15d668dddb84208a141e271403b"
+
+[[package]]
 name = "hermit-abi"
 version = "0.1.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1080,9 +1086,11 @@ dependencies = [
 name = "whirled"
 version = "0.1.0"
 dependencies = [
+ "byteorder",
  "env_logger",
  "gfx-backend-vulkan",
  "gfx-hal",
+ "glam",
  "log",
  "raw-window-handle",
  "winit",
