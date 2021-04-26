@@ -1,5 +1,6 @@
 use std::{iter, mem::ManuallyDrop};
 
+use compile_shaders::compile_shader;
 use gfx_hal::{
 	command,
 	device::Device,
@@ -33,6 +34,9 @@ pub struct Render<B: Backend> {
 	queue_group: gfx_hal::queue::QueueGroup<B>,
 	adapter: gfx_hal::adapter::Adapter<B>,
 	instance: B::Instance,
+
+	pipeline_layout: ManuallyDrop<B::PipelineLayout>,
+	test_pipeline: ManuallyDrop<B::GraphicsPipeline>,
 }
 
 impl<B: Backend> Drop for Render<B> {
@@ -40,6 +44,11 @@ impl<B: Backend> Drop for Render<B> {
 		self.device.wait_idle().unwrap();
 		self.resize_per_frame(0);
 		unsafe {
+			self.device
+				.destroy_pipeline_layout(ManuallyDrop::take(&mut self.pipeline_layout));
+			self.device
+				.destroy_graphics_pipeline(ManuallyDrop::take(&mut self.test_pipeline));
+
 			self.device
 				.destroy_render_pass(ManuallyDrop::take(&mut self.render_pass));
 			self.device
@@ -139,6 +148,76 @@ impl<B: Backend> Render<B> {
 				.unwrap()
 		};
 
+		let pipeline_layout = unsafe {
+			device
+				.create_pipeline_layout(iter::empty(), iter::empty())
+				.unwrap()
+		};
+
+		let test_pipeline = {
+			use gfx_hal::pso::{self, EntryPoint};
+
+			let vertex_shader_module = unsafe {
+				device
+					.create_shader_module(&compile_shader!("shaders/test.vert"))
+					.unwrap()
+			};
+			let fragment_shader_module = unsafe {
+				device
+					.create_shader_module(&compile_shader!("shaders/test.frag"))
+					.unwrap()
+			};
+			let desc = pso::GraphicsPipelineDesc {
+				label: None,
+				primitive_assembler: pso::PrimitiveAssemblerDesc::Vertex {
+					buffers: &[],
+					attributes: &[],
+					input_assembler: pso::InputAssemblerDesc::new(pso::Primitive::TriangleList),
+					vertex: EntryPoint {
+						entry: "main",
+						module: &vertex_shader_module,
+						specialization: pso::Specialization::default(),
+					},
+					tessellation: None,
+					geometry: None,
+				},
+				rasterizer: pso::Rasterizer {
+					polygon_mode: pso::PolygonMode::Fill,
+					cull_face: pso::Face::NONE,
+					front_face: pso::FrontFace::Clockwise,
+					depth_clamping: false,
+					depth_bias: None,
+					conservative: false,
+					line_width: pso::State::Static(1.0),
+				},
+				fragment: Some(EntryPoint {
+					entry: "main",
+					module: &fragment_shader_module,
+					specialization: pso::Specialization::default(),
+				}),
+				blender: pso::BlendDesc {
+					logic_op: None,
+					targets: vec![pso::ColorBlendDesc::EMPTY],
+				},
+				depth_stencil: pso::DepthStencilDesc::default(),
+				multisampling: None,
+				baked_states: pso::BakedStates::default(),
+				layout: &pipeline_layout,
+				subpass: gfx_hal::pass::Subpass {
+					index: 0,
+					main_pass: &render_pass,
+				},
+				flags: pso::PipelineCreationFlags::empty(),
+				parent: pso::BasePipeline::None,
+			};
+			let pipeline = unsafe { device.create_graphics_pipeline(&desc, None) };
+			unsafe {
+				device.destroy_shader_module(vertex_shader_module);
+				device.destroy_shader_module(fragment_shader_module);
+			}
+			pipeline.unwrap()
+		};
+
 		Self {
 			instance,
 			surface: ManuallyDrop::new(surface),
@@ -155,6 +234,9 @@ impl<B: Backend> Render<B> {
 			framebuffer: ManuallyDrop::new(framebuffer),
 			per_frame: Vec::new(),
 			frame: 0,
+
+			pipeline_layout: ManuallyDrop::new(pipeline_layout),
+			test_pipeline: ManuallyDrop::new(test_pipeline),
 		}
 	}
 	pub fn resize(&mut self, extent: Extent2D) {
@@ -283,17 +365,17 @@ impl<B: Backend> Render<B> {
 			}
 		};
 
-		let command_buffer = &mut frame.command_buffer;
+		let cmd_buffer = &mut frame.command_buffer;
 
 		unsafe {
 			use command::CommandBuffer;
 
-			command_buffer.begin_primary(command::CommandBufferFlags::ONE_TIME_SUBMIT);
+			cmd_buffer.begin_primary(command::CommandBufferFlags::ONE_TIME_SUBMIT);
 
-			command_buffer.set_viewports(0, iter::once(viewport.clone()));
-			command_buffer.set_scissors(0, iter::once(viewport.rect));
+			cmd_buffer.set_viewports(0, iter::once(viewport.clone()));
+			cmd_buffer.set_scissors(0, iter::once(viewport.rect));
 
-			command_buffer.begin_render_pass(
+			cmd_buffer.begin_render_pass(
 				&self.render_pass,
 				&self.framebuffer,
 				viewport.rect,
@@ -311,9 +393,12 @@ impl<B: Backend> Render<B> {
 				command::SubpassContents::Inline,
 			);
 
-			command_buffer.end_render_pass();
+			cmd_buffer.bind_graphics_pipeline(&self.test_pipeline);
+			cmd_buffer.draw(0..3, 0..1);
 
-			command_buffer.finish();
+			cmd_buffer.end_render_pass();
+
+			cmd_buffer.finish();
 		}
 
 		unsafe {
