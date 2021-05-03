@@ -12,14 +12,37 @@ use gfx_hal::{
 	Backend, Instance,
 };
 
+use super::container::{Container, ContainerGAT};
+
+pub struct MeshDef {
+	pub stride: u32,
+	pub vector_offset: Option<u32>,
+	pub normal_offset: Option<u32>,
+	pub colour_offset: Option<u32>,
+	pub texcoords_offsets: Vec<u32>,
+	pub vertex_buffer: Vec<u8>,
+	pub index_buffer: Vec<u16>,
+}
+
+pub type ModelDef = Vec<MeshDef>;
+
 struct PerFrame<B: Backend> {
 	command_pool: B::CommandPool,
 	command_buffer: B::CommandBuffer,
-	submission_complete_fence: B::Fence,
-	rendering_complete_semaphore: B::Semaphore,
+	submission_fence: B::Fence,
+	rendering_semaphore: B::Semaphore,
 }
 
-pub struct Render<B: Backend> {
+type Model<B> = Vec<Mesh<B>>;
+
+struct Mesh<B: Backend> {
+	pipeline: B::GraphicsPipeline,
+	vertex_count: u32,
+}
+
+pub struct Render<B: Backend, C: ContainerGAT> {
+	models: C::Container<Model<B>>,
+
 	surface: ManuallyDrop<B::Surface>,
 	render_pass: ManuallyDrop<B::RenderPass>,
 	surface_colour_format: Format,
@@ -34,21 +57,14 @@ pub struct Render<B: Backend> {
 	queue_group: gfx_hal::queue::QueueGroup<B>,
 	adapter: gfx_hal::adapter::Adapter<B>,
 	instance: B::Instance,
-
-	pipeline_layout: ManuallyDrop<B::PipelineLayout>,
-	test_pipeline: ManuallyDrop<B::GraphicsPipeline>,
 }
 
-impl<B: Backend> Drop for Render<B> {
+impl<B: Backend, C: ContainerGAT> Drop for Render<B, C> {
 	fn drop(&mut self) {
 		self.device.wait_idle().unwrap();
+
 		self.resize_per_frame(0);
 		unsafe {
-			self.device
-				.destroy_pipeline_layout(ManuallyDrop::take(&mut self.pipeline_layout));
-			self.device
-				.destroy_graphics_pipeline(ManuallyDrop::take(&mut self.test_pipeline));
-
 			self.device
 				.destroy_render_pass(ManuallyDrop::take(&mut self.render_pass));
 			self.device
@@ -60,7 +76,7 @@ impl<B: Backend> Drop for Render<B> {
 	}
 }
 
-impl<B: Backend> Render<B> {
+impl<B: Backend, C: ContainerGAT> Render<B, C> {
 	pub fn new(window: &impl raw_window_handle::HasRawWindowHandle) -> Self {
 		let instance = B::Instance::create("Whirled", 1).unwrap();
 
@@ -148,22 +164,105 @@ impl<B: Backend> Render<B> {
 				.unwrap()
 		};
 
-		let pipeline_layout = unsafe {
-			device
-				.create_pipeline_layout(iter::empty(), iter::empty())
-				.unwrap()
-		};
+		Self {
+			models: C::Container::new(),
 
-		let test_pipeline = {
+			instance,
+			surface: ManuallyDrop::new(surface),
+			device,
+			adapter,
+			queue_group,
+			surface_colour_format,
+			render_pass: ManuallyDrop::new(render_pass),
+			surface_extent: Extent2D {
+				width: 0,
+				height: 0,
+			},
+			reconfigure_swapchain: true,
+			framebuffer: ManuallyDrop::new(framebuffer),
+			per_frame: Vec::new(),
+			frame: 0,
+		}
+	}
+	pub fn resize(&mut self, extent: Extent2D) {
+		self.surface_extent = extent;
+		self.reconfigure_swapchain = true;
+	}
+	fn resize_per_frame(&mut self, image_count: usize) {
+		use std::cmp::Ordering;
+
+		match image_count.cmp(&(self.per_frame.len())) {
+			Ordering::Greater => {
+				let additional = image_count - self.per_frame.len();
+				self.per_frame.reserve_exact(additional);
+				for _ in 0..additional {
+					let mut command_pool = unsafe {
+						self.device
+							.create_command_pool(
+								self.queue_group.family,
+								gfx_hal::pool::CommandPoolCreateFlags::empty(),
+							)
+							.unwrap()
+					};
+
+					let command_buffer =
+						unsafe { command_pool.allocate_one(command::Level::Primary) };
+
+					let submission_fence = self.device.create_fence(true).unwrap();
+					let rendering_semaphore = self.device.create_semaphore().unwrap();
+
+					self.per_frame.push(PerFrame {
+						command_pool,
+						command_buffer,
+						submission_fence,
+						rendering_semaphore,
+					});
+				}
+			}
+			Ordering::Equal => {}
+			Ordering::Less => {
+				for per_frame in self.per_frame.drain(image_count..) {
+					unsafe {
+						self.device.destroy_fence(per_frame.submission_fence);
+						self.device.destroy_semaphore(per_frame.rendering_semaphore);
+						self.device.destroy_command_pool(per_frame.command_pool);
+					}
+				}
+			}
+		}
+	}
+}
+
+pub struct ModelInstance<Render: RenderInterface + ?Sized> {
+	pub model: Render::ModelHandle,
+}
+
+pub trait RenderInterface {
+	type ModelHandle;
+	fn add_model(&mut self, model: ModelDef) -> Self::ModelHandle;
+
+	fn render<Models: Iterator<Item = ModelInstance<Self>>>(&mut self, models: Models);
+}
+
+impl<B: Backend, C: ContainerGAT> RenderInterface for Render<B, C> {
+	type ModelHandle = C::Handle;
+	fn add_model(&mut self, _model: ModelDef) -> Self::ModelHandle {
+		let pipeline = {
 			use gfx_hal::pso::{self, EntryPoint};
 
+			let pipeline_layout = unsafe {
+				self.device
+					.create_pipeline_layout(iter::empty(), iter::empty())
+					.unwrap()
+			};
+
 			let vertex_shader_module = unsafe {
-				device
+				self.device
 					.create_shader_module(&compile_shader!("shaders/test.vert"))
 					.unwrap()
 			};
 			let fragment_shader_module = unsafe {
-				device
+				self.device
 					.create_shader_module(&compile_shader!("shaders/test.frag"))
 					.unwrap()
 			};
@@ -205,90 +304,25 @@ impl<B: Backend> Render<B> {
 				layout: &pipeline_layout,
 				subpass: gfx_hal::pass::Subpass {
 					index: 0,
-					main_pass: &render_pass,
+					main_pass: &*self.render_pass,
 				},
 				flags: pso::PipelineCreationFlags::empty(),
 				parent: pso::BasePipeline::None,
 			};
-			let pipeline = unsafe { device.create_graphics_pipeline(&desc, None) };
+			let pipeline = unsafe { self.device.create_graphics_pipeline(&desc, None) };
 			unsafe {
-				device.destroy_shader_module(vertex_shader_module);
-				device.destroy_shader_module(fragment_shader_module);
+				self.device.destroy_pipeline_layout(pipeline_layout);
+				self.device.destroy_shader_module(vertex_shader_module);
+				self.device.destroy_shader_module(fragment_shader_module);
 			}
 			pipeline.unwrap()
 		};
-
-		Self {
-			instance,
-			surface: ManuallyDrop::new(surface),
-			device,
-			adapter,
-			queue_group,
-			surface_colour_format,
-			render_pass: ManuallyDrop::new(render_pass),
-			surface_extent: Extent2D {
-				width: 0,
-				height: 0,
-			},
-			reconfigure_swapchain: true,
-			framebuffer: ManuallyDrop::new(framebuffer),
-			per_frame: Vec::new(),
-			frame: 0,
-
-			pipeline_layout: ManuallyDrop::new(pipeline_layout),
-			test_pipeline: ManuallyDrop::new(test_pipeline),
-		}
+		self.models.insert(vec![Mesh {
+			pipeline,
+			vertex_count: 3,
+		}])
 	}
-	pub fn resize(&mut self, extent: Extent2D) {
-		self.surface_extent = extent;
-		self.reconfigure_swapchain = true;
-	}
-	fn resize_per_frame(&mut self, image_count: usize) {
-		use std::cmp::Ordering;
-
-		match image_count.cmp(&(self.per_frame.len())) {
-			Ordering::Greater => {
-				let additional = image_count - self.per_frame.len();
-				self.per_frame.reserve_exact(additional);
-				for _ in 0..additional {
-					let mut command_pool = unsafe {
-						self.device
-							.create_command_pool(
-								self.queue_group.family,
-								gfx_hal::pool::CommandPoolCreateFlags::empty(),
-							)
-							.unwrap()
-					};
-
-					let command_buffer =
-						unsafe { command_pool.allocate_one(command::Level::Primary) };
-
-					let submission_complete_fence = self.device.create_fence(true).unwrap();
-					let rendering_complete_semaphore = self.device.create_semaphore().unwrap();
-
-					self.per_frame.push(PerFrame {
-						command_pool,
-						command_buffer,
-						submission_complete_fence,
-						rendering_complete_semaphore,
-					});
-				}
-			}
-			Ordering::Equal => {}
-			Ordering::Less => {
-				for per_frame in self.per_frame.drain(image_count..) {
-					unsafe {
-						self.device
-							.destroy_fence(per_frame.submission_complete_fence);
-						self.device
-							.destroy_semaphore(per_frame.rendering_complete_semaphore);
-						self.device.destroy_command_pool(per_frame.command_pool);
-					}
-				}
-			}
-		}
-	}
-	pub fn render(&mut self) {
+	fn render<Models: Iterator<Item = ModelInstance<Self>>>(&mut self, models: Models) {
 		if self.reconfigure_swapchain {
 			self.reconfigure_swapchain = false;
 
@@ -344,10 +378,10 @@ impl<B: Backend> Render<B> {
 
 		unsafe {
 			self.device
-				.wait_for_fence(&frame.submission_complete_fence, !0)
+				.wait_for_fence(&frame.submission_fence, !0)
 				.unwrap();
 			self.device
-				.reset_fence(&mut frame.submission_complete_fence)
+				.reset_fence(&mut frame.submission_fence)
 				.unwrap();
 			frame.command_pool.reset(false);
 		}
@@ -393,8 +427,13 @@ impl<B: Backend> Render<B> {
 				command::SubpassContents::Inline,
 			);
 
-			cmd_buffer.bind_graphics_pipeline(&self.test_pipeline);
-			cmd_buffer.draw(0..3, 0..1);
+			for model in models {
+				let model = self.models.get(&model.model).unwrap();
+				for mesh in model {
+					cmd_buffer.bind_graphics_pipeline(&mesh.pipeline);
+					cmd_buffer.draw(0..mesh.vertex_count, 0..1);
+				}
+			}
 
 			cmd_buffer.end_render_pass();
 
@@ -405,13 +444,13 @@ impl<B: Backend> Render<B> {
 			self.queue_group.queues[0].submit(
 				iter::once(&frame.command_buffer),
 				iter::empty(),
-				iter::once(&frame.rendering_complete_semaphore),
-				Some(&mut frame.submission_complete_fence),
+				iter::once(&frame.rendering_semaphore),
+				Some(&mut frame.submission_fence),
 			);
 			let result = self.queue_group.queues[0].present(
 				&mut self.surface,
 				surface_image,
-				Some(&mut frame.rendering_complete_semaphore),
+				Some(&mut frame.rendering_semaphore),
 			);
 			if result.is_err() {
 				self.reconfigure_swapchain = true;

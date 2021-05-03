@@ -1,3 +1,4 @@
+pub mod container;
 pub mod render;
 
 use gfx_hal::{window::Extent2D, Backend};
@@ -7,16 +8,19 @@ use winit::{
 	window::WindowBuilder,
 };
 
-use self::render::Render;
+use self::{
+	container::CounterMapGAT,
+	render::{Render, RenderInterface},
+};
 
-pub trait Content<B: Backend>: 'static {
+pub trait Content: 'static {
 	type TrackedState;
 	fn new() -> Self;
 	fn new_state() -> Self::TrackedState;
-	fn render(&self, state: &Self::TrackedState, render: &mut Render<B>);
+	fn render<Render: RenderInterface>(&self, state: &Self::TrackedState, render: &mut Render);
 }
 
-pub fn whirled<B: Backend, C: Content<B>>() -> ! {
+pub fn whirled<B: Backend, C: Content>() -> ! {
 	let event_loop = EventLoop::new();
 
 	let window = WindowBuilder::new()
@@ -25,7 +29,7 @@ pub fn whirled<B: Backend, C: Content<B>>() -> ! {
 		.build(&event_loop)
 		.unwrap();
 
-	let mut render = Render::<B>::new(&window);
+	let mut render = Render::<B, CounterMapGAT>::new(&window);
 
 	let content = C::new();
 	let state = C::new_state();

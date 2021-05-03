@@ -1,5 +1,5 @@
 use std::{
-	io::{Read, Result},
+	io::{Error, ErrorKind, Read, Result},
 	u32,
 };
 
@@ -8,6 +8,7 @@ use glam::{Vec3, Vec4};
 use log::error;
 
 use super::file::{ReadFatBool, ReadString, ReadVec};
+use crate::whirled::render::{MeshDef, ModelDef};
 
 pub struct BoundingBox {
 	pub min: Vec3,
@@ -346,4 +347,65 @@ pub fn load_md2(mut file: impl Read) -> Result<MD2> {
 			}
 		}
 	}
+}
+
+pub fn process_model(md2: MD2) -> Result<ModelDef> {
+	let geo1 = md2
+		.iter()
+		.find_map(|chunk| {
+			if let MD2Chunk::GEO1(geo1) = chunk {
+				Some(geo1)
+			} else {
+				None
+			}
+		})
+		.ok_or(Error::new(
+			ErrorKind::InvalidData,
+			"File did not contain GEO1",
+		))?;
+
+	let surfaces = &geo1
+		.first()
+		.ok_or(Error::new(
+			ErrorKind::InvalidData,
+			"GEO1 did not contain any detail levels",
+		))?
+		.render_groups;
+
+	Ok(surfaces
+		.iter()
+		.map(|surface| MeshDef {
+			stride: surface.vertex.size_vertstruct,
+			vector_offset: {
+				if surface.vertex.flags & 0b0001 == 0b0001 {
+					Some(surface.vertex.offset_vector)
+				} else {
+					None
+				}
+			},
+			normal_offset: {
+				if surface.vertex.flags & 0b0010 == 0b0010 {
+					Some(surface.vertex.offset_normal)
+				} else {
+					None
+				}
+			},
+			colour_offset: {
+				if surface.vertex.flags & 0b0100 == 0b0100 {
+					Some(surface.vertex.offset_colour)
+				} else {
+					None
+				}
+			},
+			texcoords_offsets: {
+				if surface.vertex.flags & 0b1000 == 0b1000 {
+					vec![surface.vertex.offset_texcoord]
+				} else {
+					Vec::new()
+				}
+			},
+			vertex_buffer: surface.vertex.buffer.clone(),
+			index_buffer: surface.fill.indicies.clone(),
+		})
+		.collect())
 }
