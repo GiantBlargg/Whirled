@@ -1,13 +1,12 @@
 use std::{iter, mem::ManuallyDrop};
 
-use compile_shaders::compile_shader;
 use gfx_hal::{
 	command,
 	device::Device,
 	format::{self, Format},
 	image::{Extent, FramebufferAttachment, Layout, ViewCapabilities},
 	pool::CommandPool,
-	queue::{CommandQueue, QueueFamily},
+	queue::{Queue, QueueFamily},
 	window::{Extent2D, PresentationSurface, Surface, DEFAULT_USAGE},
 	Backend, Instance,
 };
@@ -258,12 +257,12 @@ impl<B: Backend, C: ContainerGAT> RenderInterface for Render<B, C> {
 
 			let vertex_shader_module = unsafe {
 				self.device
-					.create_shader_module(&compile_shader!("shaders/test.vert"))
+					.create_shader_module(&shaders::test_vert)
 					.unwrap()
 			};
 			let fragment_shader_module = unsafe {
 				self.device
-					.create_shader_module(&compile_shader!("shaders/test.frag"))
+					.create_shader_module(&shaders::test_frag)
 					.unwrap()
 			};
 			let desc = pso::GraphicsPipelineDesc {

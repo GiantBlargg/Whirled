@@ -1,0 +1,11 @@
+[package]
+name = "shaders"
+version = "0.1.0"
+edition = "2018"
+
+[lib]
+path = "lib.rs"
+
+[build-dependencies]
+walkdir = "2.3.2"
+shaderc = "0.7.2"
