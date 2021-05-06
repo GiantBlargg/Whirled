@@ -81,7 +81,8 @@ fn main() {
 				.split(|c: char| !c.is_ascii_alphanumeric())
 				.filter(|s| *s != "")
 				.collect::<Vec<_>>()
-				.join("_");
+				.join("_")
+				.to_ascii_uppercase();
 			(spirv, shader_name)
 		})
 		.map(|(spirv, shader_name)| {

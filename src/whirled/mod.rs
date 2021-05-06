@@ -1,57 +1,39 @@
-pub mod container;
-pub mod render;
+mod container;
+mod main;
+mod render;
 
-use gfx_hal::{window::Extent2D, Backend};
-use winit::{
-	event::{Event, WindowEvent},
-	event_loop::{ControlFlow, EventLoop},
-	window::WindowBuilder,
-};
+pub use main::whirled;
 
-use self::{
-	container::CounterMapGAT,
-	render::{Render, RenderInterface},
-};
+pub struct MeshDef {
+	pub stride: u32,
+	pub vector_offset: Option<u32>,
+	pub normal_offset: Option<u32>,
+	pub colour_offset: Option<u32>,
+	pub texcoords_offsets: Vec<u32>,
+	pub vertex_buffer: Vec<u8>,
+	pub index_buffer: Vec<u16>,
+}
+
+pub type ModelDef = Vec<MeshDef>;
+
+pub struct ModelInstance<Render: RenderInterface + ?Sized> {
+	pub model: Render::ModelHandle,
+}
+
+pub trait RenderInterface {
+	type ModelHandle: Copy;
+	fn add_model(&mut self, model: ModelDef) -> Self::ModelHandle;
+
+	fn render<'a>(&mut self, models: impl Iterator<Item = ModelInstance<Self>>);
+}
+
+pub trait ContentController<TrackedState, Render: RenderInterface> {
+	fn new() -> Self;
+	fn new_state(&mut self) -> TrackedState;
+	fn render(&mut self, state: &TrackedState, render: &mut Render);
+}
 
 pub trait Content: 'static {
 	type TrackedState;
-	fn new() -> Self;
-	fn new_state() -> Self::TrackedState;
-	fn render<Render: RenderInterface>(&self, state: &Self::TrackedState, render: &mut Render);
-}
-
-pub fn whirled<B: Backend, C: Content>() -> ! {
-	let event_loop = EventLoop::new();
-
-	let window = WindowBuilder::new()
-		.with_title("Whirled")
-		.with_visible(false)
-		.build(&event_loop)
-		.unwrap();
-
-	let mut render = Render::<B, CounterMapGAT>::new(&window);
-
-	let content = C::new();
-	let state = C::new_state();
-
-	event_loop.run(move |event, _, control_flow| match event {
-		Event::NewEvents(winit::event::StartCause::Init) => {
-			window.set_visible(true);
-			window.set_maximized(true);
-		}
-		Event::WindowEvent { event, .. } => match event {
-			WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-			WindowEvent::Resized(size) => render.resize(Extent2D {
-				width: size.width,
-				height: size.height,
-			}),
-			WindowEvent::ScaleFactorChanged { new_inner_size, .. } => render.resize(Extent2D {
-				width: new_inner_size.width,
-				height: new_inner_size.width,
-			}),
-			_ => (),
-		},
-		Event::MainEventsCleared => content.render(&state, &mut render),
-		_ => (),
-	})
+	type ContentController<Render: RenderInterface>: ContentController<Self::TrackedState, Render>;
 }

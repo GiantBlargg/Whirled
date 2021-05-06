@@ -8,7 +8,7 @@ use glam::{Vec3, Vec4};
 use log::error;
 
 use super::file::{ReadFatBool, ReadString, ReadVec};
-use crate::whirled::render::{MeshDef, ModelDef};
+use crate::whirled::{MeshDef, ModelDef};
 
 pub struct BoundingBox {
 	pub min: Vec3,

@@ -1,7 +1,7 @@
-use std::{collections::HashMap, vec::IntoIter};
+use std::collections::HashMap;
 
 pub trait ContainerGAT {
-	type Handle;
+	type Handle: Copy;
 	type Container<T>: Container<Self::Handle, T>;
 }
 
@@ -47,7 +47,7 @@ impl<V> Container<usize, V> for CounterMap<V> {
 		self.hash_map.get(k)
 	}
 
-	type Drain = IntoIter<V>;
+	type Drain = std::vec::IntoIter<V>;
 	fn drain(&mut self) -> Self::Drain {
 		self.hash_map
 			.drain()

@@ -8,7 +8,5 @@ fn main() {
 		.filter(None, log::LevelFilter::Error)
 		.init();
 
-	// let mut lr2_assets = LR2Assets::new();
-
 	whirled::whirled::<gfx_backend_vulkan::Backend, lr2::LR2Content>()
 }

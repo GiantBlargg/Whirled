@@ -13,18 +13,6 @@ use gfx_hal::{
 
 use super::container::{Container, ContainerGAT};
 
-pub struct MeshDef {
-	pub stride: u32,
-	pub vector_offset: Option<u32>,
-	pub normal_offset: Option<u32>,
-	pub colour_offset: Option<u32>,
-	pub texcoords_offsets: Vec<u32>,
-	pub vertex_buffer: Vec<u8>,
-	pub index_buffer: Vec<u16>,
-}
-
-pub type ModelDef = Vec<MeshDef>;
-
 struct PerFrame<B: Backend> {
 	command_pool: B::CommandPool,
 	command_buffer: B::CommandBuffer,
@@ -232,20 +220,9 @@ impl<B: Backend, C: ContainerGAT> Render<B, C> {
 	}
 }
 
-pub struct ModelInstance<Render: RenderInterface + ?Sized> {
-	pub model: Render::ModelHandle,
-}
-
-pub trait RenderInterface {
-	type ModelHandle;
-	fn add_model(&mut self, model: ModelDef) -> Self::ModelHandle;
-
-	fn render<Models: Iterator<Item = ModelInstance<Self>>>(&mut self, models: Models);
-}
-
-impl<B: Backend, C: ContainerGAT> RenderInterface for Render<B, C> {
+impl<B: Backend, C: ContainerGAT> super::RenderInterface for Render<B, C> {
 	type ModelHandle = C::Handle;
-	fn add_model(&mut self, _model: ModelDef) -> Self::ModelHandle {
+	fn add_model(&mut self, _model: super::ModelDef) -> Self::ModelHandle {
 		let pipeline = {
 			use gfx_hal::pso::{self, EntryPoint};
 
@@ -257,12 +234,12 @@ impl<B: Backend, C: ContainerGAT> RenderInterface for Render<B, C> {
 
 			let vertex_shader_module = unsafe {
 				self.device
-					.create_shader_module(&shaders::test_vert)
+					.create_shader_module(&shaders::TEST_VERT)
 					.unwrap()
 			};
 			let fragment_shader_module = unsafe {
 				self.device
-					.create_shader_module(&shaders::test_frag)
+					.create_shader_module(&shaders::TEST_FRAG)
 					.unwrap()
 			};
 			let desc = pso::GraphicsPipelineDesc {
@@ -321,7 +298,7 @@ impl<B: Backend, C: ContainerGAT> RenderInterface for Render<B, C> {
 			vertex_count: 3,
 		}])
 	}
-	fn render<Models: Iterator<Item = ModelInstance<Self>>>(&mut self, models: Models) {
+	fn render(&mut self, models: impl Iterator<Item = super::ModelInstance<Self>>) {
 		if self.reconfigure_swapchain {
 			self.reconfigure_swapchain = false;
 
