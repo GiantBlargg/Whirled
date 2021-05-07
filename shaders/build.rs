@@ -11,6 +11,8 @@ fn stderr_ok<T, E: std::fmt::Debug>(result: Result<T, E>) -> Option<T> {
 }
 
 fn main() {
+	println!("cargo:rerun-if-changed=src");
+
 	let shader_types = {
 		use shaderc::ShaderKind;
 
@@ -53,20 +55,32 @@ fn main() {
 			Some((in_file, shader_type))
 		})
 		.map(|(in_file, shader_type)| {
-			println!("cargo:rerun-if-changed={}", in_file.to_str().unwrap());
-
 			let glsl = std::fs::read_to_string(&in_file).unwrap();
-			let spirv: Vec<u32> = compiler
-				.compile_into_spirv(
+			let spirv: Vec<u32> = {
+				let artifact = match compiler.compile_into_spirv(
 					&glsl,
 					shader_type,
 					in_file.to_str().unwrap(),
-					"main",
+					"",
 					Some(&options),
-				)
-				.unwrap()
-				.as_binary()
-				.into();
+				) {
+					Ok(artifact) => artifact,
+					Err(err) => {
+						let err_string = match err {
+							shaderc::Error::CompilationError(_, string) => string,
+							shaderc::Error::InternalError(string) => string,
+							shaderc::Error::InvalidStage(string) => string,
+							shaderc::Error::InvalidAssembly(string) => string,
+							shaderc::Error::NullResultObject(string) => string,
+						};
+						eprint!("{}", err_string);
+						panic!();
+					}
+				};
+				eprint!("{}", artifact.get_warning_messages());
+				artifact.as_binary().into()
+			};
+
 			let relative_path = in_file.strip_prefix(&src_dir).unwrap();
 			// let out_file = {
 			// 	let mut out_file = out_dir.join(relative_path);
