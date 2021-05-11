@@ -1,6 +1,7 @@
 use std::{iter, mem::ManuallyDrop};
 
 use gfx_hal::{
+	adapter::PhysicalDevice,
 	command,
 	device::Device,
 	format::{self, Format},
@@ -24,6 +25,7 @@ type Model<B> = Vec<Mesh<B>>;
 
 struct Mesh<B: Backend> {
 	pipeline: B::GraphicsPipeline,
+	buffer: B::Buffer,
 	vertex_count: u32,
 }
 
@@ -49,6 +51,13 @@ pub struct Render<B: Backend, C: ContainerGAT> {
 impl<B: Backend, C: ContainerGAT> Drop for Render<B, C> {
 	fn drop(&mut self) {
 		self.device.wait_idle().unwrap();
+
+		self.models.drain().for_each(|model| {
+			model.into_iter().for_each(|mesh| unsafe {
+				self.device.destroy_graphics_pipeline(mesh.pipeline);
+				self.device.destroy_buffer(mesh.buffer);
+			})
+		});
 
 		self.resize_per_frame(0);
 		unsafe {
@@ -81,7 +90,6 @@ impl<B: Backend, C: ContainerGAT> Render<B, C> {
 				.unwrap();
 
 			let mut gpu = unsafe {
-				use gfx_hal::adapter::PhysicalDevice;
 				adapter
 					.physical_device
 					.open(&[(queue_family, &[1.0])], gfx_hal::Features::empty())
@@ -245,8 +253,19 @@ impl<B: Backend, C: ContainerGAT> super::RenderInterface for Render<B, C> {
 			let desc = pso::GraphicsPipelineDesc {
 				label: None,
 				primitive_assembler: pso::PrimitiveAssemblerDesc::Vertex {
-					buffers: &[],
-					attributes: &[],
+					buffers: &[pso::VertexBufferDesc {
+						binding: 0,
+						stride: 8,
+						rate: pso::VertexInputRate::Vertex,
+					}],
+					attributes: &[pso::AttributeDesc {
+						location: 0,
+						binding: 0,
+						element: pso::Element {
+							format: Format::Rg32Sfloat,
+							offset: 0,
+						},
+					}],
 					input_assembler: pso::InputAssemblerDesc::new(pso::Primitive::TriangleList),
 					vertex: EntryPoint {
 						entry: "main",
@@ -293,8 +312,54 @@ impl<B: Backend, C: ContainerGAT> super::RenderInterface for Render<B, C> {
 			}
 			pipeline.unwrap()
 		};
+		let buffer = {
+			let mut buffer = unsafe {
+				self.device
+					.create_buffer(
+						24,
+						gfx_hal::buffer::Usage::VERTEX,
+						gfx_hal::memory::SparseFlags::empty(),
+					)
+					.unwrap()
+			};
+			let req = unsafe { self.device.get_buffer_requirements(&buffer) };
+			let memory_props = self.adapter.physical_device.memory_properties();
+			let memory_type = memory_props
+				.memory_types
+				.iter()
+				.enumerate()
+				.position(|(id, memory_type)| {
+					req.type_mask & (1 << id) != 0
+						&& memory_type
+							.properties
+							.contains(gfx_hal::memory::Properties::CPU_VISIBLE)
+				})
+				.unwrap()
+				.into();
+			let mut memory = unsafe { self.device.allocate_memory(memory_type, req.size).unwrap() };
+			unsafe {
+				use glam::vec2;
+				self.device
+					.bind_buffer_memory(&memory, 0, &mut buffer)
+					.unwrap();
+				let mapping = self
+					.device
+					.map_memory(&mut memory, gfx_hal::memory::Segment::ALL)
+					.unwrap();
+				let tri = vec![vec2(0.0, -0.5), vec2(0.5, 0.5), vec2(-0.5, 0.5)];
+				std::ptr::copy_nonoverlapping(tri.as_ptr() as *const u8, mapping, 24);
+				self.device
+					.flush_mapped_memory_ranges(iter::once((
+						&memory,
+						gfx_hal::memory::Segment::ALL,
+					)))
+					.unwrap();
+			}
+			buffer
+		};
 		self.models.insert(vec![Mesh {
 			pipeline,
+			buffer,
 			vertex_count: 3,
 		}])
 	}
@@ -407,6 +472,10 @@ impl<B: Backend, C: ContainerGAT> super::RenderInterface for Render<B, C> {
 				let model = self.models.get(&model.model).unwrap();
 				for mesh in model {
 					cmd_buffer.bind_graphics_pipeline(&mesh.pipeline);
+					cmd_buffer.bind_vertex_buffers(
+						0,
+						iter::once((&mesh.buffer, gfx_hal::buffer::SubRange::WHOLE)),
+					);
 					cmd_buffer.draw(0..mesh.vertex_count, 0..1);
 				}
 			}

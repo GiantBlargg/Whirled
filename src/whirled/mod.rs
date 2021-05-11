@@ -1,8 +1,10 @@
 mod container;
 mod main;
-mod render;
+mod wgpu;
 
 pub use main::whirled;
+
+pub use self::wgpu::Render as WgpuRender;
 
 pub struct MeshDef {
 	pub stride: u32,
@@ -20,17 +22,30 @@ pub struct ModelInstance<Render: RenderInterface + ?Sized> {
 	pub model: Render::ModelHandle,
 }
 
+pub struct RenderScene<Render: RenderInterface + ?Sized> {
+	pub models: Vec<ModelInstance<Render>>,
+}
+
 pub trait RenderInterface {
 	type ModelHandle: Copy;
 	fn add_model(&mut self, model: ModelDef) -> Self::ModelHandle;
+}
 
-	fn render<'a>(&mut self, models: impl Iterator<Item = ModelInstance<Self>>);
+pub trait WhirledRender: 'static {
+	fn new(window: &impl raw_window_handle::HasRawWindowHandle) -> Self;
+	fn resize(&mut self, width: u32, height: u32);
+
+	type RenderInterface: RenderInterface;
+
+	fn get_interface(&mut self) -> &mut Self::RenderInterface;
+
+	fn render(&mut self, scene: RenderScene<Self::RenderInterface>);
 }
 
 pub trait ContentController<TrackedState, Render: RenderInterface> {
 	fn new() -> Self;
 	fn new_state(&mut self) -> TrackedState;
-	fn render(&mut self, state: &TrackedState, render: &mut Render);
+	fn render(&mut self, state: &TrackedState, render: &mut Render) -> RenderScene<Render>;
 }
 
 pub trait Content: 'static {

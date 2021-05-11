@@ -4,7 +4,7 @@ mod md2;
 use std::{env, fs::File, path::PathBuf};
 
 use self::md2::{load_md2, process_model};
-use crate::whirled::{Content, ContentController, ModelInstance, RenderInterface};
+use crate::whirled::{Content, ContentController, ModelInstance, RenderInterface, RenderScene};
 
 pub struct LR2State {}
 
@@ -25,7 +25,7 @@ impl<Render: RenderInterface> ContentController<LR2State, Render> for LR2Control
 		LR2State {}
 	}
 
-	fn render(&mut self, _: &LR2State, render: &mut Render) {
+	fn render(&mut self, _: &LR2State, render: &mut Render) -> RenderScene<Render> {
 		let model = {
 			let lr2_path = &self.lr2_path;
 			*self.model.get_or_insert_with(|| {
@@ -37,7 +37,9 @@ impl<Render: RenderInterface> ContentController<LR2State, Render> for LR2Control
 				)
 			})
 		};
-		render.render(std::iter::once(ModelInstance::<Render> { model }));
+		RenderScene::<Render> {
+			models: vec![ModelInstance::<Render> { model }],
+		}
 	}
 }
 

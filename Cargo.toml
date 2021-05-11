@@ -5,12 +5,12 @@ authors = ["Daniel Doran <ddoran3@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+async-std = "1.9.0"
 byteorder = "1.4.3"
 env_logger = "0.8.3"
 log = "0.4.14"
 glam = "0.14.0"
-gfx-hal = "0.8.0"
-gfx-backend-vulkan = "0.8.0"
 raw-window-handle = "0.3.3"
+wgpu = "0.8.1"
 winit = "0.24.0"
 shaders = { path = "./shaders" }

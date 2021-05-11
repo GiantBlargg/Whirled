@@ -1,13 +1,12 @@
-use gfx_hal::{window::Extent2D, Backend};
 use winit::{
 	event::{Event, WindowEvent},
 	event_loop::{ControlFlow, EventLoop},
 	window::WindowBuilder,
 };
 
-use super::{container::CounterMapGAT, render::Render, Content, ContentController};
+use super::{Content, ContentController, WhirledRender};
 
-pub fn whirled<B: Backend, C: Content>() {
+pub fn whirled<Render: WhirledRender, C: Content>() {
 	let event_loop = EventLoop::new();
 
 	let window = WindowBuilder::new()
@@ -16,7 +15,7 @@ pub fn whirled<B: Backend, C: Content>() {
 		.build(&event_loop)
 		.unwrap();
 
-	let mut render = Render::<B, CounterMapGAT>::new(&window);
+	let mut render = Render::new(&window);
 
 	let mut controller = C::ContentController::new();
 	let mut state = controller.new_state();
@@ -28,17 +27,16 @@ pub fn whirled<B: Backend, C: Content>() {
 		}
 		Event::WindowEvent { event, .. } => match event {
 			WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-			WindowEvent::Resized(size) => render.resize(Extent2D {
-				width: size.width,
-				height: size.height,
-			}),
-			WindowEvent::ScaleFactorChanged { new_inner_size, .. } => render.resize(Extent2D {
-				width: new_inner_size.width,
-				height: new_inner_size.width,
-			}),
+			WindowEvent::Resized(size) => render.resize(size.width, size.height),
+			WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+				render.resize(new_inner_size.width, new_inner_size.width)
+			}
 			_ => (),
 		},
-		Event::MainEventsCleared => controller.render(&state, &mut render),
+		Event::MainEventsCleared => {
+			let scene = controller.render(&state, render.get_interface());
+			render.render(scene);
+		}
 		_ => (),
 	})
 }
