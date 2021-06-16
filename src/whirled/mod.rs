@@ -1,10 +1,11 @@
+mod camera;
 mod container;
 mod main;
 mod wgpu;
 
-pub use main::whirled;
+use glam::Mat4;
 
-pub use self::wgpu::Render as WgpuRender;
+pub use self::{camera::CameraController, main::whirled, wgpu::Render as WgpuRender};
 
 pub struct MeshDef {
 	pub stride: u32,
@@ -22,8 +23,15 @@ pub struct ModelInstance<Render: RenderInterface + ?Sized> {
 	pub model: Render::ModelHandle,
 }
 
+#[derive(Clone, Copy)]
+pub struct CameraView {
+	pub transform: Mat4,
+	pub projection: Mat4,
+}
+
 pub struct RenderScene<Render: RenderInterface + ?Sized> {
 	pub models: Vec<ModelInstance<Render>>,
+	pub camera: CameraView,
 }
 
 pub trait RenderInterface {

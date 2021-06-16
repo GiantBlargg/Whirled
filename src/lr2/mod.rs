@@ -3,6 +3,8 @@ mod md2;
 
 use std::{env, fs::File, path::PathBuf};
 
+use glam::Mat4;
+
 use self::md2::{load_md2, process_model};
 use crate::whirled::{Content, ContentController, ModelInstance, RenderInterface, RenderScene};
 
@@ -39,6 +41,10 @@ impl<Render: RenderInterface> ContentController<LR2State, Render> for LR2Control
 		};
 		RenderScene::<Render> {
 			models: vec![ModelInstance::<Render> { model }],
+			camera: crate::whirled::CameraView {
+				transform: Mat4::IDENTITY,
+				projection: Mat4::IDENTITY,
+			},
 		}
 	}
 }
