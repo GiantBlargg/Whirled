@@ -1,9 +1,11 @@
 use std::{borrow::Cow, mem::size_of};
 
-use glam::Mat4;
 use wgpu::{util::DeviceExt, Buffer, BufferUsage};
 
-use super::container::{Container, CounterMap};
+use super::{
+	camera::CameraView,
+	container::{Container, CounterMap},
+};
 
 struct Model {
 	pipeline: wgpu::RenderPipeline,
@@ -24,6 +26,7 @@ pub struct Render {
 
 	camera_bind_group_layout: wgpu::BindGroupLayout,
 	camera_bind_group: wgpu::BindGroup,
+	camera_buffer: Buffer,
 }
 
 impl super::WhirledRender for Render {
@@ -71,10 +74,11 @@ impl super::WhirledRender for Render {
 				}],
 			});
 
-		let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-			label: None,
-			contents: unsafe { any_as_u8_slice(&[Mat4::IDENTITY, Mat4::IDENTITY]) },
-			usage: BufferUsage::UNIFORM,
+		let camera_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+			label: Some("Camera Uniform"),
+			size: 0x80,
+			usage: BufferUsage::UNIFORM | BufferUsage::COPY_DST,
+			mapped_at_creation: false,
 		});
 
 		let camera_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -103,6 +107,7 @@ impl super::WhirledRender for Render {
 
 			camera_bind_group_layout,
 			camera_bind_group,
+			camera_buffer,
 		}
 	}
 	fn resize(&mut self, width: u32, height: u32) {
@@ -117,7 +122,7 @@ impl super::WhirledRender for Render {
 		self
 	}
 
-	fn render(&mut self, scene: super::RenderScene<Self::RenderInterface>) {
+	fn render(&mut self, camera: CameraView, scene: super::RenderScene<Self::RenderInterface>) {
 		let swapchain = {
 			if self.swapchain.is_none() {
 				self.swapchain = Some(self.device.create_swap_chain(
@@ -182,6 +187,10 @@ impl super::WhirledRender for Render {
 				render_pass.draw_indexed(0..model.vertex_count, 0, 0..1);
 			}
 		}
+
+		self.queue.write_buffer(&self.camera_buffer, 0, unsafe {
+			&any_as_u8_slice(&[camera.transform, camera.projection])
+		});
 
 		self.queue.submit(std::iter::once(cmd.finish()));
 	}

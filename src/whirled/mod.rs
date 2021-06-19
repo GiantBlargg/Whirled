@@ -3,9 +3,8 @@ mod container;
 mod main;
 mod wgpu;
 
-use glam::Mat4;
-
-pub use self::{camera::CameraController, main::whirled, wgpu::Render as WgpuRender};
+use self::camera::CameraView;
+pub use self::{main::whirled, wgpu::Render as WgpuRender};
 
 pub struct MeshDef {
 	pub stride: u32,
@@ -23,15 +22,8 @@ pub struct ModelInstance<Render: RenderInterface + ?Sized> {
 	pub model: Render::ModelHandle,
 }
 
-#[derive(Clone, Copy)]
-pub struct CameraView {
-	pub transform: Mat4,
-	pub projection: Mat4,
-}
-
 pub struct RenderScene<Render: RenderInterface + ?Sized> {
 	pub models: Vec<ModelInstance<Render>>,
-	pub camera: CameraView,
 }
 
 pub trait RenderInterface {
@@ -47,7 +39,7 @@ pub trait WhirledRender: 'static {
 
 	fn get_interface(&mut self) -> &mut Self::RenderInterface;
 
-	fn render(&mut self, scene: RenderScene<Self::RenderInterface>);
+	fn render(&mut self, camera: CameraView, scene: RenderScene<Self::RenderInterface>);
 }
 
 pub trait ContentController<TrackedState, Render: RenderInterface> {

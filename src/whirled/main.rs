@@ -6,7 +6,7 @@ use winit::{
 	window::WindowBuilder,
 };
 
-use super::{Content, ContentController, WhirledRender};
+use super::{camera::CameraController, Content, ContentController, WhirledRender};
 
 pub fn whirled<Render: WhirledRender, C: Content>() {
 	let event_loop = EventLoop::new();
@@ -28,6 +28,8 @@ pub fn whirled<Render: WhirledRender, C: Content>() {
 		imgui_winit_support::HiDpiMode::Default,
 	);
 
+	let mut camera = CameraController::default();
+
 	let mut controller = C::ContentController::new();
 	let mut state = controller.new_state();
 
@@ -46,15 +48,19 @@ pub fn whirled<Render: WhirledRender, C: Content>() {
 			}
 			Event::WindowEvent { event, .. } => match event {
 				WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-				WindowEvent::Resized(size) => render.resize(size.width, size.height),
+				WindowEvent::Resized(size) => {
+					camera.resize(size.width as f32 / size.height as f32);
+					render.resize(size.width, size.height);
+				}
 				WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-					render.resize(new_inner_size.width, new_inner_size.width)
+					camera.resize(new_inner_size.width as f32 / new_inner_size.height as f32);
+					render.resize(new_inner_size.width, new_inner_size.width);
 				}
 				_ => (),
 			},
 			Event::MainEventsCleared => {
 				let scene = controller.render(&state, render.get_interface());
-				render.render(scene);
+				render.render(camera.camera_view(), scene);
 			}
 			_ => (),
 		};
