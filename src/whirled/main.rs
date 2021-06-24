@@ -1,7 +1,7 @@
 use std::time::Instant;
 
 use winit::{
-	event::{Event, WindowEvent},
+	event::{DeviceEvent, Event, WindowEvent},
 	event_loop::{ControlFlow, EventLoop},
 	window::WindowBuilder,
 };
@@ -46,18 +46,45 @@ pub fn whirled<Render: WhirledRender, C: Content>() {
 				imgui.io_mut().update_delta_time(now - last_frame);
 				last_frame = now;
 			}
-			Event::WindowEvent { event, .. } => match event {
-				WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-				WindowEvent::Resized(size) => {
-					camera.resize(size.width as f32 / size.height as f32);
-					render.resize(size.width, size.height);
-				}
-				WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-					camera.resize(new_inner_size.width as f32 / new_inner_size.height as f32);
-					render.resize(new_inner_size.width, new_inner_size.width);
-				}
-				_ => (),
-			},
+			Event::WindowEvent {
+				event: WindowEvent::CloseRequested,
+				..
+			} => *control_flow = ControlFlow::Exit,
+
+			Event::WindowEvent {
+				event: WindowEvent::Resized(size),
+				..
+			} => {
+				camera.resize(size.width as f32 / size.height as f32);
+				render.resize(size.width, size.height);
+			}
+			Event::WindowEvent {
+				event: WindowEvent::ScaleFactorChanged { new_inner_size, .. },
+				..
+			} => {
+				camera.resize(new_inner_size.width as f32 / new_inner_size.height as f32);
+				render.resize(new_inner_size.width, new_inner_size.height);
+			}
+
+			Event::WindowEvent {
+				event: WindowEvent::MouseInput { state, button, .. },
+				..
+			} => {
+				camera.mouse_button(state, button, &window);
+			}
+			Event::DeviceEvent {
+				event: DeviceEvent::Key(keyboard_input),
+				..
+			} => {
+				camera.keyboard_input(keyboard_input);
+			}
+			Event::DeviceEvent {
+				event: DeviceEvent::MouseMotion { delta },
+				..
+			} => {
+				camera.mouse_move(delta.0 as f32, delta.1 as f32);
+			}
+
 			Event::MainEventsCleared => {
 				let scene = controller.render(&state, render.get_interface());
 				render.render(camera.camera_view(), scene);
