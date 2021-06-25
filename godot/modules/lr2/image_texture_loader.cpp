@@ -4,16 +4,16 @@
 #include "scene/resources/texture.h"
 
 RES ImageTextureLoader::load(
-	const String &p_path, const String &p_original_path,
-	Error *r_error, bool p_use_sub_threads,
-	float *r_progress, bool p_no_cache) {
+	const String& p_path, const String& p_original_path, Error* r_error, bool p_use_sub_threads, float* r_progress,
+	CacheMode p_cache_mode) {
 
 	Ref<Image> image;
-	image.instance();
+	image.instantiate();
 	image->load(p_path);
 
-	if (image->empty()) {
-		if (r_error) *r_error = ERR_FILE_CANT_READ;
+	if (image->is_empty()) {
+		if (r_error)
+			*r_error = ERR_FILE_CANT_READ;
 		return NULL;
 	}
 
@@ -28,21 +28,22 @@ RES ImageTextureLoader::load(
 	return texture;
 }
 
-void ImageTextureLoader::get_recognized_extensions(List<String> *p_extensions) const {
+void ImageTextureLoader::get_recognized_extensions(List<String>* p_extensions) const {
 	ImageLoader::get_recognized_extensions(p_extensions);
 }
 
-bool ImageTextureLoader::handles_type(const String &p_type) const {
+bool ImageTextureLoader::handles_type(const String& p_type) const {
 	return ClassDB::is_parent_class(p_type, "Texture2D");
 }
 
-String ImageTextureLoader::get_resource_type(const String &p_path) const {
+String ImageTextureLoader::get_resource_type(const String& p_path) const {
 	String extension = p_path.get_extension().to_lower();
 	List<String> extensions;
 	ImageLoader::get_recognized_extensions(&extensions);
 
-	for(auto e = extensions.front(); e; e = e->next()){
-		if(extension == e->get()) return "ImageTexture";
+	for (auto e = extensions.front(); e; e = e->next()) {
+		if (extension == e->get())
+			return "ImageTexture";
 	}
 	return "";
 }

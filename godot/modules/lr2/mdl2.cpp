@@ -1,9 +1,9 @@
 #include "mdl2.h"
 
-#include "core/os/file_access.h"
+#include "core/io/file_access.h"
 #include "scene/resources/mesh.h"
 
-enum class MDL2Chunk: uint32_t {
+enum class MDL2Chunk : uint32_t {
 	END = 0,
 	MDL0 = 0x304c444d,
 	MDL1 = 0x314c444d,
@@ -15,25 +15,18 @@ enum class MDL2Chunk: uint32_t {
 	SHA0 = 0x30414853,
 };
 
-#define FLAGS(T)\
-inline T operator|(T lhs, T rhs) {\
-	using U = std::underlying_type_t<T>;\
-	return static_cast<T>(static_cast<U>(lhs) | static_cast<U>(rhs));\
-}\
-inline T operator&(T lhs, T rhs) {\
-	using U = std::underlying_type_t<T>;\
-	return static_cast<T>(static_cast<U>(lhs) & static_cast<U>(rhs));\
-}\
-inline bool has_flag(T flag, T test) {\
-	return (flag & test) == test;\
-}
+#define FLAGS(T)                                                                                                       \
+	inline T operator|(T lhs, T rhs) {                                                                                 \
+		using U = std::underlying_type_t<T>;                                                                           \
+		return static_cast<T>(static_cast<U>(lhs) | static_cast<U>(rhs));                                              \
+	}                                                                                                                  \
+	inline T operator&(T lhs, T rhs) {                                                                                 \
+		using U = std::underlying_type_t<T>;                                                                           \
+		return static_cast<T>(static_cast<U>(lhs) & static_cast<U>(rhs));                                              \
+	}                                                                                                                  \
+	inline bool has_flag(T flag, T test) { return (flag & test) == test; }
 
-enum class VertexFlag: uint16_t {
-	Vector = 1 << 0,
-	Normal = 1 << 1,
-	Colour = 1 << 2,
-	UV = 1 << 3
-};
+enum class VertexFlag : uint16_t { Vector = 1 << 0, Normal = 1 << 1, Colour = 1 << 2, UV = 1 << 3 };
 FLAGS(VertexFlag)
 
 struct Blend {
@@ -58,13 +51,13 @@ struct MDL2Material {
 inline Vector2 get_vector2(FileAccess* f) {
 	float x = f->get_float();
 	float y = f->get_float();
-	return Vector2(x,y);
+	return Vector2(x, y);
 }
 inline Vector3 get_vector3(FileAccess* f) {
 	float x = f->get_float();
 	float y = f->get_float();
 	float z = f->get_float();
-	return Vector3(x,y,z);
+	return Vector3(x, y, z);
 }
 inline Color get_colour(FileAccess* f) {
 	float r = f->get_float();
@@ -76,7 +69,7 @@ inline Color get_colour(FileAccess* f) {
 inline String get_string(FileAccess* f, int length) {
 	CharString cs;
 	cs.resize(length + 1);
-	f->get_buffer((uint8_t *)cs.ptr(), length);
+	f->get_buffer((uint8_t*)cs.ptr(), length);
 	cs[length] = 0;
 
 	String ret;
@@ -129,8 +122,8 @@ void load_vertices(FileAccess* f, Array* group_arrays) {
 			uv.set(vertex, get_vector2(f));
 			if (texcoord_count > 1) {
 				uv2.set(vertex, get_vector2(f));
-				//Godot only supports 2 sets of uv
-				//Shouldn't matter as LR2 probably doesn't either
+				// Godot only supports 2 sets of uv
+				// Shouldn't matter as LR2 probably doesn't either
 			}
 		}
 	}
@@ -155,14 +148,13 @@ void load_vertices(FileAccess* f, Array* group_arrays) {
 }
 
 RES MDL2Loader::load(
-	const String &p_path, const String &p_original_path,
-	Error *r_error, bool p_use_sub_threads,
-	float *r_progress, bool p_no_cache) {
+	const String& p_path, const String& p_original_path, Error* r_error, bool p_use_sub_threads, float* r_progress,
+	CacheMode p_cache_mode) {
 
 	FileAccess* f = FileAccess::open(p_path, FileAccess::READ);
 
 	Ref<ArrayMesh> mesh;
-	mesh.instance();
+	mesh.instantiate();
 
 	Vector<String> textures;
 	Vector<MDL2Material> material_props;
@@ -182,7 +174,7 @@ RES MDL2Loader::load(
 		case MDL2Chunk::MDL2: {
 			f->seek(f->get_position() + 12 + 8);
 			uint32_t has_bounding_box = f->get_32();
-			if(has_bounding_box)
+			if (has_bounding_box)
 				f->seek(f->get_position() + 12 + 12 + 12 + 4);
 			f->seek(f->get_position() + 16 + 48);
 
@@ -193,7 +185,7 @@ RES MDL2Loader::load(
 			for (int i = 0; i < textures.size(); i++) {
 				f->seek(texture_start + i * (256 + 8));
 				auto path = get_string(f, 256);
-				if(p_use_sub_threads)
+				if (p_use_sub_threads)
 					ResourceLoader::load_threaded_request("lr2://" + path);
 				textures.set(i, path);
 			}
@@ -267,13 +259,13 @@ RES MDL2Loader::load(
 
 				if (fill_type == 0)
 					mesh->add_surface_from_arrays(Mesh::PrimitiveType::PRIMITIVE_TRIANGLES, group_arrays);
-				else 
+				else
 					mesh->add_surface_from_arrays(Mesh::PrimitiveType::PRIMITIVE_TRIANGLE_STRIP, group_arrays);
 
 				auto mat_prop = material_props.get(material_id);
 
 				Ref<StandardMaterial3D> mat;
-				mat.instance();
+				mat.instantiate();
 
 				mat->set_cull_mode(BaseMaterial3D::CullMode::CULL_FRONT);
 				mat->set_diffuse_mode(BaseMaterial3D::DiffuseMode::DIFFUSE_LAMBERT);
@@ -282,33 +274,35 @@ RES MDL2Loader::load(
 				float alpha = 1 - mat_prop.alpha;
 
 				switch (mat_prop.alpha_type) {
-					case 0:
-						mat->set_transparency(BaseMaterial3D::Transparency::TRANSPARENCY_ALPHA_SCISSOR);
-						mat->set_depth_draw_mode(BaseMaterial3D::DepthDrawMode::DEPTH_DRAW_ALWAYS);
-						mat->set_alpha_scissor_threshold(0.5f);
-						break;
-					case 1:
-						mat->set_blend_mode(BaseMaterial3D::BlendMode::BLEND_MODE_MIX);
-						mat->set_transparency(BaseMaterial3D::Transparency::TRANSPARENCY_ALPHA);
-						break;
-					case 4:
-						mat->set_blend_mode(BaseMaterial3D::BlendMode::BLEND_MODE_ADD);
-						mat->set_cull_mode(BaseMaterial3D::CullMode::CULL_DISABLED);
-						mat->set_shading_mode(BaseMaterial3D::ShadingMode::SHADING_MODE_UNSHADED);
-						break;
-				
-					default:
-						print_error("Unkown Alpha Type " + itos(mat_prop.alpha_type) + " in " + p_path);
-						break;
+				case 0:
+					mat->set_transparency(BaseMaterial3D::Transparency::TRANSPARENCY_ALPHA_SCISSOR);
+					mat->set_depth_draw_mode(BaseMaterial3D::DepthDrawMode::DEPTH_DRAW_ALWAYS);
+					mat->set_alpha_scissor_threshold(0.5f);
+					break;
+				case 1:
+					mat->set_blend_mode(BaseMaterial3D::BlendMode::BLEND_MODE_MIX);
+					mat->set_transparency(BaseMaterial3D::Transparency::TRANSPARENCY_ALPHA);
+					break;
+				case 4:
+					mat->set_blend_mode(BaseMaterial3D::BlendMode::BLEND_MODE_ADD);
+					mat->set_cull_mode(BaseMaterial3D::CullMode::CULL_DISABLED);
+					mat->set_shading_mode(BaseMaterial3D::ShadingMode::SHADING_MODE_UNSHADED);
+					break;
+
+				default:
+					print_error("Unkown Alpha Type " + itos(mat_prop.alpha_type) + " in " + p_path);
+					break;
 				}
 
-				mat->set_albedo(Color(1,1,1,alpha));
+				mat->set_albedo(Color(1, 1, 1, alpha));
 
-				mat->set_texture(BaseMaterial3D::TextureParam::TEXTURE_ALBEDO, ResourceLoader::load_threaded_get("lr2://" + textures.get(blends.get(0).texture_id)));
+				mat->set_texture(
+					BaseMaterial3D::TextureParam::TEXTURE_ALBEDO,
+					ResourceLoader::load_threaded_get("lr2://" + textures.get(blends.get(0).texture_id)));
 
 				mesh->surface_set_material(render_group, mat);
 			}
-			
+
 		} break;
 		case MDL2Chunk::END: {
 			f->close();
@@ -326,15 +320,11 @@ RES MDL2Loader::load(
 	}
 }
 
-void MDL2Loader::get_recognized_extensions(List<String> *p_extensions) const {
-	p_extensions->push_back("md2");
-}
+void MDL2Loader::get_recognized_extensions(List<String>* p_extensions) const { p_extensions->push_back("md2"); }
 
-bool MDL2Loader::handles_type(const String &p_type) const {
-	return p_type == "Mesh";
-}
+bool MDL2Loader::handles_type(const String& p_type) const { return p_type == "Mesh"; }
 
-String MDL2Loader::get_resource_type(const String &p_path) const {
+String MDL2Loader::get_resource_type(const String& p_path) const {
 	if (p_path.get_extension().to_lower() == "md2")
 		return "Mesh";
 	return "";

@@ -1,6 +1,6 @@
 using Godot;
 
-public class ViewCamera : Camera3D {
+public partial class ViewCamera : Camera3D {
 	const float lookSpeed = 0.2f;
 	float moveSpeed = 100f;
 	bool Right, Middle;
@@ -20,13 +20,13 @@ public class ViewCamera : Camera3D {
 	public override void _UnhandledInput(InputEvent inputEvent) {
 		if (inputEvent is InputEventMouseButton) {
 			var mouseButton = (InputEventMouseButton)inputEvent;
-			if (mouseButton.ButtonIndex == (int)ButtonList.Right) {
+			if (mouseButton.ButtonIndex == MouseButton.Right) {
 				Right = mouseButton.Pressed;
 				Input.SetMouseMode(mouseButton.Pressed ? Input.MouseMode.Captured : Input.MouseMode.Visible);
 			}
 		} else if (inputEvent is InputEventMouseMotion) {
 			var mouseMotion = (InputEventMouseMotion)inputEvent;
-			if (Input.IsMouseButtonPressed((int)ButtonList.Right)) {
+			if (Input.IsMouseButtonPressed(MouseButton.Right)) {
 				var newRot = RotationDegrees + new Vector3(mouseMotion.Relative.y, mouseMotion.Relative.x, 0) * -lookSpeed;
 				if (newRot.x < -90) newRot.x = -90;
 				if (newRot.x > 90) newRot.x = 90;
@@ -35,19 +35,19 @@ public class ViewCamera : Camera3D {
 		}
 	}
 	public override void _Process(float delta) {
-		if (Input.IsMouseButtonPressed((int)ButtonList.Right)) {
+		if (Input.IsMouseButtonPressed(MouseButton.Right)) {
 			var movement = new Vector3();
-			if (Input.IsKeyPressed((int)KeyList.W))
+			if (Input.IsKeyPressed((int)Key.W))
 				movement.z--;
-			if (Input.IsKeyPressed((int)KeyList.S))
+			if (Input.IsKeyPressed((int)Key.S))
 				movement.z++;
-			if (Input.IsKeyPressed((int)KeyList.A))
+			if (Input.IsKeyPressed((int)Key.A))
 				movement.x--;
-			if (Input.IsKeyPressed((int)KeyList.D))
+			if (Input.IsKeyPressed((int)Key.D))
 				movement.x++;
-			if (Input.IsKeyPressed((int)KeyList.Q))
+			if (Input.IsKeyPressed((int)Key.Q))
 				movement.y--;
-			if (Input.IsKeyPressed((int)KeyList.E))
+			if (Input.IsKeyPressed((int)Key.E))
 				movement.y++;
 
 			movement *= delta * moveSpeed;

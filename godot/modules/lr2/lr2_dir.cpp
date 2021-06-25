@@ -1,17 +1,15 @@
 #include "lr2_dir.h"
 
-#include "core/os/dir_access.h"
+#include "core/io/dir_access.h"
 
 LR2Dir* LR2Dir::singleton = NULL;
 
 void LR2Dir::init() {
-	config.instance();
+	config.instantiate();
 	config->load(configPath);
 }
 
-String LR2Dir::get_path() {
-	return config->get_value(section, key, "");
-}
+String LR2Dir::get_path() { return config->get_value(section, key, ""); }
 void LR2Dir::set_path(String path) {
 	config->set_value(section, key, path);
 	config->save(configPath);
@@ -29,7 +27,7 @@ String LR2Dir::resolve_path(String path) {
 		current_dir->list_dir_begin();
 		do {
 			next = current_dir->get_next();
-			if(next == "") {
+			if (next == "") {
 				return "";
 			}
 		} while (next.to_lower() != path_dir.to_lower());

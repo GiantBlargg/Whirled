@@ -2,7 +2,7 @@ using Godot;
 using System.Collections.Generic;
 using LR2.WRL;
 
-public class WRLManager : Node {
+public partial class WRLManager : Node {
 	WRL wrl = new WRL();
 	string path;
 

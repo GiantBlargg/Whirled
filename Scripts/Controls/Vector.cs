@@ -1,7 +1,7 @@
 using Godot;
 
 namespace Controls {
-	public abstract class VectorBase : VBoxContainer {
+	public abstract partial class VectorBase : VBoxContainer {
 		HBoxContainer hBox = new HBoxContainer();
 		public override void _Ready() {
 			if (Name != "" && ((string)Name)[0] != '@') {
@@ -24,7 +24,7 @@ namespace Controls {
 
 		public event ValueSet ValueSet;
 	}
-	public class Vector2Control : VectorBase, IControl<Vector2> {
+	public partial class Vector2Control : VectorBase, IControl<Vector2> {
 		Number<float> x, y;
 		public Vector2Control() {
 			x = CreateComponent();
@@ -38,7 +38,7 @@ namespace Controls {
 			}
 		}
 	}
-	public class Vector3Control : VectorBase, IControl<Vector3> {
+	public partial class Vector3Control : VectorBase, IControl<Vector3> {
 		Number<float> x, y, z;
 		public Vector3Control() {
 			x = CreateComponent();

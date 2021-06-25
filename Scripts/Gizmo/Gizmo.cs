@@ -1,22 +1,22 @@
 using Godot;
 using Controls;
 
-public class Gizmo : Node3D, IControl<Transform> {
+public partial class Gizmo : Node3D, IControl<Transform3D> {
 	public static PackedScene scene = GD.Load<PackedScene>("res://Gizmo/Gizmo.tscn");
 
 	Camera3D camera;
 
-	Transform _targetTransform;
-	public Transform targetTransform {
+	Transform3D _targetTransform;
+	public Transform3D targetTransform {
 		get => _targetTransform;
 		set {
 			_targetTransform = value;
-			Translation = _targetTransform.origin;
+			Position = _targetTransform.origin;
 			ValueSet();
 		}
 	}
 
-	public Transform Value {
+	public Transform3D Value {
 		get => _targetTransform;
 		set => _targetTransform = value;
 	}
@@ -28,9 +28,9 @@ public class Gizmo : Node3D, IControl<Transform> {
 	}
 
 	public override void _Process(float delta) {
-		Translation = _targetTransform.origin;
+		Position = _targetTransform.origin;
 
-		var distance = camera.Translation.DistanceTo(GlobalTransform.origin);
+		var distance = camera.Position.DistanceTo(GlobalTransform.origin);
 		Scale = Vector3.One * distance;
 	}
 }

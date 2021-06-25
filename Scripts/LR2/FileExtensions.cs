@@ -36,10 +36,10 @@ public static class FileExtensions {
 		return new Color(file.GetFloat(), file.GetFloat(), file.GetFloat(), file.GetFloat());
 	}
 
-	public static Quat GetQuat(this File file) {
-		return new Quat(file.GetFloat(), file.GetFloat(), file.GetFloat(), file.GetFloat());
+	public static Quaternion GetQuat(this File file) {
+		return new Quaternion(file.GetFloat(), file.GetFloat(), file.GetFloat(), file.GetFloat());
 	}
-	public static void StoreQuat(this File file, Quat quat) {
+	public static void StoreQuat(this File file, Quaternion quat) {
 		quat = quat.Normalized();
 		file.StoreFloat(quat.x);
 		file.StoreFloat(quat.y);
@@ -47,13 +47,13 @@ public static class FileExtensions {
 		file.StoreFloat(quat.w);
 	}
 
-	public static Transform GetTransform(this File file) {
+	public static Transform3D GetTransform(this File file) {
 		var origin = file.GetVector3();
 		var rot = file.GetQuat();
-		return new Transform(rot, origin);
+		return new Transform3D(rot, origin);
 	}
-	public static void StoreTransform(this File file, Transform transform) {
+	public static void StoreTransform(this File file, Transform3D transform) {
 		file.StoreVector3(transform.origin);
-		file.StoreQuat(new Quat(transform.basis));
+		file.StoreQuat(new Quaternion(transform.basis));
 	}
 }

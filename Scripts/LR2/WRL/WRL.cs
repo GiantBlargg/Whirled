@@ -37,7 +37,7 @@ namespace LR2.WRL {
 
 			var bindings = new List<(WRLEntry entry, string binding)>();
 
-			while (file.GetLen() > file.GetPosition()) {
+			while (file.GetLength() > file.GetPosition()) {
 				if (file.Get32() != OBMG_MAGIC) {
 					throw new Exception("Wrong OBGM Magic");
 				}
@@ -107,7 +107,7 @@ namespace LR2.WRL {
 
 				if (file.GetPosition() != endPosition) {
 					GD.PrintErr("The WRLEntry for type \"", type, "\" didn't read the correct amount; correcting...");
-					file.Seek(endPosition);
+					file.Seek((long)endPosition);
 				}
 
 			}
@@ -151,7 +151,7 @@ namespace LR2.WRL {
 
 			if (file.GetPosition() != endPosition) {
 				GD.PrintErr("The WRLEntry for type \"", type, "\" didn't write the correct amount; correcting...");
-				file.Seek(endPosition);
+				file.Seek((long)endPosition);
 			}
 
 			foreach (var e in entry.children) {

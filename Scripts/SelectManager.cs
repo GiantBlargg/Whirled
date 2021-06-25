@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using Controls;
 
-public class SelectManager : Node {
+public partial class SelectManager : Node {
 	[Export]
 	public NodePath WrlManager;
 	WRLManager wrl;
@@ -84,9 +84,9 @@ public class SelectManager : Node {
 
 		foreach (var prop in props) {
 			switch (prop) {
-				case ObjectProperty<Transform> p:
+				case ObjectProperty<Transform3D> p:
 					AddControl(p, new TransformControl(/*prop.flags.HasFlag(LR2.WRL.PropertyFlags.Scale)*/));
-					AddControl(p, Gizmo.scene.Instance() as Gizmo, wrl.ResolveParent(name));
+					AddControl(p, Gizmo.scene.Instantiate() as Gizmo, wrl.ResolveParent(name));
 					break;
 				case ObjectProperty<string> p:
 					AddControl(p, new StringControl());

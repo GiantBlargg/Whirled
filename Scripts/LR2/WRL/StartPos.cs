@@ -7,7 +7,7 @@ namespace LR2.WRL {
 		public override uint U => 1;
 		public override uint Length => 0x54;
 
-		Transform Transform;
+		Transform3D Transform;
 
 		uint u1;
 
@@ -23,7 +23,7 @@ namespace LR2.WRL {
 
 		public override List<ObjectProperty> GetProperties() {
 			var p = base.GetProperties();
-			p.Add(new ObjectProperty<Transform>(() => Transform));
+			p.Add(new ObjectProperty<Transform3D>(() => Transform));
 			p.Add(new ObjectProperty<uint>(() => u1));
 			return p;
 		}

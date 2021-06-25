@@ -35,7 +35,8 @@
 #include "core/os/os.h"
 #include "core/string/print_string.h"
 
-Error ImageLoaderMIP::decode_tga_rle(const uint8_t *p_compressed_buffer, size_t p_pixel_size, uint8_t *p_uncompressed_buffer, size_t p_output_size) {
+Error ImageLoaderMIP::decode_tga_rle(
+	const uint8_t* p_compressed_buffer, size_t p_pixel_size, uint8_t* p_uncompressed_buffer, size_t p_output_size) {
 	Error error;
 
 	Vector<uint8_t> pixels;
@@ -44,7 +45,7 @@ Error ImageLoaderMIP::decode_tga_rle(const uint8_t *p_compressed_buffer, size_t 
 		return error;
 	}
 
-	uint8_t *pixels_w = pixels.ptrw();
+	uint8_t* pixels_w = pixels.ptrw();
 
 	size_t compressed_pos = 0;
 	size_t output_pos = 0;
@@ -79,12 +80,14 @@ Error ImageLoaderMIP::decode_tga_rle(const uint8_t *p_compressed_buffer, size_t 
 	return OK;
 }
 
-Error ImageLoaderMIP::convert_to_image(Ref<Image> p_image, const uint8_t *p_buffer, const tga_header_s &p_header, const uint8_t *p_palette, const bool p_is_monochrome) {
-#define TGA_PUT_PIXEL(r, g, b, a)             \
-	int image_data_ofs = ((y * width) + x);   \
-	image_data_w[image_data_ofs * 4 + 0] = r; \
-	image_data_w[image_data_ofs * 4 + 1] = g; \
-	image_data_w[image_data_ofs * 4 + 2] = b; \
+Error ImageLoaderMIP::convert_to_image(
+	Ref<Image> p_image, const uint8_t* p_buffer, const tga_header_s& p_header, const uint8_t* p_palette,
+	const bool p_is_monochrome) {
+#define TGA_PUT_PIXEL(r, g, b, a)                                                                                      \
+	int image_data_ofs = ((y * width) + x);                                                                            \
+	image_data_w[image_data_ofs * 4 + 0] = r;                                                                          \
+	image_data_w[image_data_ofs * 4 + 1] = g;                                                                          \
+	image_data_w[image_data_ofs * 4 + 2] = b;                                                                          \
 	image_data_w[image_data_ofs * 4 + 3] = a;
 
 	uint32_t width = p_header.image_width;
@@ -120,7 +123,7 @@ Error ImageLoaderMIP::convert_to_image(Ref<Image> p_image, const uint8_t *p_buff
 
 	Vector<uint8_t> image_data;
 	image_data.resize(width * height * sizeof(uint32_t));
-	uint8_t *image_data_w = image_data.ptrw();
+	uint8_t* image_data_w = image_data.ptrw();
 
 	size_t i = 0;
 	uint32_t x = x_start;
@@ -211,9 +214,9 @@ Error ImageLoaderMIP::convert_to_image(Ref<Image> p_image, const uint8_t *p_buff
 	return OK;
 }
 
-Error ImageLoaderMIP::load_image(Ref<Image> p_image, FileAccess *f, bool p_force_linear, float p_scale) {
+Error ImageLoaderMIP::load_image(Ref<Image> p_image, FileAccess* f, bool p_force_linear, float p_scale) {
 	Vector<uint8_t> src_image;
-	int src_image_len = f->get_len();
+	int src_image_len = f->get_length();
 	ERR_FAIL_COND_V(src_image_len == 0, ERR_FILE_CORRUPT);
 	ERR_FAIL_COND_V(src_image_len < (int)sizeof(tga_header_s), ERR_FILE_CORRUPT);
 	src_image.resize(src_image_len);
@@ -236,16 +239,20 @@ Error ImageLoaderMIP::load_image(Ref<Image> p_image, FileAccess *f, bool p_force
 	tga_header.pixel_depth = f->get_8();
 	tga_header.image_descriptor = f->get_8();
 
-	bool is_encoded = (tga_header.image_type == TGA_TYPE_RLE_INDEXED || tga_header.image_type == TGA_TYPE_RLE_RGB || tga_header.image_type == TGA_TYPE_RLE_MONOCHROME);
+	bool is_encoded =
+		(tga_header.image_type == TGA_TYPE_RLE_INDEXED || tga_header.image_type == TGA_TYPE_RLE_RGB ||
+		 tga_header.image_type == TGA_TYPE_RLE_MONOCHROME);
 	bool has_color_map = (tga_header.image_type == TGA_TYPE_RLE_INDEXED || tga_header.image_type == TGA_TYPE_INDEXED);
-	bool is_monochrome = (tga_header.image_type == TGA_TYPE_RLE_MONOCHROME || tga_header.image_type == TGA_TYPE_MONOCHROME);
+	bool is_monochrome =
+		(tga_header.image_type == TGA_TYPE_RLE_MONOCHROME || tga_header.image_type == TGA_TYPE_MONOCHROME);
 
 	if (tga_header.image_type == TGA_TYPE_NO_DATA) {
 		err = FAILED;
 	}
 
 	if (has_color_map) {
-		if (tga_header.color_map_length > 256 || (tga_header.color_map_depth != 24 && tga_header.color_map_depth != 32) || tga_header.color_map_type != 1) {
+		if (tga_header.color_map_length > 256 ||
+			(tga_header.color_map_depth != 24 && tga_header.color_map_depth != 32) || tga_header.color_map_type != 1) {
 			err = FAILED;
 		}
 	} else {
@@ -271,27 +278,27 @@ Error ImageLoaderMIP::load_image(Ref<Image> p_image, FileAccess *f, bool p_force
 			size_t color_map_size = tga_header.color_map_length * (tga_header.color_map_depth >> 3);
 			err = palette.resize(color_map_size);
 			if (err == OK) {
-				uint8_t *palette_w = palette.ptrw();
+				uint8_t* palette_w = palette.ptrw();
 				f->get_buffer(&palette_w[0], color_map_size);
 			} else {
 				return OK;
 			}
 		}
 
-		uint8_t *src_image_w = src_image.ptrw();
+		uint8_t* src_image_w = src_image.ptrw();
 		f->get_buffer(&src_image_w[0], src_image_len - f->get_position());
 
-		const uint8_t *src_image_r = src_image.ptr();
+		const uint8_t* src_image_r = src_image.ptr();
 
 		const size_t pixel_size = tga_header.pixel_depth >> 3;
 		const size_t buffer_size = (tga_header.image_width * tga_header.image_height) * pixel_size;
 
 		Vector<uint8_t> uncompressed_buffer;
 		uncompressed_buffer.resize(buffer_size);
-		uint8_t *uncompressed_buffer_w = uncompressed_buffer.ptrw();
-		const uint8_t *uncompressed_buffer_r;
+		uint8_t* uncompressed_buffer_w = uncompressed_buffer.ptrw();
+		const uint8_t* uncompressed_buffer_r;
 
-		const uint8_t *buffer = nullptr;
+		const uint8_t* buffer = nullptr;
 
 		if (is_encoded) {
 			err = decode_tga_rle(src_image_r, pixel_size, uncompressed_buffer_w, buffer_size);
@@ -305,7 +312,7 @@ Error ImageLoaderMIP::load_image(Ref<Image> p_image, FileAccess *f, bool p_force
 		};
 
 		if (err == OK) {
-			const uint8_t *palette_r = palette.ptr();
+			const uint8_t* palette_r = palette.ptr();
 			err = convert_to_image(p_image, buffer, tga_header, palette_r, is_monochrome);
 		}
 	}
@@ -314,21 +321,17 @@ Error ImageLoaderMIP::load_image(Ref<Image> p_image, FileAccess *f, bool p_force
 	return err;
 }
 
-void ImageLoaderMIP::get_recognized_extensions(List<String> *p_extensions) const {
-	p_extensions->push_back("mip");
-}
+void ImageLoaderMIP::get_recognized_extensions(List<String>* p_extensions) const { p_extensions->push_back("mip"); }
 
-static Ref<Image> _tga_mem_loader_func(const uint8_t *p_png, int p_size) {
+static Ref<Image> _tga_mem_loader_func(const uint8_t* p_png, int p_size) {
 	FileAccessMemory memfile;
 	Error open_memfile_error = memfile.open_custom(p_png, p_size);
 	ERR_FAIL_COND_V_MSG(open_memfile_error, Ref<Image>(), "Could not create memfile for TGA image buffer.");
 	Ref<Image> img;
-	img.instance();
+	img.instantiate();
 	Error load_error = ImageLoaderMIP().load_image(img, &memfile, false, 1.0f);
 	ERR_FAIL_COND_V_MSG(load_error, Ref<Image>(), "Failed to load TGA image.");
 	return img;
 }
 
-ImageLoaderMIP::ImageLoaderMIP() {
-	Image::_tga_mem_loader_func = _tga_mem_loader_func;
-}
+ImageLoaderMIP::ImageLoaderMIP() { Image::_tga_mem_loader_func = _tga_mem_loader_func; }

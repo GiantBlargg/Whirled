@@ -1,7 +1,7 @@
 using Godot;
 using System.Collections.Generic;
 
-public class TDF : Node3D {
+public partial class TDF : Node3D {
 	private string _modelPath;
 	public string ModelPath {
 		get { return _modelPath; }
@@ -156,7 +156,7 @@ public class TDF : Node3D {
 
 class TDFMaterialFactory {
 
-	static Shader shader = GD.Load<Shader>("res://Scripts/LR2/TDF.shader");
+	static Shader shader = GD.Load<Shader>("res://Scripts/LR2/TDF.gdshader");
 
 	Dictionary<byte[], ShaderMaterial> materials = new Dictionary<byte[], ShaderMaterial>();
 	string modelPath;

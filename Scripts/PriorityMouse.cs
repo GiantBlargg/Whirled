@@ -1,7 +1,7 @@
 using Godot;
 using System;
 
-public class PriorityMouse : Node {
+public partial class PriorityMouse : Node {
 	Camera3D camera;
 	PhysicsDirectSpaceState3D space;
 	CollisionObject3D lastCollider = null;

@@ -30,7 +30,7 @@ func set_dir():
 script = null
 
 [node name="ViewCamera" type="Camera3D" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 100, 0 )
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 100, 0)
 current = true
 fov = 60.0
 near = 1.0
@@ -45,7 +45,7 @@ script = ExtResource( 6 )
 rootMount = NodePath("RootMount")
 
 [node name="RootMount" type="Node3D" parent="WRLManager"]
-transform = Transform( -1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 script = null
 
 [node name="SelectManager" type="Node" parent="."]
@@ -57,10 +57,6 @@ PropertyContainer = NodePath("../Control/VBoxContainer/HSplitContainer/HSplitCon
 [node name="Control" type="Control" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_left = -3.0
-margin_top = -3.0
-margin_right = 3.0
-margin_bottom = 3.0
 mouse_filter = 2
 theme = ExtResource( 5 )
 script = null
@@ -79,60 +75,60 @@ __meta__ = {
 }
 
 [node name="PanelContainer" type="PanelContainer" parent="Control/VBoxContainer"]
-margin_right = 1286.0
-margin_bottom = 38.0
+offset_right = 1280.0
+offset_bottom = 43.0
 script = null
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="HBoxContainer" type="HBoxContainer" parent="Control/VBoxContainer/PanelContainer"]
-margin_left = 7.0
-margin_top = 7.0
-margin_right = 1279.0
-margin_bottom = 31.0
+offset_left = 7.0
+offset_top = 7.0
+offset_right = 1273.0
+offset_bottom = 36.0
 script = null
 
 [node name="NewButton" type="Button" parent="Control/VBoxContainer/PanelContainer/HBoxContainer"]
-margin_right = 42.0
-margin_bottom = 24.0
+offset_right = 47.0
+offset_bottom = 29.0
 text = "New"
 script = null
 
 [node name="OpenButton" type="Button" parent="Control/VBoxContainer/PanelContainer/HBoxContainer"]
-margin_left = 46.0
-margin_right = 95.0
-margin_bottom = 24.0
+offset_left = 51.0
+offset_right = 105.0
+offset_bottom = 29.0
 text = "Open"
 script = null
 
 [node name="FileDialog" type="FileDialog" parent="Control/VBoxContainer/PanelContainer/HBoxContainer/OpenButton"]
 title = "Open a File"
-size = Vector2i( 500, 300 )
+size = Vector2i(500, 300)
 file_mode = 0
 access = 2
-filters = PackedStringArray( "*.WRL; LR2 Worlds" )
+filters = PackedStringArray("*.WRL; LR2 Worlds")
 current_dir = "/"
 current_path = "/"
 script = SubResource( 1 )
 
 [node name="SaveButton" type="Button" parent="Control/VBoxContainer/PanelContainer/HBoxContainer"]
-margin_left = 99.0
-margin_right = 142.0
-margin_bottom = 24.0
+offset_left = 109.0
+offset_right = 157.0
+offset_bottom = 29.0
 text = "Save"
 script = null
 
 [node name="PathButton" type="Button" parent="Control/VBoxContainer/PanelContainer/HBoxContainer"]
-margin_left = 146.0
-margin_right = 231.0
-margin_bottom = 24.0
+offset_left = 161.0
+offset_right = 257.0
+offset_bottom = 29.0
 text = "Game Path"
 script = null
 
 [node name="FileDialog" type="FileDialog" parent="Control/VBoxContainer/PanelContainer/HBoxContainer/PathButton"]
 title = "Open a Directory"
-size = Vector2i( 500, 300 )
+size = Vector2i(500, 300)
 file_mode = 2
 access = 2
 current_dir = "/"
@@ -140,24 +136,24 @@ current_path = "/"
 script = SubResource( 2 )
 
 [node name="HSplitContainer" type="HSplitContainer" parent="Control/VBoxContainer"]
-margin_top = 34.0
-margin_right = 1286.0
-margin_bottom = 726.0
+offset_top = 39.0
+offset_right = 1280.0
+offset_bottom = 720.0
 mouse_filter = 2
 size_flags_vertical = 3
 split_offset = 175
 script = null
 
 [node name="PanelContainer" type="PanelContainer" parent="Control/VBoxContainer/HSplitContainer"]
-margin_right = 190.0
-margin_bottom = 692.0
+offset_right = 190.0
+offset_bottom = 681.0
 script = null
 
 [node name="WRLTreeView" type="Tree" parent="Control/VBoxContainer/HSplitContainer/PanelContainer"]
-margin_left = 7.0
-margin_top = 7.0
-margin_right = 183.0
-margin_bottom = 685.0
+offset_left = 7.0
+offset_top = 7.0
+offset_right = 183.0
+offset_bottom = 674.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 allow_reselect = true
@@ -166,35 +162,35 @@ select_mode = 1
 script = null
 
 [node name="HSplitContainer" type="HSplitContainer" parent="Control/VBoxContainer/HSplitContainer"]
-margin_left = 202.0
-margin_right = 1286.0
-margin_bottom = 692.0
+offset_left = 202.0
+offset_right = 1280.0
+offset_bottom = 681.0
 mouse_filter = 2
 split_offset = -300
 script = null
 
 [node name="Control" type="Control" parent="Control/VBoxContainer/HSplitContainer/HSplitContainer"]
-margin_right = 758.0
-margin_bottom = 692.0
+offset_right = 752.0
+offset_bottom = 681.0
 mouse_filter = 2
 size_flags_horizontal = 3
 script = null
 
 [node name="PanelContainer" type="PanelContainer" parent="Control/VBoxContainer/HSplitContainer/HSplitContainer"]
-margin_left = 770.0
-margin_right = 1084.0
-margin_bottom = 692.0
+offset_left = 764.0
+offset_right = 1078.0
+offset_bottom = 681.0
 script = null
 
 [node name="PropertyContainer" type="ScrollContainer" parent="Control/VBoxContainer/HSplitContainer/HSplitContainer/PanelContainer"]
-margin_left = 7.0
-margin_top = 7.0
-margin_right = 307.0
-margin_bottom = 685.0
+offset_left = 7.0
+offset_top = 7.0
+offset_right = 307.0
+offset_bottom = 674.0
 script = null
 
 [node name="DirectionalLight" type="DirectionalLight3D" parent="."]
-transform = Transform( 0.760395, -0.406999, 0.506114, 0, 0.779283, 0.626672, -0.649461, -0.476518, 0.592563, 0, 0, 0 )
+transform = Transform3D(0.760395, -0.406999, 0.506114, 0, 0.779283, 0.626672, -0.649461, -0.476518, 0.592563, 0, 0, 0)
 script = null
 
 [connection signal="pressed" from="Control/VBoxContainer/PanelContainer/HBoxContainer/NewButton" to="WRLManager" method="New"]

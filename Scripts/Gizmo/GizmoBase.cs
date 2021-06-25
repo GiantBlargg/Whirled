@@ -1,6 +1,6 @@
 using Godot;
 
-public abstract class GizmoBase : StaticBody3D {
+public abstract partial class GizmoBase : StaticBody3D {
 	[Export]
 	public Color color;
 
@@ -12,9 +12,9 @@ public abstract class GizmoBase : StaticBody3D {
 
 	public override void _Ready() {
 		var mesh = GetChild<MeshInstance3D>(0);
-		var mat = mesh.GetSurfaceMaterial(0).Duplicate() as BaseMaterial3D;
+		var mat = mesh.GetSurfaceOverrideMaterial(0).Duplicate() as BaseMaterial3D;
 		mat.AlbedoColor = color * mat.AlbedoColor;
-		mesh.SetSurfaceMaterial(0, mat);
+		mesh.SetSurfaceOverrideMaterial(0, mat);
 
 		parent = GetParent<Gizmo>();
 		camera = GetViewport().GetCamera();
@@ -67,7 +67,7 @@ public abstract class GizmoBase : StaticBody3D {
 	public override void _UnhandledInput(InputEvent ev) {
 		if (ev is InputEventMouseButton) {
 			var buttonEvent = ev as InputEventMouseButton;
-			if (buttonEvent.ButtonIndex == (int)ButtonList.Left) {
+			if (buttonEvent.ButtonIndex == MouseButton.Left) {
 				if (buttonEvent.Pressed) {
 					InteractStart(buttonEvent);
 					SetProcessInput(true);
@@ -80,7 +80,7 @@ public abstract class GizmoBase : StaticBody3D {
 	public override void _Input(InputEvent ev) {
 		if (ev is InputEventMouseButton) {
 			var buttonEvent = ev as InputEventMouseButton;
-			if (buttonEvent.ButtonIndex == (int)ButtonList.Left) {
+			if (buttonEvent.ButtonIndex == MouseButton.Left) {
 				if (!buttonEvent.Pressed) {
 					SetProcessInput(false);
 					InteractEnd(buttonEvent);
@@ -95,6 +95,6 @@ public abstract class GizmoBase : StaticBody3D {
 	}
 
 	public virtual void InteractStart(InputEventMouseButton ev) { }
-	public virtual void InteractUpdate(InputEventMouseMotion ev, ref Transform targetTransform) { }
+	public virtual void InteractUpdate(InputEventMouseMotion ev, ref Transform3D targetTransform) { }
 	public virtual void InteractEnd(InputEventMouseButton ev) { }
 }

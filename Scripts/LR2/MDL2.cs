@@ -1,7 +1,7 @@
 using Godot;
 using System.Collections.Generic;
 
-public class MDL2 : MeshInstance3D {
+public partial class MDL2 : MeshInstance3D {
 	public string modelPath {
 		get { return _modelPath; }
 		set {

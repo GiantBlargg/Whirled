@@ -42,7 +42,7 @@ namespace LR2.WRL {
 
 		public override System.Collections.Generic.List<ObjectProperty> GetProperties() {
 			var p = base.GetProperties();
-			p.Add(new ObjectProperty<Transform>(() => model.Transform));
+			p.Add(new ObjectProperty<Transform3D>(() => model.Transform));
 			p.Add(new ObjectProperty<float>(() => u1));
 			p.Add(new ObjectProperty<float>(() => u2));
 			p.Add(new ObjectProperty<uint>(() => u3));

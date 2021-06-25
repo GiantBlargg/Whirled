@@ -1,6 +1,6 @@
 using Godot;
 
-public class GameDataManager : Node {
+public partial class GameDataManager : Node {
 	// ConfigFile config;
 	// const string configPath = "user://settings.cfg";
 	// public override void _Ready() {

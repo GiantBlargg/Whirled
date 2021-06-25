@@ -3,7 +3,7 @@ using System;
 using System.Linq;
 
 namespace Controls {
-	public class ArrayControl<T> : VBoxContainer, IControl<T[]> {
+	public partial class ArrayControl<T> : VBoxContainer, IControl<T[]> {
 
 		IControl<T>[] controls;
 

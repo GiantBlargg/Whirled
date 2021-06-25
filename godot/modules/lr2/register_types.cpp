@@ -1,10 +1,10 @@
 #include "register_types.h"
 
 #include "core/config/engine.h"
-#include "lr2_dir.h"
+#include "ifl.h"
 #include "image_loader_mip.h"
 #include "image_texture_loader.h"
-#include "ifl.h"
+#include "lr2_dir.h"
 #include "mdl2.h"
 
 static LR2Dir* lr2_dir = NULL;
@@ -22,13 +22,13 @@ void register_lr2_types() {
 	image_loader_mip = memnew(ImageLoaderMIP);
 	ImageLoader::add_image_format_loader(image_loader_mip);
 
-	image_texture_loader.instance();
+	image_texture_loader.instantiate();
 	ResourceLoader::add_resource_format_loader(image_texture_loader);
 
-	ifl_loader.instance();
+	ifl_loader.instantiate();
 	ResourceLoader::add_resource_format_loader(ifl_loader);
 
-	mdl2_loader.instance();
+	mdl2_loader.instantiate();
 	ResourceLoader::add_resource_format_loader(mdl2_loader);
 }
 
@@ -44,6 +44,6 @@ void unregister_lr2_types() {
 	ResourceLoader::remove_resource_format_loader(ifl_loader);
 	ifl_loader.unref();
 
-	ResourceLoader::add_resource_format_loader(mdl2_loader);
+	ResourceLoader::remove_resource_format_loader(mdl2_loader);
 	mdl2_loader.unref();
 }

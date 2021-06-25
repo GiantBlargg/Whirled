@@ -1,7 +1,7 @@
 using Godot;
 
 namespace Controls {
-	public class TransformControl : VBoxContainer, IControl<Transform> {
+	public partial class TransformControl : VBoxContainer, IControl<Transform3D> {
 		static float RadToDeg = 180 / Mathf.Pi;
 		static float DegToRad = Mathf.Pi / 180;
 
@@ -35,13 +35,13 @@ namespace Controls {
 		public void SetTransform(string _) => ValueSet();
 		public void SetTransform() => ValueSet();
 
-		public Transform Value {
+		public Transform3D Value {
 			get {
 				var basis = new Basis(rotation.Value * DegToRad);
 				if (AllowScale) {
 					basis = basis.Scaled(scale.Value);
 				}
-				return new Transform(basis, translate.Value);
+				return new Transform3D(basis, translate.Value);
 			}
 			set {
 				translate.Value = value.origin;
