@@ -1,11 +1,12 @@
 #include "register_types.h"
 
 #include "core/config/engine.h"
-#include "ifl.h"
-#include "image_loader_mip.h"
-#include "image_texture_loader.h"
-#include "lr2_dir.h"
-#include "mdl2.h"
+#include "editor/whirled.h"
+#include "import/ifl.h"
+#include "import/image_loader_mip.h"
+#include "import/image_texture_loader.h"
+#include "import/lr2_dir.h"
+#include "import/mdl2.h"
 
 static LR2Dir* lr2_dir = NULL;
 static ImageLoaderMIP* image_loader_mip = NULL;
@@ -30,6 +31,8 @@ void register_lr2_types() {
 
 	mdl2_loader.instantiate();
 	ResourceLoader::add_resource_format_loader(mdl2_loader);
+
+	ClassDB::register_class<Whirled>();
 }
 
 void unregister_lr2_types() {

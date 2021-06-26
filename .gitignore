@@ -1,21 +1,13 @@
-
 # Godot-specific ignores
 *.import
 export.cfg
 .godot/
+*.log
 
 # Imported translations (automatically generated from CSV files)
 *.translation
 
-# Mono-specific ignores
-.mono/
-data_*/
-mono_crash.*
-
-.vscode/
-
 __pycache__
-
 *.o
 
-/build/
+.vscode/

@@ -1,3 +1,4 @@
-[submodule "godot/godot"]
-	path = godot/godot
+[submodule "godot"]
+	path = godot
 	url = git@github.com:GiantBlargg/godot.git
+	branch = lr2

@@ -40,5 +40,15 @@ String LR2Dir::resolve_path(String path) {
 void LR2Dir::deduce_path(String path) {
 	if (get_path() == "") {
 		DirAccess* dir = DirAccess::open(path);
+		while (true) {
+			if (dir->file_exists("LEGO Racers 2.exe")) {
+				set_path(dir->get_current_dir());
+				break;
+			}
+			if (dir->get_current_dir(false) == "") {
+				break;
+			}
+			dir->change_dir("..");
+		}
 	}
 }

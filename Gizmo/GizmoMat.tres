@@ -1,8 +1,0 @@
-[gd_resource type="StandardMaterial3D" format=2]
-
-[resource]
-transparency = 1
-cull_mode = 2
-no_depth_test = true
-shading_mode = 0
-albedo_color = Color( 1, 1, 1, 0.74902 )
