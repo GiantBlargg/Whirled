@@ -1,8 +1,3 @@
 [application]
 config/name="Whirled"
 run/main_scene="res://whirled.tscn"
-
-[display]
-window/size/width=1280
-window/size/height=720
-window/energy_saving/keep_screen_on=false
