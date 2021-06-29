@@ -1,5 +1,6 @@
 #include "mdl2.h"
 
+#include "../io/file_helper.h"
 #include "core/io/file_access.h"
 #include "scene/resources/mesh.h"
 
@@ -47,36 +48,6 @@ struct MDL2Material {
 	uint32_t bitfield;
 	uint64_t anim_name;
 };
-
-inline Vector2 get_vector2(FileAccess* f) {
-	float x = f->get_float();
-	float y = f->get_float();
-	return Vector2(x, y);
-}
-inline Vector3 get_vector3(FileAccess* f) {
-	float x = f->get_float();
-	float y = f->get_float();
-	float z = f->get_float();
-	return Vector3(x, y, z);
-}
-inline Color get_colour(FileAccess* f) {
-	float r = f->get_float();
-	float g = f->get_float();
-	float b = f->get_float();
-	float a = f->get_float();
-	return Color(r, g, b, a);
-}
-inline String get_string(FileAccess* f, int length) {
-	CharString cs;
-	cs.resize(length + 1);
-	f->get_buffer((uint8_t*)cs.ptr(), length);
-	cs[length] = 0;
-
-	String ret;
-	ret.parse_utf8(cs.ptr());
-
-	return ret;
-}
 
 void load_vertices(FileAccess* f, Array* group_arrays) {
 	auto vertex_vector_offset = f->get_32();
@@ -186,7 +157,7 @@ RES MDL2Loader::load(
 				f->seek(texture_start + i * (256 + 8));
 				auto path = get_string(f, 256);
 				if (p_use_sub_threads)
-					ResourceLoader::load_threaded_request("lr2://" + path);
+					ResourceLoader::load_threaded_request("user://" + path);
 				textures.set(i, path);
 			}
 
@@ -298,7 +269,7 @@ RES MDL2Loader::load(
 
 				mat->set_texture(
 					BaseMaterial3D::TextureParam::TEXTURE_ALBEDO,
-					ResourceLoader::load_threaded_get("lr2://" + textures.get(blends.get(0).texture_id)));
+					ResourceLoader::load_threaded_get("user://" + textures.get(blends.get(0).texture_id)));
 
 				mesh->surface_set_material(render_group, mat);
 			}
