@@ -27,22 +27,35 @@ Error WRL::load(FileAccess* file) {
 
 		uint32_t layer = file->get_32();
 		String name = get_string(file, 24);
+		String binding = get_string(file, 24);
 
 		Ref<WRLEntry> entry;
 
-		{
-			Ref<WRLUnknown> unknown(memnew(WRLUnknown));
+		if (type == "cGeneralStatic") {
+			Ref<WRLGeneralStatic> e(memnew(WRLGeneralStatic));
 
-			unknown->data.resize(next_chunk - file->get_position());
-			file->get_buffer(unknown->data.ptrw(), unknown->data.size());
+			e->position = get_vector3(file);
+			e->rotation = get_quaternion(file);
+			file->seek(file->get_position() + 8);
+			e->collision_sound = file->get_32();
+			e->model = get_string(file, 0x80);
 
-			entry = unknown;
+			entry = e;
+
+		} else {
+			Ref<WRLUnknown> e(memnew(WRLUnknown));
+
+			e->data.resize(next_chunk - file->get_position());
+			file->get_buffer(e->data.ptrw(), e->data.size());
+
+			entry = e;
 		}
 
 		entry->type = type;
 		entry->u = u;
 		entry->layer = layer;
 		entry->name = name;
+		entry->binding = binding;
 
 		entries.append(entry);
 	}
@@ -66,10 +79,20 @@ Error WRL::save(FileAccess* file) {
 
 		file->store_32(entry->layer);
 		store_string(file, entry->name, 24);
+		store_string(file, entry->binding, 24);
 
-		{
-			Ref<WRLUnknown> unknown = entry;
-			file->store_buffer(unknown->data.ptr(), unknown->data.size());
+		if (entry->type == "cGeneralStatic") {
+			Ref<WRLGeneralStatic> e = entry;
+
+			store_vector3(file, e->position);
+			store_quaternion(file, e->rotation);
+			file->store_64(0);
+			file->store_32(e->collision_sound);
+			store_string(file, e->model, 0x80);
+
+		} else {
+			Ref<WRLUnknown> e = entry;
+			file->store_buffer(e->data.ptr(), e->data.size());
 		}
 
 		uint64_t length = file->get_position() - length_start;

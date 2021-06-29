@@ -11,6 +11,17 @@ class WRLEntry : public RefCounted {
 	uint32_t u;
 	uint32_t layer;
 	String name;
+	String binding;
+};
+
+class WRLGeneralStatic : public WRLEntry {
+	GDCLASS(WRLGeneralStatic, WRLEntry);
+
+  public:
+	Vector3 position;
+	Quaternion rotation;
+	uint32_t collision_sound;
+	String model;
 };
 
 class WRLUnknown : public WRLEntry {

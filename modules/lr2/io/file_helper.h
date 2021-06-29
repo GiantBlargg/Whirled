@@ -13,6 +13,24 @@ inline Vector3 get_vector3(FileAccess* f) {
 	float z = f->get_float();
 	return Vector3(x, y, z);
 }
+inline void store_vector3(FileAccess* f, Vector3 v) {
+	f->store_float(v.x);
+	f->store_float(v.y);
+	f->store_float(v.z);
+}
+inline Quaternion get_quaternion(FileAccess* f) {
+	float x = f->get_float();
+	float y = f->get_float();
+	float z = f->get_float();
+	float w = f->get_float();
+	return Quaternion(x, y, z, w);
+}
+inline void store_quaternion(FileAccess* f, Quaternion q) {
+	f->store_float(q.x);
+	f->store_float(q.y);
+	f->store_float(q.z);
+	f->store_float(q.w);
+}
 inline Color get_colour(FileAccess* f) {
 	float r = f->get_float();
 	float g = f->get_float();
@@ -20,6 +38,7 @@ inline Color get_colour(FileAccess* f) {
 	float a = f->get_float();
 	return Color(r, g, b, a);
 }
+
 inline String get_string(FileAccess* f, int length) {
 	CharString cs;
 	cs.resize(length + 1);
@@ -31,7 +50,6 @@ inline String get_string(FileAccess* f, int length) {
 
 	return ret;
 }
-
 inline void store_string(FileAccess* f, String str, int length) {
 	int end = f->get_position() + length;
 	CharString cs = str.ascii();
