@@ -36,7 +36,9 @@ Error WRL::load(FileAccess* file) {
 
 			e->position = get_vector3(file);
 			e->rotation = get_quaternion(file);
-			file->seek(file->get_position() + 8);
+			if (file->get_64() != 0) {
+				WARN_PRINT("Unexpected value");
+			}
 			e->collision_sound = file->get_32();
 			e->model = get_string(file, 0x80);
 

@@ -20,6 +20,8 @@ void Init::_notification(int p_notification) {
 
 			get_parent()->call_deferred("add_child", memnew(Whirled));
 			queue_delete();
+
+			DisplayServer::get_singleton()->delete_sub_window(window);
 		} else {
 			DisplayServer::get_singleton()->alert("Could not locate Lego Racers 2.");
 			get_tree()->quit();
@@ -36,6 +38,13 @@ Init::Init() {
 	ScriptServer::set_scripting_enabled(false);
 	TranslationServer::get_singleton()->set_enabled(false);
 
-	DisplayServer::get_singleton()->window_set_min_size(Size2(1024, 600));
-	DisplayServer::get_singleton()->screen_set_keep_on(false);
+	{
+		auto DS = DisplayServer::get_singleton();
+
+		DS->window_set_min_size(Size2(1024, 600));
+		DS->screen_set_keep_on(false);
+
+		window = DS->create_sub_window(DisplayServer::WINDOW_MODE_WINDOWED, 0);
+		DS->show_window(window);
+	}
 }

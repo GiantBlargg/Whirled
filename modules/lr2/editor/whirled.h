@@ -1,7 +1,6 @@
 #pragma once
 
 #include "scene/gui/file_dialog.h"
-#include "scene/main/node.h"
 #include "wrl.h"
 
 class Whirled : public Node {
@@ -20,9 +19,7 @@ class Whirled : public Node {
 
 	void _file_open(String path);
 	void _file_save_as(String path);
-	void _file_close();
-
-	void _update();
+	void _file_reset();
 
   public:
 	Whirled();

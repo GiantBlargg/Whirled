@@ -8,7 +8,7 @@ minizip = "no"
 
 modules_enabled_by_default = "no"
 module_freetype_enabled = "yes"
-module_gdnavigation_enabled = "yes"
+module_navigation_enabled = "yes"
 module_glslang_enabled = "yes"
 module_regex_enabled = "yes"
 module_text_server_adv_enabled = "yes"
