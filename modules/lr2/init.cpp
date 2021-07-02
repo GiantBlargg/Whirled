@@ -7,6 +7,7 @@
 
 void Init::_notification(int p_notification) {
 	if (p_notification == NOTIFICATION_READY) {
+		DisplayServer::get_singleton()->delete_sub_window(window);
 
 		// TODO: Locate lr2
 
@@ -15,13 +16,14 @@ void Init::_notification(int p_notification) {
 
 		if (found) {
 			RemapFSAccess::set_path(lr2_dir);
-			DirAccess::make_default<RemapDirAccess>(DirAccess::ACCESS_USERDATA);
-			FileAccess::make_default<RemapFileAccess>(FileAccess::ACCESS_USERDATA);
+			DirAccess::make_default<RemapDirAccess<RemapFSAccess, DefaultDirAccess<DirAccess::ACCESS_FILESYSTEM>>>(
+				DirAccess::ACCESS_RESOURCES);
+			FileAccess::make_default<CaseInsensitiveFileAccess<
+				New<RemapFileAccess<RemapFSAccess, DefaultFileAccess<FileAccess::ACCESS_FILESYSTEM>>>,
+				DefaultDirAccess<DirAccess::ACCESS_RESOURCES>>>(FileAccess::ACCESS_RESOURCES);
 
 			get_parent()->call_deferred("add_child", memnew(Whirled));
 			queue_delete();
-
-			DisplayServer::get_singleton()->delete_sub_window(window);
 		} else {
 			DisplayServer::get_singleton()->alert("Could not locate Lego Racers 2.");
 			get_tree()->quit();

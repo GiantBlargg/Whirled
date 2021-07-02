@@ -44,4 +44,17 @@ class WRL : public RefCounted {
 
 	Error load(FileAccess* file);
 	Error save(FileAccess* file);
+
+	enum WRLEvent {
+		Added,
+		Removed,
+		Renamed,
+		Modifed,
+	};
+
+	class EventHandler {
+		friend class WRL;
+		virtual void _wrl_event(WRL::WRLEvent event_type, String name, Ref<WRLEntry> entry) = 0;
+	};
+	EventHandler* event_handler;
 };

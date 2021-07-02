@@ -11,6 +11,8 @@ const uint32_t OBMG_MAGIC = 0x474d424f;
 void WRL::clear() { entries.clear(); }
 
 Error WRL::load(FileAccess* file) {
+	clear();
+
 	ERR_FAIL_COND_V_MSG(file->get_32() != WRL_MAGIC, ERR_FILE_UNRECOGNIZED, "Not a WRL file.");
 	ERR_FAIL_COND_V_MSG(file->get_32() != WRL_VERSION, ERR_FILE_UNRECOGNIZED, "Wrong WRL version");
 
@@ -60,6 +62,8 @@ Error WRL::load(FileAccess* file) {
 		entry->binding = binding;
 
 		entries.append(entry);
+
+		event_handler->_wrl_event(WRLEvent::Added, entry->name, entry);
 	}
 	return OK;
 }
@@ -68,7 +72,6 @@ Error WRL::save(FileAccess* file) {
 	file->store_32(WRL_MAGIC);
 	file->store_32(WRL_VERSION);
 
-	uint64_t current_chunk = 8;
 	for (int i = 0; i < entries.size(); i++) {
 		Ref<WRLEntry> entry = entries.get(i);
 

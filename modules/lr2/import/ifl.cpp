@@ -12,10 +12,7 @@ RES IFLLoader::load(
 
 	auto dir_path = p_path.get_base_dir();
 
-	auto f = FileAccess::open(p_path, FileAccess::READ);
-	auto contents = f->get_as_utf8_string();
-	f->close();
-	memdelete(f);
+	String contents = FileAccess::get_file_as_string(p_path);
 
 	Ref<AnimatedTexture> texture;
 	texture.instantiate();
@@ -40,7 +37,7 @@ RES IFLLoader::load(
 
 void IFLLoader::get_recognized_extensions(List<String>* p_extensions) const { p_extensions->push_back("ifl"); }
 
-bool IFLLoader::handles_type(const String& p_type) const { return p_type == "AnimatedTexture"; }
+bool IFLLoader::handles_type(const String& p_type) const { return ClassDB::is_parent_class("AnimatedTexture", p_type); }
 
 String IFLLoader::get_resource_type(const String& p_path) const {
 	if (p_path.get_extension().to_lower() == "ifl")

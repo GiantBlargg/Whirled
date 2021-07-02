@@ -2,6 +2,7 @@
 
 #include "core/os/keyboard.h"
 #include "scene/3d/camera_3d.h"
+#include "scene/3d/light_3d.h"
 #include "scene/gui/subviewport_container.h"
 
 void Viewer::_input(Ref<InputEvent> p_event) {
@@ -53,6 +54,45 @@ void Viewer::_notification(int p_what) {
 			movement *= get_process_delta_time() * move_speed;
 			camera->translate(movement);
 		}
+
+		for (auto p = pending.front(); p; p = p->next()) {
+			String name = p->get();
+			Instance i = instances[name];
+			String resolved_path = "res://" + i.model_path;
+			if (ResourceLoader::load_threaded_get_status(resolved_path) == ResourceLoader::THREAD_LOAD_LOADED) {
+				i.mesh_instance->set_mesh(ResourceLoader::load_threaded_get(resolved_path));
+				pending.erase(p);
+			}
+		}
+	}
+}
+
+void Viewer::_wrl_event(WRL::WRLEvent event_type, String name, Ref<WRLEntry> entry) {
+	switch (event_type) {
+	case WRL::Added:
+		if (entry->type == "cGeneralStatic") {
+			auto mesh_instance = memnew(MeshInstance3D);
+			viewport->add_child(mesh_instance);
+			instances.insert(name, {mesh_instance});
+			_wrl_event(WRL::Modifed, name, entry);
+		}
+		break;
+	case WRL::WRLEvent::Modifed:
+		if (entry->type == "cGeneralStatic") {
+			Ref<WRLGeneralStatic> gs = entry;
+			Instance& i = instances[name];
+			i.mesh_instance->set_transform(Transform3D(Basis(gs->rotation), gs->position));
+			if (i.model_path != gs->model) {
+				i.model_path = gs->model;
+				pending.insert(name);
+				ResourceLoader::load_threaded_request("res://" + i.model_path, "Mesh", true);
+			}
+		}
+		break;
+	case WRL::WRLEvent::Removed:
+		break;
+	case WRL::WRLEvent::Renamed:
+		break;
 	}
 }
 
@@ -65,8 +105,12 @@ Viewer::Viewer() {
 	viewport_container->set_h_size_flags(Control::SIZE_EXPAND_FILL);
 	add_child(viewport_container);
 
-	SubViewport* viewport = memnew(SubViewport);
+	viewport = memnew(SubViewport);
 	viewport_container->add_child(viewport);
+
+	DirectionalLight3D* l = memnew(DirectionalLight3D);
+	l->rotate_x(Math_PI / 4);
+	viewport->add_child(l);
 
 	camera = memnew(Camera3D);
 	camera->translate(Vector3(0, 0, 5));

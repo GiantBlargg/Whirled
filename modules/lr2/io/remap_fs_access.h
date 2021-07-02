@@ -18,14 +18,20 @@ class RemapFSAccess {
 	String get() { return _path; }
 };
 
-class RemapDirAccess : public DirAccess {
+template <DirAccess::AccessType Access> struct DefaultDirAccess {
+	DirAccess* operator()() { return DirAccess::create(Access); }
+};
 
+template <typename Remap, typename D> class RemapDirAccess : public DirAccess {
   private:
 	DirAccess* dir;
-	RemapFSAccess map;
+	Remap map;
 
   public:
-	RemapDirAccess();
+	RemapDirAccess() {
+		dir = D()();
+		dir->change_dir(map.get());
+	};
 
 	Error list_dir_begin() { return dir->list_dir_begin(); }
 	String get_next() { return dir->get_next(); }
@@ -81,13 +87,21 @@ class RemapDirAccess : public DirAccess {
 	}
 };
 
-class RemapFileAccess : public FileAccess {
+template <FileAccess::AccessType Access> struct DefaultFileAccess {
+	FileAccess* operator()() { return FileAccess::create(Access); }
+};
+
+template <typename F> struct New {
+	F* operator()() { return new F(); }
+};
+
+template <typename Remap, typename F> class RemapFileAccess : public FileAccess {
   private:
 	FileAccess* file;
-	RemapFSAccess map;
+	Remap map;
 
   public:
-	RemapFileAccess();
+	RemapFileAccess() { file = F()(); }
 
   public:
 	uint32_t _get_unix_permissions(const String& p_file) {
@@ -143,6 +157,80 @@ class RemapFileAccess : public FileAccess {
 		ERR_PRINT("NOT IMPLEMENTED");
 		file->flush();
 	}
+	void store_8(uint8_t p_dest) { file->store_8(p_dest); }
+
+	bool file_exists(const String& p_name) {
+		ERR_PRINT("NOT IMPLEMENTED");
+		return file->file_exists(p_name);
+	}
+};
+
+template <typename F, typename D> class CaseInsensitiveFileAccess : public FileAccess {
+  private:
+	FileAccess* file;
+
+  public:
+	CaseInsensitiveFileAccess() { file = F()(); }
+
+  public:
+	uint32_t _get_unix_permissions(const String& p_file) {
+		ERR_PRINT("NOT IMPLEMENTED");
+		return file->_get_unix_permissions(p_file);
+	}
+	Error _set_unix_permissions(const String& p_file, uint32_t p_permissions) {
+		ERR_PRINT("NOT IMPLEMENTED");
+		return file->_set_unix_permissions(p_file, p_permissions);
+	}
+
+  protected:
+	Error _open(const String& p_path, int p_mode_flags) {
+		Error err = file->reopen(p_path, p_mode_flags);
+		if (err != ERR_FILE_NOT_FOUND)
+			return err;
+
+		DirAccess* dir = D()();
+
+		String next = "";
+
+		Vector<String> path = p_path.replace_first("res://", "").split("/");
+		for (int i = 0; i < path.size(); i++) {
+			String path_seg = path[i].to_lower();
+			dir->list_dir_begin();
+			do {
+				next = dir->get_next();
+				if (next == "")
+					return ERR_FILE_NOT_FOUND;
+			} while (next.to_lower() != path_seg);
+			dir->list_dir_end();
+			dir->change_dir(next);
+		}
+
+		return file->reopen(dir->get_current_dir() + "/" + next, p_mode_flags);
+	}
+	uint64_t _get_modified_time(const String& p_file) {
+		ERR_PRINT("NOT IMPLEMENTED");
+		return file->get_modified_time(p_file);
+	}
+
+  public:
+	void close() { file->close(); }
+	bool is_open() const { return file->is_open(); }
+
+	String get_path() const { return file->get_path(); }
+	String get_path_absolute() const { return file->get_path_absolute(); }
+
+	void seek(uint64_t p_position) { file->seek(p_position); }
+	void seek_end(int64_t p_position = 0) { file->seek_end(); }
+	uint64_t get_position() const { return file->get_position(); }
+	uint64_t get_length() const { return file->get_length(); }
+
+	bool eof_reached() const { return file->eof_reached(); }
+
+	uint8_t get_8() const { return file->get_8(); }
+
+	Error get_error() const { return file->get_error(); }
+
+	void flush() { file->flush(); }
 	void store_8(uint8_t p_dest) { file->store_8(p_dest); }
 
 	bool file_exists(const String& p_name) {

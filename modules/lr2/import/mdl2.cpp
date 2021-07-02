@@ -156,8 +156,7 @@ RES MDL2Loader::load(
 			for (int i = 0; i < textures.size(); i++) {
 				f->seek(texture_start + i * (256 + 8));
 				auto path = get_string(f, 256);
-				if (p_use_sub_threads)
-					ResourceLoader::load_threaded_request("user://" + path);
+				ResourceLoader::load_threaded_request("res://" + path, "Texture2D");
 				textures.set(i, path);
 			}
 
@@ -269,7 +268,7 @@ RES MDL2Loader::load(
 
 				mat->set_texture(
 					BaseMaterial3D::TextureParam::TEXTURE_ALBEDO,
-					ResourceLoader::load_threaded_get("user://" + textures.get(blends.get(0).texture_id)));
+					ResourceLoader::load_threaded_get("res://" + textures.get(blends.get(0).texture_id)));
 
 				mesh->surface_set_material(render_group, mat);
 			}
@@ -293,10 +292,10 @@ RES MDL2Loader::load(
 
 void MDL2Loader::get_recognized_extensions(List<String>* p_extensions) const { p_extensions->push_back("md2"); }
 
-bool MDL2Loader::handles_type(const String& p_type) const { return p_type == "Mesh"; }
+bool MDL2Loader::handles_type(const String& p_type) const { return ClassDB::is_parent_class("ArrayMesh", p_type); }
 
 String MDL2Loader::get_resource_type(const String& p_path) const {
 	if (p_path.get_extension().to_lower() == "md2")
-		return "Mesh";
+		return "ArrayMesh";
 	return "";
 }

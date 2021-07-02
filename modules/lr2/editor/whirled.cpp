@@ -2,7 +2,6 @@
 
 #include "scene/gui/panel_container.h"
 #include "scene/gui/split_container.h"
-#include "viewer.h"
 
 void Whirled::_menu_new() {
 	file_path = "";
@@ -49,6 +48,10 @@ void Whirled::_file_reset() {
 	}
 }
 
+void Whirled::_wrl_event(WRL::WRLEvent event_type, String name, Ref<WRLEntry> entry) {
+	viewer->_wrl_event(event_type, name, entry);
+}
+
 Whirled::Whirled() {
 
 	// TODO: Theme
@@ -58,8 +61,8 @@ Whirled::Whirled() {
 	base->set_anchors_and_offsets_preset(Control::PRESET_WIDE);
 
 	file = memnew(FileDialog);
-	file->set_access(FileDialog::ACCESS_USERDATA);
-	file->set_current_dir("user://game data/SAVED WORLDS");
+	file->set_access(FileDialog::ACCESS_RESOURCES);
+	file->set_current_dir("res://game data/SAVED WORLDS");
 	file->add_filter("*.WRL; LR2 Worlds");
 	base->add_child(file);
 
@@ -99,12 +102,13 @@ Whirled::Whirled() {
 	HSplitContainer* left_drawer_split = memnew(HSplitContainer);
 	right_drawer_split->add_child(left_drawer_split);
 
-	Viewer* main_viewport = memnew(Viewer);
-	left_drawer_split->add_child(main_viewport);
-	main_viewport->set_h_size_flags(Control::SIZE_EXPAND_FILL);
+	viewer = memnew(Viewer);
+	left_drawer_split->add_child(viewer);
+	viewer->set_h_size_flags(Control::SIZE_EXPAND_FILL);
 
 	ScrollContainer* left_drawer = memnew(ScrollContainer);
 	left_drawer_split->add_child(left_drawer);
 
 	wrl.instantiate();
+	wrl->event_handler = this;
 }

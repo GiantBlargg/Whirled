@@ -9,7 +9,18 @@ RES ImageTextureLoader::load(
 
 	Ref<Image> image;
 	image.instantiate();
-	image->load(p_path);
+
+	if (!FileAccess::exists(p_path) && p_path.get_extension().to_lower() == "tga") {
+		return ResourceLoader::load(p_path.get_basename() + ".mip", "Texture2D", p_cache_mode, r_error);
+	}
+
+	Error err = ImageLoader::load_image(p_path, image);
+
+	if (err) {
+		if (r_error)
+			*r_error = err;
+		return NULL;
+	}
 
 	if (image->is_empty()) {
 		if (r_error)
@@ -33,7 +44,7 @@ void ImageTextureLoader::get_recognized_extensions(List<String>* p_extensions) c
 }
 
 bool ImageTextureLoader::handles_type(const String& p_type) const {
-	return ClassDB::is_parent_class(p_type, "Texture2D");
+	return ClassDB::is_parent_class("ImageTexture", p_type);
 }
 
 String ImageTextureLoader::get_resource_type(const String& p_path) const {

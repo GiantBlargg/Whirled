@@ -2,18 +2,11 @@
 
 String RemapFSAccess::path = "";
 
-String RemapFSAccess::map_path(String p_path) { return p_path.replace_first("user:/", _path); }
+String RemapFSAccess::map_path(String p_path) { return p_path.replace_first("res:/", _path); }
 String RemapFSAccess::unmap_path(String p_path) {
-	String path = p_path.replace_first(_path, "user:/");
-	if (path == "user:/") {
+	String path = p_path.replace_first(_path, "res:/");
+	if (path == "res:/") {
 		path = path + "/";
 	}
 	return path;
 }
-
-RemapDirAccess::RemapDirAccess() {
-	dir = DirAccess::create(ACCESS_FILESYSTEM);
-	dir->change_dir(map.get());
-};
-
-RemapFileAccess::RemapFileAccess() { file = FileAccess::create(ACCESS_FILESYSTEM); }
