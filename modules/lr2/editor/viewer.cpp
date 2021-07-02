@@ -59,9 +59,21 @@ void Viewer::_notification(int p_what) {
 			String name = p->get();
 			Instance i = instances[name];
 			String resolved_path = "res://" + i.model_path;
-			if (ResourceLoader::load_threaded_get_status(resolved_path) == ResourceLoader::THREAD_LOAD_LOADED) {
+			switch (ResourceLoader::load_threaded_get_status(resolved_path)) {
+			case ResourceLoader::THREAD_LOAD_INVALID_RESOURCE:
+				ResourceLoader::load_threaded_request(resolved_path, "Mesh", true);
+				break;
+			case ResourceLoader::THREAD_LOAD_IN_PROGRESS:
+				break;
+			case ResourceLoader::THREAD_LOAD_FAILED:
+				Error err;
+				ResourceLoader::load_threaded_get(resolved_path, &err);
+				ERR_PRINT("Failed to load: " + resolved_path);
+				break;
+			case ResourceLoader::THREAD_LOAD_LOADED:
 				i.mesh_instance->set_mesh(ResourceLoader::load_threaded_get(resolved_path));
 				pending.erase(p);
+				break;
 			}
 		}
 	}
@@ -85,11 +97,15 @@ void Viewer::_wrl_event(WRL::WRLEvent event_type, String name, Ref<WRLEntry> ent
 			if (i.model_path != gs->model) {
 				i.model_path = gs->model;
 				pending.insert(name);
-				ResourceLoader::load_threaded_request("res://" + i.model_path, "Mesh", true);
 			}
 		}
 		break;
 	case WRL::WRLEvent::Removed:
+		if (instances.has(name)) {
+			Instance& i = instances[name];
+			i.mesh_instance->queue_delete();
+			instances.erase(name);
+		}
 		break;
 	case WRL::WRLEvent::Renamed:
 		break;

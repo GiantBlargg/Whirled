@@ -8,7 +8,13 @@ const uint32_t WRL_MAGIC = 0x57324352;
 const uint32_t WRL_VERSION = 0xb;
 const uint32_t OBMG_MAGIC = 0x474d424f;
 
-void WRL::clear() { entries.clear(); }
+void WRL::clear() {
+	for (int i = 0; i < entries.size(); i++) {
+		auto entry = entries[i];
+		event_handler->_wrl_event(WRL::Removed, entry->name, entry);
+	}
+	entries.clear();
+}
 
 Error WRL::load(FileAccess* file) {
 	clear();

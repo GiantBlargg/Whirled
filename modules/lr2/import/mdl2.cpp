@@ -155,8 +155,9 @@ RES MDL2Loader::load(
 
 			for (int i = 0; i < textures.size(); i++) {
 				f->seek(texture_start + i * (256 + 8));
-				auto path = get_string(f, 256);
-				ResourceLoader::load_threaded_request("res://" + path, "Texture2D");
+				auto path = ("res://" + get_string(f, 256)).simplify_path();
+				if (p_use_sub_threads)
+					ResourceLoader::load_threaded_request(path, "Texture2D", p_use_sub_threads, p_cache_mode);
 				textures.set(i, path);
 			}
 
@@ -194,6 +195,15 @@ RES MDL2Loader::load(
 			f->get_float();
 			auto render_group_count = f->get_32();
 			f->get_64();
+
+			Vector<RES> loaded_textures;
+			loaded_textures.resize(textures.size());
+			for (int i = 0; i < textures.size(); i++) {
+				if (p_use_sub_threads)
+					loaded_textures.set(i, ResourceLoader::load_threaded_get(textures.get(i), r_error));
+				else
+					loaded_textures.set(i, ResourceLoader::load(textures.get(i), "Texture2D", p_cache_mode, r_error));
+			}
 
 			for (int render_group = 0; render_group < render_group_count; render_group++) {
 				f->seek(f->get_position() + 4);
@@ -260,15 +270,14 @@ RES MDL2Loader::load(
 					break;
 
 				default:
-					print_error("Unkown Alpha Type " + itos(mat_prop.alpha_type) + " in " + p_path);
+					ERR_PRINT("Unkown Alpha Type " + itos(mat_prop.alpha_type) + " in " + p_path);
 					break;
 				}
 
 				mat->set_albedo(Color(1, 1, 1, alpha));
 
 				mat->set_texture(
-					BaseMaterial3D::TextureParam::TEXTURE_ALBEDO,
-					ResourceLoader::load_threaded_get("res://" + textures.get(blends.get(0).texture_id)));
+					BaseMaterial3D::TextureParam::TEXTURE_ALBEDO, loaded_textures.get(blends.get(0).texture_id));
 
 				mesh->surface_set_material(render_group, mat);
 			}
