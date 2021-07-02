@@ -89,25 +89,25 @@ void Viewer::_wrl_event(WRL::WRLEvent event_type, String name, Ref<WRLEntry> ent
 			_wrl_event(WRL::Modifed, name, entry);
 		}
 		break;
-	case WRL::WRLEvent::Modifed:
+	case WRL::Modifed:
 		if (entry->type == "cGeneralStatic") {
 			Ref<WRLGeneralStatic> gs = entry;
 			Instance& i = instances[name];
-			i.mesh_instance->set_transform(Transform3D(Basis(gs->rotation), gs->position));
+			i.mesh_instance->set_transform(Transform3D(Basis(gs->rotation), gs->position).scaled({-1, 1, 1}));
 			if (i.model_path != gs->model) {
 				i.model_path = gs->model;
 				pending.insert(name);
 			}
 		}
 		break;
-	case WRL::WRLEvent::Removed:
+	case WRL::Removed:
 		if (instances.has(name)) {
 			Instance& i = instances[name];
 			i.mesh_instance->queue_delete();
 			instances.erase(name);
 		}
 		break;
-	case WRL::WRLEvent::Renamed:
+	case WRL::Renamed:
 		break;
 	}
 }
@@ -125,11 +125,10 @@ Viewer::Viewer() {
 	viewport_container->add_child(viewport);
 
 	DirectionalLight3D* l = memnew(DirectionalLight3D);
-	l->rotate_x(Math_PI / 4);
+	l->rotate_x(-Math_PI / 4);
 	viewport->add_child(l);
 
 	camera = memnew(Camera3D);
-	camera->translate(Vector3(0, 0, 5));
 	camera->set_current(true);
 
 	viewport->add_child(camera);

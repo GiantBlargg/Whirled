@@ -20,6 +20,8 @@ class WRLGeneralStatic : public WRLEntry {
   public:
 	Vector3 position;
 	Quaternion rotation;
+	uint32_t u1;
+	uint32_t u2;
 	uint32_t collision_sound;
 	String model;
 };

@@ -28,7 +28,7 @@ RES IFLLoader::load(
 
 		String tex_path = dir_path + "/" + match->get_string(1);
 
-		texture->set_frame_texture(i, ResourceLoader::load(tex_path));
+		texture->set_frame_texture(i, ResourceLoader::load(tex_path, "Texture2D", p_cache_mode, r_error));
 		texture->set_frame_delay(i, delay_time * match->get_string(2).to_int());
 	}
 

@@ -44,9 +44,8 @@ Error WRL::load(FileAccess* file) {
 
 			e->position = get_vector3(file);
 			e->rotation = get_quaternion(file);
-			if (file->get_64() != 0) {
-				WARN_PRINT("Unexpected value");
-			}
+			e->u1 = file->get_32();
+			e->u2 = file->get_32();
 			e->collision_sound = file->get_32();
 			e->model = get_string(file, 0x80);
 
@@ -85,7 +84,7 @@ Error WRL::save(FileAccess* file) {
 		store_string(file, entry->type, 24);
 		file->store_32(entry->u);
 
-		file->store_32(0);
+		file->store_32(0); // Placeholder for length
 		uint64_t length_start = file->get_position();
 
 		file->store_32(entry->layer);
@@ -97,7 +96,8 @@ Error WRL::save(FileAccess* file) {
 
 			store_vector3(file, e->position);
 			store_quaternion(file, e->rotation);
-			file->store_64(0);
+			file->store_32(e->u1);
+			file->store_32(e->u2);
 			file->store_32(e->collision_sound);
 			store_string(file, e->model, 0x80);
 

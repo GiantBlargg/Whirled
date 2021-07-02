@@ -7,8 +7,6 @@
 
 void Init::_notification(int p_notification) {
 	if (p_notification == NOTIFICATION_READY) {
-		DisplayServer::get_singleton()->delete_sub_window(window);
-
 		// TODO: Locate lr2
 
 		String lr2_dir = OS::get_singleton()->get_environment("LR2_PATH");
@@ -40,13 +38,6 @@ Init::Init() {
 	ScriptServer::set_scripting_enabled(false);
 	TranslationServer::get_singleton()->set_enabled(false);
 
-	{
-		auto DS = DisplayServer::get_singleton();
-
-		DS->window_set_min_size(Size2(1024, 600));
-		DS->screen_set_keep_on(false);
-
-		window = DS->create_sub_window(DisplayServer::WINDOW_MODE_WINDOWED, 0);
-		DS->show_window(window);
-	}
+	DisplayServer::get_singleton()->window_set_min_size(Size2(1024, 600));
+	DisplayServer::get_singleton()->screen_set_keep_on(false);
 }
