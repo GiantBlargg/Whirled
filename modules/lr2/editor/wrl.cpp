@@ -39,7 +39,7 @@ Error WRL::load(FileAccess* file) {
 
 		Ref<WRLEntry> entry;
 
-		if (type == "cGeneralStatic") {
+		if (type == "cGeneralStatic" || type == "cGoldenBrick") {
 			Ref<WRLGeneralStatic> e(memnew(WRLGeneralStatic));
 
 			e->position = get_vector3(file);
@@ -91,19 +91,18 @@ Error WRL::save(FileAccess* file) {
 		store_string(file, entry->name, 24);
 		store_string(file, entry->binding, 24);
 
-		if (entry->type == "cGeneralStatic") {
-			Ref<WRLGeneralStatic> e = entry;
-
-			store_vector3(file, e->position);
-			store_quaternion(file, e->rotation);
-			file->store_32(e->u1);
-			file->store_32(e->u2);
-			file->store_32(e->collision_sound);
-			store_string(file, e->model, 0x80);
-
-		} else {
-			Ref<WRLUnknown> e = entry;
-			file->store_buffer(e->data.ptr(), e->data.size());
+		Ref<WRLGeneralStatic> gs = entry;
+		if (gs.is_valid()) {
+			store_vector3(file, gs->position);
+			store_quaternion(file, gs->rotation);
+			file->store_32(gs->u1);
+			file->store_32(gs->u2);
+			file->store_32(gs->collision_sound);
+			store_string(file, gs->model, 0x80);
+		}
+		Ref<WRLUnknown> u = entry;
+		if (u.is_valid()) {
+			file->store_buffer(u->data.ptr(), u->data.size());
 		}
 
 		uint64_t length = file->get_position() - length_start;

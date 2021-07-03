@@ -81,17 +81,18 @@ void Viewer::_notification(int p_what) {
 
 void Viewer::_wrl_event(WRL::WRLEvent event_type, String name, Ref<WRLEntry> entry) {
 	switch (event_type) {
-	case WRL::Added:
-		if (entry->type == "cGeneralStatic") {
+	case WRL::Added: {
+		Ref<WRLGeneralStatic> gs = entry;
+		if (gs.is_valid()) {
 			auto mesh_instance = memnew(MeshInstance3D);
 			viewport->add_child(mesh_instance);
 			instances.insert(name, {mesh_instance});
 			_wrl_event(WRL::Modifed, name, entry);
 		}
-		break;
-	case WRL::Modifed:
-		if (entry->type == "cGeneralStatic") {
-			Ref<WRLGeneralStatic> gs = entry;
+	} break;
+	case WRL::Modifed: {
+		Ref<WRLGeneralStatic> gs = entry;
+		if (gs.is_valid()) {
 			Instance& i = instances[name];
 			i.mesh_instance->set_transform(Transform3D(Basis(gs->rotation), gs->position).scaled({-1, 1, 1}));
 			if (i.model_path != gs->model) {
@@ -99,7 +100,7 @@ void Viewer::_wrl_event(WRL::WRLEvent event_type, String name, Ref<WRLEntry> ent
 				pending.insert(name);
 			}
 		}
-		break;
+	} break;
 	case WRL::Removed:
 		if (instances.has(name)) {
 			Instance& i = instances[name];
