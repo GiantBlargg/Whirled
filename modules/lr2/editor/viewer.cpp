@@ -51,6 +51,11 @@ void Viewer::_notification(int p_what) {
 			if (i->is_key_pressed(Key::KEY_E))
 				movement.y++;
 
+			if (i->is_key_pressed(Key::KEY_SHIFT))
+				movement *= 5;
+			if (i->is_key_pressed(Key::KEY_CTRL))
+				movement /= 5;
+
 			movement *= get_process_delta_time() * move_speed;
 			camera->translate(movement);
 		}

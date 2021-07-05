@@ -231,7 +231,7 @@ RES MDL2Loader::load(
 
 				Vector<int> indicies;
 				indicies.resize(f->get_32());
-				for (int index = 0; index < indicies.size(); index++) {
+				for (int index = indicies.size() - 1; index >= 0; index--) {
 					indicies.set(index, f->get_16());
 				}
 
@@ -247,9 +247,9 @@ RES MDL2Loader::load(
 				Ref<StandardMaterial3D> mat;
 				mat.instantiate();
 
-				mat->set_cull_mode(BaseMaterial3D::CullMode::CULL_FRONT);
-				mat->set_diffuse_mode(BaseMaterial3D::DiffuseMode::DIFFUSE_LAMBERT);
-				mat->set_specular_mode(BaseMaterial3D::SpecularMode::SPECULAR_DISABLED);
+				mat->set_shading_mode(BaseMaterial3D::SHADING_MODE_PER_VERTEX);
+				mat->set_diffuse_mode(BaseMaterial3D::DIFFUSE_LAMBERT);
+				mat->set_specular_mode(BaseMaterial3D::SPECULAR_DISABLED);
 
 				float alpha = 1 - mat_prop.alpha;
 
