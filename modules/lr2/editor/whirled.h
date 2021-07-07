@@ -1,10 +1,11 @@
 #pragma once
 
 #include "scene/gui/file_dialog.h"
+#include "scene_layout.h"
 #include "viewer.h"
 #include "wrl.h"
 
-class Whirled : public Node, WRL::EventHandler {
+class Whirled : public Node {
 	GDCLASS(Whirled, Node);
 
   private:
@@ -14,6 +15,7 @@ class Whirled : public Node, WRL::EventHandler {
 	FileDialog* file;
 
 	Viewer* viewer;
+	SceneLayout* scene;
 
 	void _menu_new();
 	void _menu_open();
@@ -23,8 +25,6 @@ class Whirled : public Node, WRL::EventHandler {
 	void _file_open(String path);
 	void _file_save_as(String path);
 	void _file_reset();
-
-	void _wrl_event(WRL::WRLEvent event_type, String name, Ref<WRLEntry> entry) override;
 
   public:
 	Whirled();

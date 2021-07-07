@@ -5,7 +5,7 @@
 #include "scene/main/viewport.h"
 #include "wrl.h"
 
-class Viewer : public BoxContainer {
+class Viewer : public BoxContainer, public WRL::EventHandler {
 	GDCLASS(Viewer, BoxContainer);
 
   private:
@@ -26,15 +26,18 @@ class Viewer : public BoxContainer {
 
   protected:
 	static void _bind_methods() {
-		ClassDB::bind_method(D_METHOD("_input", "event"), &Viewer::_input);
-		ClassDB::bind_method(D_METHOD("_gui_input", "event"), &Viewer::_gui_input);
+		ClassDB::bind_method(D_METHOD("_input"), &Viewer::_input);
+		ClassDB::bind_method(D_METHOD("_gui_input"), &Viewer::_gui_input);
 	}
 	void _input(Ref<InputEvent> p_event);
 	void _gui_input(Ref<InputEvent> p_event);
 	void _notification(int p_what);
 
   public:
-	void _wrl_event(WRL::WRLEvent event_type, String name, Ref<WRLEntry> entry);
-
 	Viewer();
+
+  protected:
+	void _wrl_added(Ref<WRLEntry> entry, int index, bool synthetic) override;
+	void _wrl_modified(Ref<WRLEntry> entry, int index, bool synthetic) override;
+	void _wrl_removed(Ref<WRLEntry> entry, int index, bool synthetic) override;
 };

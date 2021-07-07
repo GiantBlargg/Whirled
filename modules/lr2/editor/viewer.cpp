@@ -84,42 +84,38 @@ void Viewer::_notification(int p_what) {
 	}
 }
 
-void Viewer::_wrl_event(WRL::WRLEvent event_type, String name, Ref<WRLEntry> entry) {
-	switch (event_type) {
-	case WRL::Added: {
-		Ref<WRLGeneralStatic> gs = entry;
-		if (gs.is_valid()) {
-			auto mesh_instance = memnew(MeshInstance3D);
-			viewport->add_child(mesh_instance);
-			instances.insert(name, {mesh_instance});
-			_wrl_event(WRL::Modifed, name, entry);
+void Viewer::_wrl_added(Ref<WRLEntry> entry, int index, bool synthetic) {
+	Ref<WRLGeneralStatic> gs = entry;
+	if (gs.is_valid()) {
+		auto mesh_instance = memnew(MeshInstance3D);
+		viewport->add_child(mesh_instance);
+		instances.insert(entry->name, {mesh_instance});
+	}
+}
+
+void Viewer::_wrl_modified(Ref<WRLEntry> entry, int index, bool synthetic) {
+	Ref<WRLGeneralStatic> gs = entry;
+	if (gs.is_valid()) {
+		Instance& i = instances[entry->name];
+		i.mesh_instance->set_transform(Transform3D(Basis(gs->rotation), gs->position).scaled({-1, 1, 1}));
+		if (i.model_path != gs->model) {
+			i.model_path = gs->model;
+			pending.insert(entry->name);
 		}
-	} break;
-	case WRL::Modifed: {
-		Ref<WRLGeneralStatic> gs = entry;
-		if (gs.is_valid()) {
-			Instance& i = instances[name];
-			i.mesh_instance->set_transform(Transform3D(Basis(gs->rotation), gs->position).scaled({-1, 1, 1}));
-			if (i.model_path != gs->model) {
-				i.model_path = gs->model;
-				pending.insert(name);
-			}
-		}
-	} break;
-	case WRL::Removed:
-		if (instances.has(name)) {
-			Instance& i = instances[name];
-			i.mesh_instance->queue_delete();
-			instances.erase(name);
-		}
-		break;
-	case WRL::Renamed:
-		break;
+	}
+}
+
+void Viewer::_wrl_removed(Ref<WRLEntry> entry, int index, bool synthetic) {
+	if (instances.has(entry->name)) {
+		Instance& i = instances[entry->name];
+		i.mesh_instance->queue_delete();
+		instances.erase(entry->name);
 	}
 }
 
 Viewer::Viewer() {
 	set_process(true);
+	set_process_input(true);
 
 	SubViewportContainer* viewport_container = memnew(SubViewportContainer);
 	viewport_container->set_stretch(true);

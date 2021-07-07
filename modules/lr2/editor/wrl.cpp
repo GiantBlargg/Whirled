@@ -2,19 +2,41 @@
 
 #include "../io/file_helper.h"
 
+#define EVENT(event)                                                                                                   \
+	for (int i = 0; i < event_handlers.size(); i++) {                                                                  \
+		event_handlers[i]->_wrl_##event;                                                                               \
+	}
+
 WRL::WRL() {}
+
+int WRL::add(Ref<WRLEntry> entry, int index) {
+	if (index == -1) {
+		index = entries.size();
+	}
+	entries.insert(index, entry);
+	EVENT(added(entry, index))
+	EVENT(modified(entry, index, true))
+	return index;
+}
+
+Ref<WRLEntry> WRL::remove(int index) {
+	Ref<WRLEntry> e = entries.get(index);
+	entries.remove(index);
+	for (int i = 0; i < event_handlers.size(); i++) {
+		event_handlers[i]->_wrl_removed(e, index);
+	}
+	return e;
+}
+
+void WRL::clear() {
+	for (int i = entries.size() - 1; i >= 0; i--) {
+		remove(i);
+	}
+}
 
 const uint32_t WRL_MAGIC = 0x57324352;
 const uint32_t WRL_VERSION = 0xb;
 const uint32_t OBMG_MAGIC = 0x474d424f;
-
-void WRL::clear() {
-	for (int i = 0; i < entries.size(); i++) {
-		auto entry = entries[i];
-		event_handler->_wrl_event(WRL::Removed, entry->name, entry);
-	}
-	entries.clear();
-}
 
 Error WRL::load(FileAccess* file) {
 	clear();
@@ -66,9 +88,7 @@ Error WRL::load(FileAccess* file) {
 		entry->name = name;
 		entry->binding = binding;
 
-		entries.append(entry);
-
-		event_handler->_wrl_event(WRLEvent::Added, entry->name, entry);
+		add(entry);
 	}
 	return OK;
 }

@@ -48,10 +48,6 @@ void Whirled::_file_reset() {
 	}
 }
 
-void Whirled::_wrl_event(WRL::WRLEvent event_type, String name, Ref<WRLEntry> entry) {
-	viewer->_wrl_event(event_type, name, entry);
-}
-
 Whirled::Whirled() {
 
 	// TODO: Theme
@@ -95,9 +91,10 @@ Whirled::Whirled() {
 	HSplitContainer* right_drawer_split = memnew(HSplitContainer);
 	main_vbox->add_child(right_drawer_split);
 	right_drawer_split->set_v_size_flags(Control::SIZE_EXPAND_FILL);
+	right_drawer_split->set_split_offset(210);
 
-	ScrollContainer* right_drawer = memnew(ScrollContainer);
-	right_drawer_split->add_child(right_drawer);
+	scene = memnew(SceneLayout);
+	right_drawer_split->add_child(scene);
 
 	HSplitContainer* left_drawer_split = memnew(HSplitContainer);
 	right_drawer_split->add_child(left_drawer_split);
@@ -110,5 +107,6 @@ Whirled::Whirled() {
 	left_drawer_split->add_child(left_drawer);
 
 	wrl.instantiate();
-	wrl->event_handler = this;
+	wrl->add_event_handler(viewer);
+	wrl->add_event_handler(scene);
 }

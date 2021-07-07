@@ -42,21 +42,23 @@ class WRL : public RefCounted {
   public:
 	WRL();
 
-	void clear();
+	int add(Ref<WRLEntry>, int index = -1);
+	Ref<WRLEntry> remove(int index);
 
+	void clear();
 	Error load(FileAccess* file);
 	Error save(FileAccess* file);
 
-	enum WRLEvent {
-		Added,
-		Removed,
-		Renamed,
-		Modifed,
+	class EventHandler {
+	  protected:
+		friend class WRL;
+		virtual void _wrl_added(Ref<WRLEntry> entry, int index, bool synthetic = false){};
+		virtual void _wrl_modified(Ref<WRLEntry> entry, int index, bool synthetic = false){};
+		virtual void _wrl_removed(Ref<WRLEntry> entry, int index, bool synthetic = false){};
 	};
 
-	class EventHandler {
-		friend class WRL;
-		virtual void _wrl_event(WRL::WRLEvent event_type, String name, Ref<WRLEntry> entry) = 0;
-	};
-	EventHandler* event_handler;
+	void add_event_handler(EventHandler* handler) { event_handlers.append(handler); }
+
+  private:
+	Vector<EventHandler*> event_handlers;
 };
