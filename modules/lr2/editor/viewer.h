@@ -22,7 +22,9 @@ class Viewer : public BoxContainer, public WRL::EventHandler {
 	};
 	Map<String, Instance> instances;
 
-	Set<String> pending;
+	Vector<String> pending_names;
+	Vector<String> pending_files;
+	Vector<String> request_files;
 
   protected:
 	static void _bind_methods() {

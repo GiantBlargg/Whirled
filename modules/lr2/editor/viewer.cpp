@@ -60,27 +60,85 @@ void Viewer::_notification(int p_what) {
 			camera->translate(movement);
 		}
 
-		for (auto p = pending.front(); p; p = p->next()) {
-			String name = p->get();
-			Instance i = instances[name];
-			String resolved_path = "res://" + i.model_path;
-			switch (ResourceLoader::load_threaded_get_status(resolved_path)) {
+#define BATCH 1
+
+#if BATCH
+		ResourceLoader::load_threaded_request_batch(request_files, "Mesh", true);
+#else
+		for (int i = 0; i < request_files.size(); i++) {
+			ResourceLoader::load_threaded_request(request_files[i], "Mesh", true);
+		}
+#endif
+
+#if BATCH
+		Vector<ResourceLoader::ThreadLoadStatus> status = ResourceLoader::load_threaded_get_status_batch(pending_files);
+#else
+		Vector<ResourceLoader::ThreadLoadStatus> status;
+		status.resize(pending_files.size());
+		for (int s = 0; s < status.size(); s++) {
+			status.set(s, ResourceLoader::load_threaded_get_status(pending_files[s]));
+		}
+#endif
+
+#if BATCH
+		Vector<String> done;
+		int wtf = 0;
+
+		for (int s = 0; s < status.size(); s++) {
+			switch (status[s]) {
 			case ResourceLoader::THREAD_LOAD_INVALID_RESOURCE:
-				ResourceLoader::load_threaded_request(resolved_path, "Mesh", true);
+				request_files.append(pending_files[s]);
 				break;
 			case ResourceLoader::THREAD_LOAD_IN_PROGRESS:
 				break;
 			case ResourceLoader::THREAD_LOAD_FAILED:
 				Error err;
-				ResourceLoader::load_threaded_get(resolved_path, &err);
-				ERR_PRINT("Failed to load: " + resolved_path);
+				ResourceLoader::load_threaded_get(pending_files[s], &err);
+				ERR_PRINT("Failed to load: " + pending_files[s]);
 				break;
-			case ResourceLoader::THREAD_LOAD_LOADED:
-				i.mesh_instance->set_mesh(ResourceLoader::load_threaded_get(resolved_path));
-				pending.erase(p);
-				break;
+			case ResourceLoader::THREAD_LOAD_LOADED: {
+				done.append(pending_files[s]);
+				wtf++;
+			} break;
 			}
 		}
+		Vector<RES> res = ResourceLoader::load_threaded_get_batch(done);
+		for (int s = 0, p = 0, r = 0; s < status.size(); s++, p++) {
+			if (status[s] != ResourceLoader::THREAD_LOAD_LOADED)
+				continue;
+
+			Instance i = instances[pending_names[p]];
+			if (i.model_path == pending_files[p])
+				i.mesh_instance->set_mesh(res[r]);
+			r++;
+			pending_names.remove(p);
+			pending_files.remove(p);
+			p--;
+		}
+#else
+		for (int s = 0, p = 0; s < status.size(); s++, p++) {
+			switch (status[s]) {
+			case ResourceLoader::THREAD_LOAD_INVALID_RESOURCE:
+				request_files.append(pending_files[p]);
+				break;
+			case ResourceLoader::THREAD_LOAD_IN_PROGRESS:
+				break;
+			case ResourceLoader::THREAD_LOAD_FAILED:
+				Error err;
+				ResourceLoader::load_threaded_get(pending_files[p], &err);
+				ERR_PRINT("Failed to load: " + pending_files[p]);
+				break;
+			case ResourceLoader::THREAD_LOAD_LOADED: {
+				Instance i = instances[pending_names[p]];
+				if (i.model_path == pending_files[p])
+					i.mesh_instance->set_mesh(ResourceLoader::load_threaded_get(pending_files[p]));
+				pending_names.remove(p);
+				pending_files.remove(p);
+				p--;
+			} break;
+			}
+		}
+#endif
 	}
 }
 
@@ -98,9 +156,13 @@ void Viewer::_wrl_modified(Ref<WRLEntry> entry, int index, bool synthetic) {
 	if (gs.is_valid()) {
 		Instance& i = instances[entry->name];
 		i.mesh_instance->set_transform(Transform3D(Basis(gs->rotation), gs->position).scaled({-1, 1, 1}));
-		if (i.model_path != gs->model) {
-			i.model_path = gs->model;
-			pending.insert(entry->name);
+
+		String model_path = "res://" + gs->model;
+		if (i.model_path != model_path) {
+			i.model_path = model_path;
+			pending_names.append(entry->name);
+			pending_files.append(model_path);
+			request_files.append(model_path);
 		}
 	}
 }
