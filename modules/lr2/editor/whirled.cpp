@@ -50,6 +50,8 @@ void Whirled::_file_reset() {
 
 Whirled::Whirled() {
 
+	wrl.instantiate();
+
 	// TODO: Theme
 
 	PanelContainer* base = memnew(PanelContainer);
@@ -93,7 +95,7 @@ Whirled::Whirled() {
 	right_drawer_split->set_v_size_flags(Control::SIZE_EXPAND_FILL);
 	right_drawer_split->set_split_offset(210);
 
-	scene = memnew(SceneLayout);
+	scene = memnew(SceneLayout(wrl));
 	right_drawer_split->add_child(scene);
 
 	HSplitContainer* left_drawer_split = memnew(HSplitContainer);
@@ -102,11 +104,8 @@ Whirled::Whirled() {
 	viewer = memnew(Viewer);
 	left_drawer_split->add_child(viewer);
 	viewer->set_h_size_flags(Control::SIZE_EXPAND_FILL);
+	wrl->add_event_handler(viewer);
 
 	ScrollContainer* left_drawer = memnew(ScrollContainer);
 	left_drawer_split->add_child(left_drawer);
-
-	wrl.instantiate();
-	wrl->add_event_handler(viewer);
-	wrl->add_event_handler(scene);
 }

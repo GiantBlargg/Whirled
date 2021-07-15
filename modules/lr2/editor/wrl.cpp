@@ -14,24 +14,21 @@ int WRL::add(Ref<WRLEntry> entry, int index) {
 		index = entries.size();
 	}
 	entries.insert(index, entry);
-	EVENT(added(entry, index))
-	EVENT(modified(entry, index, true))
+	EVENT(_added(entry, index))
 	return index;
 }
 
 Ref<WRLEntry> WRL::remove(int index) {
 	Ref<WRLEntry> e = entries.get(index);
 	entries.remove(index);
-	for (int i = 0; i < event_handlers.size(); i++) {
-		event_handlers[i]->_wrl_removed(e, index);
-	}
+	EVENT(removed(e, index))
 	return e;
 }
 
 void WRL::clear() {
-	for (int i = entries.size() - 1; i >= 0; i--) {
-		remove(i);
-	}
+	Vector<Ref<WRLEntry>> e = entries;
+	entries.clear();
+	EVENT(cleared(e))
 }
 
 const uint32_t WRL_MAGIC = 0x57324352;
@@ -132,4 +129,23 @@ Error WRL::save(FileAccess* file) {
 	}
 
 	return OK;
+}
+
+void WRL::select(int index) {
+	if (selected == index)
+		return;
+	if (selected > 0)
+		EVENT(deselected(entries[selected], selected))
+	selected = index;
+	if (selected > 0)
+		EVENT(selected(entries[selected], selected))
+}
+
+void WRL::select(String name) {
+	for (int i = 0; i < entries.size(); i++) {
+		if (name == entries[i]->name) {
+			return select(i);
+		}
+	}
+	ERR_PRINT("Could not find " + name + " for selection.");
 }

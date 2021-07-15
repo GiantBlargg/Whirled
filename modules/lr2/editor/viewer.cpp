@@ -36,7 +36,7 @@ void Viewer::_notification(int p_what) {
 		if (right) {
 			Vector3 movement;
 
-			auto i = Input::get_singleton();
+			Input* i = Input::get_singleton();
 
 			if (i->is_key_pressed(Key::KEY_W))
 				movement.z--;
@@ -84,7 +84,7 @@ void Viewer::_notification(int p_what) {
 	}
 }
 
-void Viewer::_wrl_added(Ref<WRLEntry> entry, int index, bool synthetic) {
+void Viewer::_wrl_added(Ref<WRLEntry> entry, int index) {
 	Ref<WRLGeneralStatic> gs = entry;
 	if (gs.is_valid()) {
 		auto mesh_instance = memnew(MeshInstance3D);
@@ -93,7 +93,7 @@ void Viewer::_wrl_added(Ref<WRLEntry> entry, int index, bool synthetic) {
 	}
 }
 
-void Viewer::_wrl_modified(Ref<WRLEntry> entry, int index, bool synthetic) {
+void Viewer::_wrl_modified(Ref<WRLEntry> entry, int index) {
 	Ref<WRLGeneralStatic> gs = entry;
 	if (gs.is_valid()) {
 		Instance& i = instances[entry->name];
@@ -105,7 +105,7 @@ void Viewer::_wrl_modified(Ref<WRLEntry> entry, int index, bool synthetic) {
 	}
 }
 
-void Viewer::_wrl_removed(Ref<WRLEntry> entry, int index, bool synthetic) {
+void Viewer::_wrl_removed(Ref<WRLEntry> entry, int index) {
 	if (instances.has(entry->name)) {
 		Instance& i = instances[entry->name];
 		i.mesh_instance->queue_delete();
