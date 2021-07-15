@@ -19,6 +19,8 @@ int WRL::add(Ref<WRLEntry> entry, int index) {
 }
 
 Ref<WRLEntry> WRL::remove(int index) {
+	if (selected == index)
+		select(-1);
 	Ref<WRLEntry> e = entries.get(index);
 	entries.remove(index);
 	EVENT(removed(e, index))
@@ -26,6 +28,7 @@ Ref<WRLEntry> WRL::remove(int index) {
 }
 
 void WRL::clear() {
+	select(-1);
 	Vector<Ref<WRLEntry>> e = entries;
 	entries.clear();
 	EVENT(cleared(e))
@@ -134,10 +137,10 @@ Error WRL::save(FileAccess* file) {
 void WRL::select(int index) {
 	if (selected == index)
 		return;
-	if (selected > 0)
+	if (selected > -1)
 		EVENT(deselected(entries[selected], selected))
 	selected = index;
-	if (selected > 0)
+	if (selected > -1)
 		EVENT(selected(entries[selected], selected))
 }
 

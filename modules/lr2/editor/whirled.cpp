@@ -1,5 +1,6 @@
 #include "whirled.h"
 
+#include "inspector.h"
 #include "scene/gui/panel_container.h"
 #include "scene/gui/split_container.h"
 
@@ -103,9 +104,11 @@ Whirled::Whirled() {
 
 	viewer = memnew(Viewer);
 	left_drawer_split->add_child(viewer);
+	left_drawer_split->set_split_offset(-210);
 	viewer->set_h_size_flags(Control::SIZE_EXPAND_FILL);
 	wrl->add_event_handler(viewer);
 
-	ScrollContainer* left_drawer = memnew(ScrollContainer);
-	left_drawer_split->add_child(left_drawer);
+	Inspector* inspector = memnew(Inspector);
+	left_drawer_split->add_child(inspector);
+	wrl->add_event_handler(inspector);
 }
