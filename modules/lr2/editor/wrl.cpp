@@ -14,7 +14,7 @@ int WRL::add(Ref<WRLEntry> entry, int index) {
 		index = entries.size();
 	}
 	entries.insert(index, entry);
-	EVENT(_added(entry, index))
+	EVENT(added(entry, index))
 	return index;
 }
 

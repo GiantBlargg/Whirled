@@ -5,13 +5,13 @@
 #include "scene/3d/light_3d.h"
 #include "scene/gui/subviewport_container.h"
 
-void Viewer::_input(Ref<InputEvent> p_event) {
+void Viewer::input(const Ref<InputEvent>& p_event) {
 	Ref<InputEventKey> k = p_event;
 	if (right && k.is_valid())
 		get_viewport()->set_input_as_handled();
 }
 
-void Viewer::_gui_input(Ref<InputEvent> p_event) {
+void Viewer::gui_input(const Ref<InputEvent>& p_event) {
 	Ref<InputEventMouseButton> mb = p_event;
 	if (mb.is_valid()) {
 		if (mb->get_button_index() == MouseButton::MOUSE_BUTTON_RIGHT) {
@@ -91,6 +91,8 @@ void Viewer::_wrl_added(Ref<WRLEntry> entry, int index) {
 		viewport->add_child(mesh_instance);
 		instances.insert(entry->name, {mesh_instance});
 	}
+
+	_wrl_modified(entry, index);
 }
 
 void Viewer::_wrl_modified(Ref<WRLEntry> entry, int index) {

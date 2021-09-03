@@ -59,10 +59,6 @@ class WRL : public RefCounted {
 		virtual void _wrl_added(Ref<WRLEntry> entry, int index){};
 		virtual void _wrl_modified(Ref<WRLEntry> entry, int index){};
 		virtual void _wrl_removed(Ref<WRLEntry> entry, int index){};
-		virtual void _wrl__added(Ref<WRLEntry> entry, int index) {
-			_wrl_added(entry, index);
-			_wrl_modified(entry, index);
-		};
 		virtual void _wrl_cleared(Vector<Ref<WRLEntry>> entries) {
 			for (int i = entries.size() - 1; i >= 0; i--) {
 				_wrl_removed(entries[i], i);

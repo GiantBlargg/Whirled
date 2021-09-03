@@ -23,7 +23,7 @@ void Init::_notification(int p_notification) {
 			get_parent()->call_deferred("add_child", memnew(Whirled));
 			queue_delete();
 		} else {
-			DisplayServer::get_singleton()->alert("Could not locate Lego Racers 2.");
+			OS::get_singleton()->alert("Could not locate Lego Racers 2.");
 			get_tree()->quit();
 		}
 	}

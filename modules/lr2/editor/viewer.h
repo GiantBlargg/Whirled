@@ -25,12 +25,8 @@ class Viewer : public BoxContainer, public WRL::EventHandler {
 	Set<String> pending;
 
   protected:
-	static void _bind_methods() {
-		ClassDB::bind_method(D_METHOD("_input"), &Viewer::_input);
-		ClassDB::bind_method(D_METHOD("_gui_input"), &Viewer::_gui_input);
-	}
-	void _input(Ref<InputEvent> p_event);
-	void _gui_input(Ref<InputEvent> p_event);
+	void input(const Ref<InputEvent>& p_event) override;
+	void gui_input(const Ref<InputEvent>& p_event) override;
 	void _notification(int p_what);
 
   public:
