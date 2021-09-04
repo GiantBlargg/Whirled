@@ -26,7 +26,9 @@ void Viewer::gui_input(const Ref<InputEvent>& p_event) {
 		if (right) {
 			Vector3 old_rot = camera->get_rotation();
 			Vector2 rel = mm->get_relative() * look_speed;
-			camera->set_rotation(Vector3(CLAMP(old_rot.x - rel.y, -Math_PI / 2, Math_PI / 2), (old_rot.y - rel.x), 0));
+			Vector3 new_rot(CLAMP(old_rot.x - rel.y, -Math_PI / 2, Math_PI / 2), (old_rot.y - rel.x), 0);
+			camera->set_rotation(new_rot);
+			bg_camera->set_rotation(new_rot);
 		}
 	}
 }
@@ -88,7 +90,16 @@ void Viewer::_wrl_added(Ref<WRLEntry> entry, int index) {
 	Ref<WRLGeneralStatic> gs = entry;
 	if (gs.is_valid()) {
 		auto mesh_instance = memnew(MeshInstance3D);
-		viewport->add_child(mesh_instance);
+		mesh_instance->set_layer_mask(RenderLayerProps);
+		add_child(mesh_instance);
+		instances.insert(entry->name, {mesh_instance});
+	}
+
+	Ref<WRLSkyBox> sb = entry;
+	if (sb.is_valid()) {
+		auto mesh_instance = memnew(MeshInstance3D);
+		mesh_instance->set_layer_mask(RenderLayerSkyBox);
+		add_child(mesh_instance);
 		instances.insert(entry->name, {mesh_instance});
 	}
 
@@ -102,6 +113,15 @@ void Viewer::_wrl_modified(Ref<WRLEntry> entry, int index) {
 		i.mesh_instance->set_transform(Transform3D(Basis(gs->rotation), gs->position).scaled({-1, 1, 1}));
 		if (i.model_path != gs->model) {
 			i.model_path = gs->model;
+			pending.insert(entry->name);
+		}
+	}
+
+	Ref<WRLSkyBox> sb = entry;
+	if (sb.is_valid()) {
+		Instance& i = instances[entry->name];
+		if (i.model_path != sb->model) {
+			i.model_path = sb->model;
 			pending.insert(entry->name);
 		}
 	}
@@ -125,15 +145,21 @@ Viewer::Viewer() {
 	viewport_container->set_h_size_flags(Control::SIZE_EXPAND_FILL);
 	add_child(viewport_container);
 
-	viewport = memnew(SubViewport);
+	SubViewport* bg_viewport = memnew(SubViewport);
+	bg_viewport->set_debug_draw(Viewport::DEBUG_DRAW_UNSHADED);
+	viewport_container->add_child(bg_viewport);
+	bg_camera = memnew(Camera3D);
+	bg_camera->set_cull_mask(RenderLayerSkyBox);
+	bg_viewport->add_child(bg_camera);
+
+	SubViewport* viewport = memnew(SubViewport);
+	viewport->set_transparent_background(true);
 	viewport_container->add_child(viewport);
+	camera = memnew(Camera3D);
+	camera->set_cull_mask(RenderLayerProps);
+	viewport->add_child(camera);
 
 	DirectionalLight3D* l = memnew(DirectionalLight3D);
 	l->rotate_x(-Math_PI / 4);
-	viewport->add_child(l);
-
-	camera = memnew(Camera3D);
-	camera->set_current(true);
-
-	viewport->add_child(camera);
+	add_child(l);
 }

@@ -9,10 +9,14 @@ class Viewer : public BoxContainer, public WRL::EventHandler {
 	GDCLASS(Viewer, BoxContainer);
 
   private:
-	SubViewport* viewport;
+	enum RenderLayer {
+		RenderLayerProps = 1 << 0,
+		RenderLayerSkyBox = 1 << 1,
+	};
 
-	bool right = false;
+	Camera3D* bg_camera;
 	Camera3D* camera;
+	bool right = false;
 	const float look_speed = 0.2 * (Math_PI / 180.0);
 	float move_speed = 100;
 

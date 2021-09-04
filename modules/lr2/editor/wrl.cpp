@@ -73,6 +73,13 @@ Error WRL::load(FileAccess* file) {
 
 			entry = e;
 
+		} else if (type == "cSkyBox") {
+			Ref<WRLSkyBox> e(memnew(WRLSkyBox));
+
+			e->model = get_string(file, 0x80);
+
+			entry = e;
+
 		} else {
 			Ref<WRLUnknown> e(memnew(WRLUnknown));
 

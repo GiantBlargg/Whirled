@@ -26,6 +26,13 @@ class WRLGeneralStatic : public WRLEntry {
 	String model;
 };
 
+class WRLSkyBox : public WRLEntry {
+	GDCLASS(WRLSkyBox, WRLEntry);
+
+  public:
+	String model;
+};
+
 class WRLUnknown : public WRLEntry {
 	GDCLASS(WRLUnknown, WRLEntry);
 
