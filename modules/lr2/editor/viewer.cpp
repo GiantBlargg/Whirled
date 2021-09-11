@@ -4,6 +4,7 @@
 #include "scene/3d/camera_3d.h"
 #include "scene/3d/light_3d.h"
 #include "scene/gui/subviewport_container.h"
+#include "scene/resources/primitive_meshes.h"
 
 void Viewer::input(const Ref<InputEvent>& p_event) {
 	Ref<InputEventKey> k = p_event;
@@ -153,11 +154,27 @@ Viewer::Viewer() {
 	bg_viewport->add_child(bg_camera);
 
 	SubViewport* viewport = memnew(SubViewport);
-	viewport->set_transparent_background(true);
 	viewport_container->add_child(viewport);
 	camera = memnew(Camera3D);
 	camera->set_cull_mask(RenderLayerProps);
 	viewport->add_child(camera);
+
+	MeshInstance3D* skybox_viewer = memnew(MeshInstance3D);
+	skybox_viewer->set_mesh(memnew(QuadMesh));
+	Ref<Shader> skybox_viewer_shader = memnew(Shader);
+	skybox_viewer_shader->set_code(R"(
+shader_type spatial;
+render_mode unshaded;
+uniform sampler2D skybox : hint_albedo;
+void vertex() { POSITION = vec4(VERTEX.x * 2.0, VERTEX.y * -2.0, 1.0, 1.0); }
+void fragment() { ALBEDO = texture(skybox, UV).rgb; }
+)");
+	Ref<ShaderMaterial> skybox_viewer_material = memnew(ShaderMaterial);
+	skybox_viewer_material->set_shader(skybox_viewer_shader);
+	skybox_viewer_material->set_shader_param("skybox", bg_viewport->get_texture());
+	skybox_viewer->set_material_override(skybox_viewer_material);
+	skybox_viewer->set_position(Vector3(0, 0, -1));
+	camera->add_child(skybox_viewer);
 
 	DirectionalLight3D* l = memnew(DirectionalLight3D);
 	l->rotate_x(-Math_PI / 4);

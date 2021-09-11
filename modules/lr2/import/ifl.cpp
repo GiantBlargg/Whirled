@@ -18,8 +18,6 @@ RES IFLLoader::load(
 	regex.instantiate();
 	regex->compile("(\\S+)\\s(\\d+)");
 	auto matches = regex->search_all(contents);
-	return ResourceLoader::load(
-		dir_path + "/" + static_cast<Ref<RegExMatch>>(matches[0])->get_string(1), "Texture2D", p_cache_mode, r_error);
 
 	Ref<AnimatedTexture> texture;
 	texture.instantiate();
