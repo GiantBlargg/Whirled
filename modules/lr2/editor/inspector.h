@@ -7,14 +7,14 @@
 class Inspector : public ScrollContainer, public WRL::EventHandler {
 	GDCLASS(Inspector, ScrollContainer)
 
-	Ref<WRLEntry> selected;
+	Ref<WRL::Entry> selected;
 
 	VBoxContainer* vbox;
 
   protected:
-	virtual void _wrl_modified(Ref<WRLEntry> entry, int index) override;
-	virtual void _wrl_selected(Ref<WRLEntry> entry, int index) override;
-	virtual void _wrl_deselected(Ref<WRLEntry> entry, int index) override;
+	void _wrl_modified(Ref<WRL::Entry> entry, int index) override;
+	void _wrl_selected(Ref<WRL::Entry> entry, int index) override;
+	void _wrl_deselected(Ref<WRL::Entry> entry, int index) override;
 
   public:
 	Inspector();

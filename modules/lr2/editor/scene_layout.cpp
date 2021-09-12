@@ -14,18 +14,18 @@ void SceneLayout::_notification(int p_what) {
 	}
 }
 
-void SceneLayout::_wrl_added(Ref<WRLEntry> entry, int index) {
+void SceneLayout::_wrl_added(Ref<WRL::Entry> entry, int index) {
 	TreeItem* item = create_item(nullptr, index);
 	item->set_text(0, entry->name);
 }
 
-void SceneLayout::_wrl_removed(Ref<WRLEntry> entry, int index) {
+void SceneLayout::_wrl_removed(Ref<WRL::Entry> entry, int index) {
 	TreeItem* root = get_root();
 	root->remove_child(root->get_child(index));
 }
 
-void SceneLayout::_wrl_selected(Ref<WRLEntry> entry, int index) { get_root()->get_child(index)->select(0); };
-void SceneLayout::_wrl_deselected(Ref<WRLEntry> entry, int index) {
+void SceneLayout::_wrl_selected(Ref<WRL::Entry> entry, int index) { get_root()->get_child(index)->select(0); };
+void SceneLayout::_wrl_deselected(Ref<WRL::Entry> entry, int index) {
 	get_root()->get_child(index)->deselect(0);
 	ensure_cursor_is_visible();
 };

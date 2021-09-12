@@ -9,7 +9,7 @@
 
 WRL::WRL() {}
 
-int WRL::add(Ref<WRLEntry> entry, int index) {
+int WRL::add(Ref<Entry> entry, int index) {
 	if (index == -1) {
 		index = entries.size();
 	}
@@ -18,10 +18,10 @@ int WRL::add(Ref<WRLEntry> entry, int index) {
 	return index;
 }
 
-Ref<WRLEntry> WRL::remove(int index) {
+Ref<WRL::Entry> WRL::remove(int index) {
 	if (selected == index)
 		select(-1);
-	Ref<WRLEntry> e = entries.get(index);
+	Ref<Entry> e = entries.get(index);
 	entries.remove(index);
 	EVENT(removed(e, index))
 	return e;
@@ -29,7 +29,7 @@ Ref<WRLEntry> WRL::remove(int index) {
 
 void WRL::clear() {
 	select(-1);
-	Vector<Ref<WRLEntry>> e = entries;
+	Vector<Ref<Entry>> e = entries;
 	entries.clear();
 	EVENT(cleared(e))
 }
@@ -59,10 +59,10 @@ Error WRL::load(FileAccess* file) {
 		String name = get_string(file, 24);
 		String binding = get_string(file, 24);
 
-		Ref<WRLEntry> entry;
+		Ref<Entry> entry;
 
 		if (type == "cGeneralStatic" || type == "cGoldenBrick") {
-			Ref<WRLGeneralStatic> e(memnew(WRLGeneralStatic));
+			Ref<GeneralStatic> e(memnew(GeneralStatic));
 
 			e->position = get_vector3(file);
 			e->rotation = get_quaternion(file);
@@ -74,14 +74,14 @@ Error WRL::load(FileAccess* file) {
 			entry = e;
 
 		} else if (type == "cSkyBox") {
-			Ref<WRLSkyBox> e(memnew(WRLSkyBox));
+			Ref<SkyBox> e(memnew(SkyBox));
 
 			e->model = get_string(file, 0x80);
 
 			entry = e;
 
 		} else {
-			Ref<WRLUnknown> e(memnew(WRLUnknown));
+			Ref<Unknown> e(memnew(Unknown));
 
 			e->data.resize(next_chunk - file->get_position());
 			file->get_buffer(e->data.ptrw(), e->data.size());
@@ -105,7 +105,7 @@ Error WRL::save(FileAccess* file) {
 	file->store_32(WRL_VERSION);
 
 	for (int i = 0; i < entries.size(); i++) {
-		Ref<WRLEntry> entry = entries.get(i);
+		Ref<Entry> entry = entries.get(i);
 
 		file->store_32(OBMG_MAGIC);
 		store_string(file, entry->type, 24);
@@ -118,7 +118,7 @@ Error WRL::save(FileAccess* file) {
 		store_string(file, entry->name, 24);
 		store_string(file, entry->binding, 24);
 
-		Ref<WRLGeneralStatic> gs = entry;
+		Ref<GeneralStatic> gs = entry;
 		if (gs.is_valid()) {
 			store_vector3(file, gs->position);
 			store_quaternion(file, gs->rotation);
@@ -127,7 +127,7 @@ Error WRL::save(FileAccess* file) {
 			file->store_32(gs->collision_sound);
 			store_string(file, gs->model, 0x80);
 		}
-		Ref<WRLUnknown> u = entry;
+		Ref<Unknown> u = entry;
 		if (u.is_valid()) {
 			file->store_buffer(u->data.ptr(), u->data.size());
 		}

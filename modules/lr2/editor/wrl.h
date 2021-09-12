@@ -3,55 +3,56 @@
 #include "core/io/file_access.h"
 #include "core/object/ref_counted.h"
 
-class WRLEntry : public RefCounted {
-	GDCLASS(WRLEntry, RefCounted);
-
-  public:
-	String type;
-	uint32_t u;
-	uint32_t layer;
-	String name;
-	String binding;
-};
-
-class WRLGeneralStatic : public WRLEntry {
-	GDCLASS(WRLGeneralStatic, WRLEntry);
-
-  public:
-	Vector3 position;
-	Quaternion rotation;
-	uint32_t u1;
-	uint32_t u2;
-	uint32_t collision_sound;
-	String model;
-};
-
-class WRLSkyBox : public WRLEntry {
-	GDCLASS(WRLSkyBox, WRLEntry);
-
-  public:
-	String model;
-};
-
-class WRLUnknown : public WRLEntry {
-	GDCLASS(WRLUnknown, WRLEntry);
-
-  public:
-	Vector<uint8_t> data;
-};
-
 class WRL : public RefCounted {
 	GDCLASS(WRL, RefCounted);
 
+  public:
+	class Entry : public RefCounted {
+		GDCLASS(Entry, RefCounted);
+
+	  public:
+		String type;
+		uint32_t u;
+		uint32_t layer;
+		String name;
+		String binding;
+	};
+
+	class GeneralStatic : public Entry {
+		GDCLASS(GeneralStatic, Entry);
+
+	  public:
+		Vector3 position;
+		Quaternion rotation;
+		uint32_t u1;
+		uint32_t u2;
+		uint32_t collision_sound;
+		String model;
+	};
+
+	class SkyBox : public Entry {
+		GDCLASS(SkyBox, Entry);
+
+	  public:
+		String model;
+	};
+
+	class Unknown : public Entry {
+		GDCLASS(Unknown, Entry);
+
+	  public:
+		Vector<uint8_t> data;
+	};
+
   private:
-	Vector<Ref<WRLEntry>> entries;
+	Vector<Ref<Entry>> entries;
 	int selected = -1;
 
   public:
 	WRL();
 
-	int add(Ref<WRLEntry>, int index = -1);
-	Ref<WRLEntry> remove(int index);
+	int add(Ref<Entry>, int index = -1);
+	Ref<Entry> remove(int index);
 
 	void clear();
 	Error load(FileAccess* file);
@@ -63,17 +64,17 @@ class WRL : public RefCounted {
 	class EventHandler {
 	  protected:
 		friend class WRL;
-		virtual void _wrl_added(Ref<WRLEntry> entry, int index){};
-		virtual void _wrl_modified(Ref<WRLEntry> entry, int index){};
-		virtual void _wrl_removed(Ref<WRLEntry> entry, int index){};
-		virtual void _wrl_cleared(Vector<Ref<WRLEntry>> entries) {
+		virtual void _wrl_added(Ref<Entry> entry, int index){};
+		virtual void _wrl_modified(Ref<Entry> entry, int index){};
+		virtual void _wrl_removed(Ref<Entry> entry, int index){};
+		virtual void _wrl_cleared(Vector<Ref<Entry>> entries) {
 			for (int i = entries.size() - 1; i >= 0; i--) {
 				_wrl_removed(entries[i], i);
 			}
 		};
 
-		virtual void _wrl_selected(Ref<WRLEntry> entry, int index) {}
-		virtual void _wrl_deselected(Ref<WRLEntry> entry, int index) {}
+		virtual void _wrl_selected(Ref<Entry> entry, int index) {}
+		virtual void _wrl_deselected(Ref<Entry> entry, int index) {}
 	};
 
 	void add_event_handler(EventHandler* handler) { event_handlers.append(handler); }

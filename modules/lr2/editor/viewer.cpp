@@ -87,8 +87,8 @@ void Viewer::_notification(int p_what) {
 	}
 }
 
-void Viewer::_wrl_added(Ref<WRLEntry> entry, int index) {
-	Ref<WRLGeneralStatic> gs = entry;
+void Viewer::_wrl_added(Ref<WRL::Entry> entry, int index) {
+	Ref<WRL::GeneralStatic> gs = entry;
 	if (gs.is_valid()) {
 		auto mesh_instance = memnew(MeshInstance3D);
 		mesh_instance->set_layer_mask(RenderLayerProps);
@@ -96,7 +96,7 @@ void Viewer::_wrl_added(Ref<WRLEntry> entry, int index) {
 		instances.insert(entry->name, {mesh_instance});
 	}
 
-	Ref<WRLSkyBox> sb = entry;
+	Ref<WRL::SkyBox> sb = entry;
 	if (sb.is_valid()) {
 		auto mesh_instance = memnew(MeshInstance3D);
 		mesh_instance->set_layer_mask(RenderLayerSkyBox);
@@ -107,8 +107,8 @@ void Viewer::_wrl_added(Ref<WRLEntry> entry, int index) {
 	_wrl_modified(entry, index);
 }
 
-void Viewer::_wrl_modified(Ref<WRLEntry> entry, int index) {
-	Ref<WRLGeneralStatic> gs = entry;
+void Viewer::_wrl_modified(Ref<WRL::Entry> entry, int index) {
+	Ref<WRL::GeneralStatic> gs = entry;
 	if (gs.is_valid()) {
 		Instance& i = instances[entry->name];
 		i.mesh_instance->set_transform(Transform3D(Basis(gs->rotation), gs->position).scaled({-1, 1, 1}));
@@ -118,7 +118,7 @@ void Viewer::_wrl_modified(Ref<WRLEntry> entry, int index) {
 		}
 	}
 
-	Ref<WRLSkyBox> sb = entry;
+	Ref<WRL::SkyBox> sb = entry;
 	if (sb.is_valid()) {
 		Instance& i = instances[entry->name];
 		if (i.model_path != sb->model) {
@@ -128,7 +128,7 @@ void Viewer::_wrl_modified(Ref<WRLEntry> entry, int index) {
 	}
 }
 
-void Viewer::_wrl_removed(Ref<WRLEntry> entry, int index) {
+void Viewer::_wrl_removed(Ref<WRL::Entry> entry, int index) {
 	if (instances.has(entry->name)) {
 		Instance& i = instances[entry->name];
 		i.mesh_instance->queue_delete();

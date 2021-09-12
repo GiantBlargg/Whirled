@@ -37,7 +37,7 @@ class Viewer : public BoxContainer, public WRL::EventHandler {
 	Viewer();
 
   protected:
-	void _wrl_added(Ref<WRLEntry> entry, int index) override;
-	void _wrl_modified(Ref<WRLEntry> entry, int index) override;
-	void _wrl_removed(Ref<WRLEntry> entry, int index) override;
+	void _wrl_added(Ref<WRL::Entry> entry, int index) override;
+	void _wrl_modified(Ref<WRL::Entry> entry, int index) override;
+	void _wrl_removed(Ref<WRL::Entry> entry, int index) override;
 };
