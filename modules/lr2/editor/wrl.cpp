@@ -73,6 +73,23 @@ Error WRL::load(FileAccess* file) {
 
 			entry = e;
 
+		} else if (type == "cLegoTerrain") {
+			Ref<LegoTerrain> e(memnew(LegoTerrain));
+
+			e->position = get_vector3(file);
+			e->rotation = get_quaternion(file);
+			e->u1 = file->get_float();
+			e->u2 = file->get_float();
+			e->u3 = file->get_32();
+			e->model = get_string(file, 0x80);
+			e->u4 = file->get_32();
+			e->scale = get_vector3(file);
+			file->get_buffer(e->u5, sizeof(e->u5));
+			e->texture_scale = get_vector2(file);
+			file->get_buffer(e->u6, sizeof(e->u6));
+
+			entry = e;
+
 		} else if (type == "cSkyBox") {
 			Ref<SkyBox> e(memnew(SkyBox));
 
@@ -127,6 +144,7 @@ Error WRL::save(FileAccess* file) {
 			file->store_32(gs->collision_sound);
 			store_string(file, gs->model, 0x80);
 		}
+
 		Ref<Unknown> u = entry;
 		if (u.is_valid()) {
 			file->store_buffer(u->data.ptr(), u->data.size());

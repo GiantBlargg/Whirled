@@ -1,6 +1,7 @@
 #include "viewer.h"
 
 #include "core/os/keyboard.h"
+#include "modules/lr2/import/tdf.h"
 #include "scene/3d/camera_3d.h"
 #include "scene/3d/light_3d.h"
 #include "scene/gui/subviewport_container.h"
@@ -96,6 +97,14 @@ void Viewer::_wrl_added(Ref<WRL::Entry> entry, int index) {
 		instances.insert(entry->name, {mesh_instance});
 	}
 
+	Ref<WRL::LegoTerrain> lt = entry;
+	if (lt.is_valid()) {
+		auto mesh_instance = memnew(MeshInstance3D);
+		mesh_instance->set_layer_mask(RenderLayerTerrain);
+		add_child(mesh_instance);
+		instances.insert(entry->name, {mesh_instance});
+	}
+
 	Ref<WRL::SkyBox> sb = entry;
 	if (sb.is_valid()) {
 		auto mesh_instance = memnew(MeshInstance3D);
@@ -116,6 +125,19 @@ void Viewer::_wrl_modified(Ref<WRL::Entry> entry, int index) {
 			i.model_path = gs->model;
 			pending.insert(entry->name);
 		}
+	}
+
+	Ref<WRL::LegoTerrain> lt = entry;
+	if (lt.is_valid()) {
+		Instance& i = instances[entry->name];
+		i.mesh_instance->set_transform(
+			Transform3D(Basis(lt->rotation).scaled(lt->scale), lt->position).scaled({-1, 1, 1}));
+		Ref<TDF> tdf = memnew(TDF);
+		tdf->load(ProjectSettings::get_singleton()->localize_path("res://" + lt->model));
+		Ref<TDFMesh> mesh = memnew(TDFMesh);
+		mesh->set_texture_scale(lt->texture_scale);
+		mesh->set_tdf(tdf);
+		i.mesh_instance->set_mesh(mesh);
 	}
 
 	Ref<WRL::SkyBox> sb = entry;
@@ -156,7 +178,7 @@ Viewer::Viewer() {
 	SubViewport* viewport = memnew(SubViewport);
 	viewport_container->add_child(viewport);
 	camera = memnew(Camera3D);
-	camera->set_cull_mask(RenderLayerProps);
+	camera->set_cull_mask(RenderLayerProps | RenderLayerTerrain);
 	viewport->add_child(camera);
 
 	MeshInstance3D* skybox_viewer = memnew(MeshInstance3D);

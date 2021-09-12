@@ -11,7 +11,8 @@ class Viewer : public BoxContainer, public WRL::EventHandler {
   private:
 	enum RenderLayer {
 		RenderLayerProps = 1 << 0,
-		RenderLayerSkyBox = 1 << 1,
+		RenderLayerTerrain = 1 << 1,
+		RenderLayerSkyBox = 1 << 2,
 	};
 
 	Camera3D* bg_camera;
