@@ -52,25 +52,24 @@ TDFMesh::TDFMesh() {
 	shader->set_code(R"(
 		shader_type spatial;
 		render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_lambert, specular_disabled, vertex_lighting;
+		varying vec4 mix;
+		void vertex() {mix = CUSTOM0;}
 		uniform sampler2D tex0 : hint_black_albedo;
 		uniform sampler2D tex1 : hint_black_albedo;
 		uniform sampler2D tex2 : hint_black_albedo;
 		uniform sampler2D tex3 : hint_black_albedo;
 		void fragment() {
-			ALBEDO = COLOR.r * texture(tex0, UV).rgb + COLOR.g * texture(tex1, UV).rgb + COLOR.b * texture(tex2, UV).rgb + COLOR.a * texture(tex3, UV).rgb;
+			ALBEDO = (mat4(texture(tex0, UV),texture(tex1, UV),texture(tex2, UV),texture(tex3, UV)) * mix).rgb;
 		}
 	)");
 }
-
-#define MIX_RATIO(src, mask) static_cast<float>(src & mask) / static_cast<float>(mask)
 
 struct TempSurface {
 	Vector<Vector3> vertices;
 	Vector<Vector3> normals;
 	Vector<Vector2> uv;
 	Vector<bool> cutout;
-	Vector<Color> colour;
-	// I'm using the colour info for texture mix info.
+	Vector<uint8_t> mix;
 };
 
 void TDFMesh::rebuild_mesh() {
@@ -103,9 +102,10 @@ void TDFMesh::rebuild_mesh() {
 						static_cast<float>(chunk.pos_y + sz) / tdf->chunk_width) *
 					texture_scale);
 				temp_surface.cutout.push_back((vertex.flags & 0b10000000) == 0b10000000);
-				temp_surface.colour.push_back(Color(
-					MIX_RATIO(vertex.mix_ratios, 0x000f), MIX_RATIO(vertex.mix_ratios, 0x00f0),
-					MIX_RATIO(vertex.mix_ratios, 0x0f00), MIX_RATIO(vertex.mix_ratios, 0xf000)));
+				temp_surface.mix.push_back(((vertex.mix_ratios >> 0x0) & 0xf) * 0x11);
+				temp_surface.mix.push_back(((vertex.mix_ratios >> 0x4) & 0xf) * 0x11);
+				temp_surface.mix.push_back(((vertex.mix_ratios >> 0x8) & 0xf) * 0x11);
+				temp_surface.mix.push_back(((vertex.mix_ratios >> 0xc) & 0xf) * 0x11);
 			}
 		}
 	}
@@ -143,10 +143,12 @@ void TDFMesh::rebuild_mesh() {
 		array.resize(ArrayMesh::ARRAY_MAX);
 		array.set(ArrayMesh::ARRAY_VERTEX, E.value.vertices);
 		array.set(ArrayMesh::ARRAY_NORMAL, E.value.normals);
-		array.set(ArrayMesh::ARRAY_COLOR, E.value.colour);
 		array.set(ArrayMesh::ARRAY_TEX_UV, E.value.uv);
+		array.set(ArrayMesh::ARRAY_CUSTOM0, E.value.mix);
 		array.set(ArrayMesh::ARRAY_INDEX, indices);
-		add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, array);
+		add_surface_from_arrays(
+			Mesh::PRIMITIVE_TRIANGLES, array, Array(), Dictionary(),
+			ARRAY_CUSTOM_RGBA8_UNORM << ARRAY_FORMAT_CUSTOM0_SHIFT);
 
 		Ref<ShaderMaterial> mat = memnew(ShaderMaterial);
 		mat->set_shader(shader);
