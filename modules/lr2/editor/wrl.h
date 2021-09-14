@@ -30,6 +30,21 @@ class WRL : public RefCounted {
 		String model;
 	};
 
+	class GeneralMobile : public Entry {
+		GDCLASS(GeneralMobile, Entry);
+
+	  public:
+		Vector3 position;
+		Quaternion rotation;
+		uint32_t u1;
+		uint32_t u2;
+		uint32_t collision_sound;
+		float weight;
+		Vector3 u3;
+		String model;
+		uint32_t u4;
+	};
+
 	class LegoTerrain : public Entry {
 		GDCLASS(LegoTerrain, Entry);
 

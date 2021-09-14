@@ -73,6 +73,21 @@ Error WRL::load(FileAccess* file) {
 
 			entry = e;
 
+		} else if (type == "cGeneralMobile" || type == "cBonusPickup") {
+			Ref<GeneralMobile> e(memnew(GeneralMobile));
+
+			e->position = get_vector3(file);
+			e->rotation = get_quaternion(file);
+			e->u1 = file->get_32();
+			e->u2 = file->get_32();
+			e->collision_sound = file->get_32();
+			e->weight = file->get_float();
+			e->u3 = get_vector3(file);
+			e->model = get_string(file, 0x80);
+			e->u4 = file->get_32();
+
+			entry = e;
+
 		} else if (type == "cLegoTerrain") {
 			Ref<LegoTerrain> e(memnew(LegoTerrain));
 

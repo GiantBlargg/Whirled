@@ -97,6 +97,14 @@ void Viewer::_wrl_added(Ref<WRL::Entry> entry, int index) {
 		instances.insert(entry->name, {mesh_instance});
 	}
 
+	Ref<WRL::GeneralMobile> gm = entry;
+	if (gm.is_valid()) {
+		auto mesh_instance = memnew(MeshInstance3D);
+		mesh_instance->set_layer_mask(RenderLayerProps);
+		add_child(mesh_instance);
+		instances.insert(entry->name, {mesh_instance});
+	}
+
 	Ref<WRL::LegoTerrain> lt = entry;
 	if (lt.is_valid()) {
 		auto mesh_instance = memnew(MeshInstance3D);
@@ -123,6 +131,16 @@ void Viewer::_wrl_modified(Ref<WRL::Entry> entry, int index) {
 		i.mesh_instance->set_transform(Transform3D(Basis(gs->rotation), gs->position).scaled({-1, 1, 1}));
 		if (i.model_path != gs->model) {
 			i.model_path = gs->model;
+			pending.insert(entry->name);
+		}
+	}
+
+	Ref<WRL::GeneralMobile> gm = entry;
+	if (gm.is_valid()) {
+		Instance& i = instances[entry->name];
+		i.mesh_instance->set_transform(Transform3D(Basis(gm->rotation), gm->position).scaled({-1, 1, 1}));
+		if (i.model_path != gm->model) {
+			i.model_path = gm->model;
 			pending.insert(entry->name);
 		}
 	}
