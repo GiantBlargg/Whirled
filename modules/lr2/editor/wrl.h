@@ -96,9 +96,9 @@ class WRL : public RefCounted {
 	class EventHandler {
 	  protected:
 		friend class WRL;
-		virtual void _wrl_added(Ref<Entry> entry, int index){};
-		virtual void _wrl_modified(Ref<Entry> entry, int index){};
-		virtual void _wrl_removed(Ref<Entry> entry, int index){};
+		virtual void _wrl_added(Ref<Entry> entry, int index) {}
+		virtual void _wrl_modified(Ref<Entry> entry, int index) {}
+		virtual void _wrl_removed(Ref<Entry> entry, int index) {}
 		virtual void _wrl_cleared(Vector<Ref<Entry>> entries) {
 			for (int i = entries.size() - 1; i >= 0; i--) {
 				_wrl_removed(entries[i], i);
