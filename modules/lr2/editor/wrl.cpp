@@ -21,8 +21,10 @@ int WRL::add(Ref<Entry> entry, int index) {
 Ref<WRL::Entry> WRL::remove(int index) {
 	if (selected == index)
 		select(-1);
+	if (selected > index)
+		selected--;
 	Ref<Entry> e = entries.get(index);
-	entries.remove(index);
+	entries.remove_at(index);
 	EVENT(removed(e, index))
 	return e;
 }
@@ -113,6 +115,7 @@ Error WRL::load(FileAccess* file) {
 			entry = e;
 
 		} else {
+			// WARN_PRINT("Unknown chunk: " + type);
 			Ref<Unknown> e(memnew(Unknown));
 
 			e->data.resize(next_chunk - file->get_position());
@@ -128,6 +131,10 @@ Error WRL::load(FileAccess* file) {
 		entry->binding = binding;
 
 		add(entry);
+
+		if (file->get_position() != next_chunk) {
+			WARN_PRINT("Wrong amount of data read: " + type);
+		}
 	}
 	return OK;
 }

@@ -16,7 +16,7 @@ void Viewer::input(const Ref<InputEvent>& p_event) {
 void Viewer::gui_input(const Ref<InputEvent>& p_event) {
 	Ref<InputEventMouseButton> mb = p_event;
 	if (mb.is_valid()) {
-		if (mb->get_button_index() == MouseButton::MOUSE_BUTTON_RIGHT) {
+		if (mb->get_button_index() == MouseButton::RIGHT) {
 			right = mb->is_pressed();
 			Input::get_singleton()->set_mouse_mode(
 				mb->is_pressed() ? Input::MOUSE_MODE_CAPTURED : Input::MOUSE_MODE_VISIBLE);
@@ -42,22 +42,22 @@ void Viewer::_notification(int p_what) {
 
 			Input* i = Input::get_singleton();
 
-			if (i->is_key_pressed(Key::KEY_W))
+			if (i->is_key_pressed(Key::W))
 				movement.z--;
-			if (i->is_key_pressed(Key::KEY_S))
+			if (i->is_key_pressed(Key::S))
 				movement.z++;
-			if (i->is_key_pressed(Key::KEY_A))
+			if (i->is_key_pressed(Key::A))
 				movement.x--;
-			if (i->is_key_pressed(Key::KEY_D))
+			if (i->is_key_pressed(Key::D))
 				movement.x++;
-			if (i->is_key_pressed(Key::KEY_Q))
+			if (i->is_key_pressed(Key::Q))
 				movement.y--;
-			if (i->is_key_pressed(Key::KEY_E))
+			if (i->is_key_pressed(Key::E))
 				movement.y++;
 
-			if (i->is_key_pressed(Key::KEY_SHIFT))
+			if (i->is_key_pressed(Key::SHIFT))
 				movement *= 5;
-			if (i->is_key_pressed(Key::KEY_CTRL))
+			if (i->is_key_pressed(Key::CTRL))
 				movement /= 5;
 
 			movement *= get_process_delta_time() * move_speed;
