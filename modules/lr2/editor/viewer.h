@@ -1,9 +1,9 @@
 #pragma once
 
+#include "../wrl/wrl.hpp"
 #include "scene/3d/mesh_instance_3d.h"
 #include "scene/gui/box_container.h"
 #include "scene/main/viewport.h"
-#include "wrl.h"
 
 class Viewer : public BoxContainer, public WRL::EventHandler {
 	GDCLASS(Viewer, BoxContainer);
@@ -25,9 +25,9 @@ class Viewer : public BoxContainer, public WRL::EventHandler {
 		MeshInstance3D* mesh_instance;
 		String model_path;
 	};
-	Map<String, Instance> instances;
+	Map<int, Instance> instances;
 
-	Set<String> pending;
+	Set<int> pending;
 
   protected:
 	void input(const Ref<InputEvent>& p_event) override;
@@ -38,7 +38,5 @@ class Viewer : public BoxContainer, public WRL::EventHandler {
 	Viewer();
 
   protected:
-	void _wrl_added(Ref<WRL::Entry> entry, int index) override;
-	void _wrl_modified(Ref<WRL::Entry> entry, int index) override;
-	void _wrl_removed(Ref<WRL::Entry> entry, int index) override;
+	void _wrl_event(const WRL::Event&) override;
 };

@@ -37,7 +37,7 @@ void Whirled::_file_open(String path) {
 void Whirled::_file_save_as(String path) {
 	file_path = path;
 	FileAccess* file = FileAccess::open(path, FileAccess::ModeFlags::WRITE);
-	wrl->save(file);
+	// wrl->save(file);
 	file->close();
 }
 void Whirled::_file_reset() {
@@ -84,11 +84,13 @@ Whirled::Whirled() {
 	Button* save_button = memnew(Button);
 	menu->add_child(save_button);
 	save_button->set_text("Save");
+	save_button->set_disabled(true);
 	save_button->connect("pressed", callable_mp(this, &Whirled::_menu_save));
 
 	Button* save_as_button = memnew(Button);
 	menu->add_child(save_as_button);
 	save_as_button->set_text("Save As");
+	save_as_button->set_disabled(true);
 	save_as_button->connect("pressed", callable_mp(this, &Whirled::_menu_save_as));
 
 	HSplitContainer* right_drawer_split = memnew(HSplitContainer);
@@ -96,8 +98,9 @@ Whirled::Whirled() {
 	right_drawer_split->set_v_size_flags(Control::SIZE_EXPAND_FILL);
 	right_drawer_split->set_split_offset(210);
 
-	scene = memnew(SceneLayout(wrl));
+	scene = memnew(SceneLayout);
 	right_drawer_split->add_child(scene);
+	scene->wrl_connect(wrl);
 
 	HSplitContainer* left_drawer_split = memnew(HSplitContainer);
 	right_drawer_split->add_child(left_drawer_split);
@@ -106,9 +109,9 @@ Whirled::Whirled() {
 	left_drawer_split->add_child(viewer);
 	left_drawer_split->set_split_offset(-210);
 	viewer->set_h_size_flags(Control::SIZE_EXPAND_FILL);
-	wrl->add_event_handler(viewer);
+	viewer->wrl_connect(wrl);
 
 	Inspector* inspector = memnew(Inspector);
 	left_drawer_split->add_child(inspector);
-	wrl->add_event_handler(inspector);
+	inspector->wrl_connect(wrl);
 }

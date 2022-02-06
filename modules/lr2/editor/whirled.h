@@ -1,9 +1,9 @@
 #pragma once
 
+#include "../wrl/wrl.hpp"
 #include "scene/gui/file_dialog.h"
 #include "scene_layout.h"
 #include "viewer.h"
-#include "wrl.h"
 
 class Whirled : public Node {
 	GDCLASS(Whirled, Node);

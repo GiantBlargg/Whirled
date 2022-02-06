@@ -3,7 +3,8 @@
 void SceneLayout::_item_selected() {
 	TreeItem* item = get_selected();
 	String name = item->get_text(0);
-	wrl->select(name);
+	int index = wrl->get_index(name);
+	wrl->select(index);
 }
 
 void SceneLayout::_notification(int p_what) {
@@ -14,20 +15,34 @@ void SceneLayout::_notification(int p_what) {
 	}
 }
 
-void SceneLayout::_wrl_added(Ref<WRL::Entry> entry, int index) {
-	TreeItem* item = create_item(nullptr, index);
-	item->set_text(0, entry->name);
+void SceneLayout::_wrl_event(const WRL::Event& event) {
+	switch (event.event_type) {
+	case WRL::Event::Type::Inited:
+		_wrl_emit_add_all();
+		return;
+
+	case WRL::Event::Type::Cleared:
+		_wrl_emit_remove_all();
+		return;
+
+	case WRL::Event::Type::Added: {
+		TreeItem* item = create_item(nullptr, event.index);
+		item->set_text(0, wrl->get_Entry_name(event.id));
+	}
+		return;
+
+	case WRL::Event::Type::Removed: {
+		TreeItem* root = get_root();
+		root->remove_child(root->get_child(event.index));
+	}
+		return;
+
+	case WRL::Event::Type::Selected:
+		get_root()->get_child(event.index)->select(0);
+		return;
+
+	case WRL::Event::Type::Deselected:
+		get_root()->get_child(event.index)->deselect(0);
+		return;
+	}
 }
-
-void SceneLayout::_wrl_removed(Ref<WRL::Entry> entry, int index) {
-	TreeItem* root = get_root();
-	root->remove_child(root->get_child(index));
-}
-
-void SceneLayout::_wrl_selected(Ref<WRL::Entry> entry, int index) { get_root()->get_child(index)->select(0); };
-void SceneLayout::_wrl_deselected(Ref<WRL::Entry> entry, int index) {
-	get_root()->get_child(index)->deselect(0);
-	ensure_cursor_is_visible();
-};
-
-SceneLayout::SceneLayout(Ref<WRL> w) : wrl(w) { wrl->add_event_handler(this); }

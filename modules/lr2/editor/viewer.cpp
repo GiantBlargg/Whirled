@@ -65,8 +65,8 @@ void Viewer::_notification(int p_what) {
 		}
 
 		for (auto p = pending.front(); p; p = p->next()) {
-			String name = p->get();
-			Instance i = instances[name];
+			int id = p->get();
+			Instance i = instances[id];
 			String resolved_path = "res://" + i.model_path;
 			switch (ResourceLoader::load_threaded_get_status(resolved_path)) {
 			case ResourceLoader::THREAD_LOAD_INVALID_RESOURCE:
@@ -88,91 +88,143 @@ void Viewer::_notification(int p_what) {
 	}
 }
 
-void Viewer::_wrl_added(Ref<WRL::Entry> entry, int index) {
-	Ref<WRL::GeneralStatic> gs = entry;
-	if (gs.is_valid()) {
-		auto mesh_instance = memnew(MeshInstance3D);
-		mesh_instance->set_layer_mask(RenderLayerProps);
-		add_child(mesh_instance);
-		instances.insert(entry->name, {mesh_instance});
-	}
+void Viewer::_wrl_event(const WRL::Event& event) {
+	switch (event.event_type) {
+	case WRL::Event::Type::Inited:
+		_wrl_emit_add_all();
+		return;
 
-	Ref<WRL::GeneralMobile> gm = entry;
-	if (gm.is_valid()) {
-		auto mesh_instance = memnew(MeshInstance3D);
-		mesh_instance->set_layer_mask(RenderLayerProps);
-		add_child(mesh_instance);
-		instances.insert(entry->name, {mesh_instance});
-	}
+	case WRL::Event::Type::Cleared:
+		_wrl_emit_remove_all();
+		return;
 
-	Ref<WRL::LegoTerrain> lt = entry;
-	if (lt.is_valid()) {
-		auto mesh_instance = memnew(MeshInstance3D);
-		mesh_instance->set_layer_mask(RenderLayerTerrain);
-		add_child(mesh_instance);
-		instances.insert(entry->name, {mesh_instance});
-	}
+	case WRL::Event::Type::Added:
+		switch (wrl->get_Entry_EntryType(event.id)) {
+		case WRL::EntryType::GeneralStatic: {
+			auto mesh_instance = memnew(MeshInstance3D);
+			mesh_instance->set_layer_mask(RenderLayerProps);
+			add_child(mesh_instance);
+			instances.insert(event.id.id, {mesh_instance});
 
-	Ref<WRL::SkyBox> sb = entry;
-	if (sb.is_valid()) {
-		auto mesh_instance = memnew(MeshInstance3D);
-		mesh_instance->set_layer_mask(RenderLayerSkyBox);
-		add_child(mesh_instance);
-		instances.insert(entry->name, {mesh_instance});
-	}
+			WRL::Event ev = event;
+			ev.event_type = WRL::Event::Type::Modified;
 
-	_wrl_modified(entry, index);
-}
-
-void Viewer::_wrl_modified(Ref<WRL::Entry> entry, int index) {
-	Ref<WRL::GeneralStatic> gs = entry;
-	if (gs.is_valid()) {
-		Instance& i = instances[entry->name];
-		i.mesh_instance->set_transform(Transform3D(Basis(gs->rotation), gs->position).scaled({-1, 1, 1}));
-		if (i.model_path != gs->model) {
-			i.model_path = gs->model;
-			pending.insert(entry->name);
+			ev.field = WRL::Field::GeneralStatic_model;
+			_wrl_event(ev);
+			ev.field = WRL::Field::GeneralStatic_position;
+			_wrl_event(ev);
+			// ev.field = WRL::Field::GeneralStatic_rotation;
+			// _wrl_event(ev);
 		}
-	}
+			return;
+		case WRL::EntryType::GeneralMobile: {
+			auto mesh_instance = memnew(MeshInstance3D);
+			mesh_instance->set_layer_mask(RenderLayerProps);
+			add_child(mesh_instance);
+			instances.insert(event.id.id, {mesh_instance});
 
-	Ref<WRL::GeneralMobile> gm = entry;
-	if (gm.is_valid()) {
-		Instance& i = instances[entry->name];
-		i.mesh_instance->set_transform(Transform3D(Basis(gm->rotation), gm->position).scaled({-1, 1, 1}));
-		if (i.model_path != gm->model) {
-			i.model_path = gm->model;
-			pending.insert(entry->name);
+			WRL::Event ev = event;
+			ev.event_type = WRL::Event::Type::Modified;
+
+			ev.field = WRL::Field::GeneralMobile_model;
+			_wrl_event(ev);
+			ev.field = WRL::Field::GeneralMobile_position;
+			_wrl_event(ev);
+			// ev.field = WRL::Field::GeneralMobile_rotation;
+			// _wrl_event(ev);
 		}
-	}
+			return;
+		case WRL::EntryType::LegoTerrain: {
+			auto mesh_instance = memnew(MeshInstance3D);
+			mesh_instance->set_layer_mask(RenderLayerTerrain);
+			add_child(mesh_instance);
+			instances.insert(event.id.id, {mesh_instance});
 
-	Ref<WRL::LegoTerrain> lt = entry;
-	if (lt.is_valid()) {
-		Instance& i = instances[entry->name];
-		i.mesh_instance->set_transform(
-			Transform3D(Basis(lt->rotation).scaled(lt->scale), lt->position).scaled({-1, 1, 1}));
-		Ref<TDF> tdf = memnew(TDF);
-		tdf->load(ProjectSettings::get_singleton()->localize_path("res://" + lt->model));
-		Ref<TDFMesh> mesh = memnew(TDFMesh);
-		mesh->set_texture_scale(lt->texture_scale);
-		mesh->set_tdf(tdf);
-		i.mesh_instance->set_mesh(mesh);
-	}
+			WRL::Event ev = event;
+			ev.event_type = WRL::Event::Type::Modified;
 
-	Ref<WRL::SkyBox> sb = entry;
-	if (sb.is_valid()) {
-		Instance& i = instances[entry->name];
-		if (i.model_path != sb->model) {
-			i.model_path = sb->model;
-			pending.insert(entry->name);
+			ev.field = WRL::Field::LegoTerrain_model;
+			_wrl_event(ev);
+			ev.field = WRL::Field::LegoTerrain_position;
+			_wrl_event(ev);
+			// ev.field = WRL::Field::LegoTerrain_rotation;
+			// _wrl_event(ev);
+			// ev.field = WRL::Field::LegoTerrain_scale;
+			// _wrl_event(ev);
+			// ev.field = WRL::Field::LegoTerrain_texture_scale;
+			// _wrl_event(ev);
 		}
-	}
-}
+			return;
+		case WRL::EntryType::SkyBox: {
+			auto mesh_instance = memnew(MeshInstance3D);
+			mesh_instance->set_layer_mask(RenderLayerSkyBox);
+			add_child(mesh_instance);
+			instances.insert(event.id.id, {mesh_instance});
 
-void Viewer::_wrl_removed(Ref<WRL::Entry> entry, int index) {
-	if (instances.has(entry->name)) {
-		Instance& i = instances[entry->name];
-		i.mesh_instance->queue_delete();
-		instances.erase(entry->name);
+			WRL::Event ev = event;
+			ev.event_type = WRL::Event::Type::Modified;
+
+			ev.field = WRL::Field::SkyBox_model;
+			_wrl_event(ev);
+		}
+			return;
+		}
+		return;
+
+	case WRL::Event::Type::Modified:
+		switch (event.field) {
+		case WRL::Field::GeneralStatic_model:
+			instances[event.id.id].model_path = wrl->get_GeneralStatic_model(event.id);
+			pending.insert(event.id.id);
+			return;
+		case WRL::Field::GeneralStatic_position:
+		case WRL::Field::GeneralStatic_rotation:
+			instances[event.id.id].mesh_instance->set_transform(
+				Transform3D(Basis(wrl->get_GeneralStatic_rotation(event.id)), wrl->get_GeneralStatic_position(event.id))
+					.scaled({-1, 1, 1}));
+			return;
+		case WRL::Field::GeneralMobile_model:
+			instances[event.id.id].model_path = wrl->get_GeneralMobile_model(event.id);
+			pending.insert(event.id.id);
+			return;
+		case WRL::Field::GeneralMobile_position:
+		case WRL::Field::GeneralMobile_rotation:
+			instances[event.id.id].mesh_instance->set_transform(
+				Transform3D(Basis(wrl->get_GeneralMobile_rotation(event.id)), wrl->get_GeneralMobile_position(event.id))
+					.scaled({-1, 1, 1}));
+			return;
+		case WRL::Field::LegoTerrain_model:
+		case WRL::Field::LegoTerrain_texture_scale: {
+			Ref<TDF> tdf = memnew(TDF);
+			tdf->load(ProjectSettings::get_singleton()->localize_path("res://" + wrl->get_LegoTerrain_model(event.id)));
+			Ref<TDFMesh> mesh = memnew(TDFMesh);
+			mesh->set_texture_scale(wrl->get_LegoTerrain_texture_scale(event.id));
+			mesh->set_tdf(tdf);
+			instances[event.id.id].mesh_instance->set_mesh(mesh);
+		}
+			return;
+		case WRL::Field::LegoTerrain_position:
+		case WRL::Field::LegoTerrain_rotation:
+		case WRL::Field::LegoTerrain_scale:
+			instances[event.id.id].mesh_instance->set_transform(
+				Transform3D(
+					Basis(wrl->get_LegoTerrain_rotation(event.id)).scaled(wrl->get_LegoTerrain_scale(event.id)),
+					wrl->get_LegoTerrain_position(event.id))
+					.scaled({-1, 1, 1}));
+			return;
+		case WRL::Field::SkyBox_model:
+			instances[event.id.id].model_path = wrl->get_SkyBox_model(event.id);
+			pending.insert(event.id.id);
+			return;
+		}
+		return;
+
+	case WRL::Event::Type::Removed:
+		if (instances.has(event.id.id)) {
+			instances[event.id.id].mesh_instance->queue_delete();
+			instances.erase(event.id.id);
+		}
+		return;
 	}
 }
 
@@ -190,12 +242,14 @@ Viewer::Viewer() {
 	bg_viewport->set_debug_draw(Viewport::DEBUG_DRAW_UNSHADED);
 	viewport_container->add_child(bg_viewport);
 	bg_camera = memnew(Camera3D);
+	bg_camera->set_near(1);
 	bg_camera->set_cull_mask(RenderLayerSkyBox);
 	bg_viewport->add_child(bg_camera);
 
 	SubViewport* viewport = memnew(SubViewport);
 	viewport_container->add_child(viewport);
 	camera = memnew(Camera3D);
+	camera->set_near(1);
 	camera->set_cull_mask(RenderLayerProps | RenderLayerTerrain);
 	viewport->add_child(camera);
 
@@ -213,7 +267,7 @@ void fragment() { ALBEDO = texture(skybox, UV).rgb; }
 	skybox_viewer_material->set_shader(skybox_viewer_shader);
 	skybox_viewer_material->set_shader_param("skybox", bg_viewport->get_texture());
 	skybox_viewer->set_material_override(skybox_viewer_material);
-	skybox_viewer->set_position(Vector3(0, 0, -1));
+	skybox_viewer->set_position(Vector3(0, 0, -2));
 	camera->add_child(skybox_viewer);
 
 	DirectionalLight3D* l = memnew(DirectionalLight3D);
