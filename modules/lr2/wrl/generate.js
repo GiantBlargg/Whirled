@@ -1,12 +1,12 @@
 const data_types = {
 	"uint8*": field => ({
-		storage_type: "Vector<uint8_t>", load_func: (field_address, file, next_chunk) => [
+		storage_type: "Vector<uint8_t>", variant: "PACKED_BYTE_ARRAY", load_func: (field_address, file, next_chunk) => [
 			`${field_address}.resize(${next_chunk} - ${file}->get_position());`,
 			`\t\tfile->get_buffer(${field_address}.ptrw(), ${field_address}.size());`
 		].join("\n")
 	}),
 	"uint8[]": field => ({
-		storage_type: "uint8_t", extern_type: "Vector<uint8_t>", postfix: `[${field.length}]`,
+		storage_type: "uint8_t", extern_type: "Vector<uint8_t>", postfix: `[${field.length}]`, variant: "PACKED_BYTE_ARRAY",
 		load_func: (field_address, file) => `${file}->get_buffer(${field_address}, ${field.length})`,
 		getter: field_address => [
 			"\tVector<uint8_t> v;",
@@ -16,12 +16,12 @@ const data_types = {
 		],
 		setter: (field_address, value) => [`\tmemcpy(${field_address}, ${value}.ptrw(), ${field.length});`]
 	}),
-	"uint32": { storage_type: "uint32_t", load_func: (field_address, file) => `${field_address} = ${file}->get_32()`, widget: "IntWidget" },
-	"float": { load_func: (field_address, file) => `${field_address} = ${file}->get_float()`, widget: "FloatWidget" },
-	"String": field => ({ load_func: (field_address, file) => `${field_address} = get_string(${file}, ${field.length})`, widget: "StringWidget" }),
-	"Vector2": { load_func: (field_address, file) => `${field_address} = get_vector2(${file})`, widget: "Vector2Widget" },
-	"Vector3": { load_func: (field_address, file) => `${field_address} = get_vector3(${file})`, widget: "Vector3Widget" },
-	"Quaternion": { load_func: (field_address, file) => `${field_address} = get_quaternion(${file})`, widget: "RotationWidget" }
+	"uint32": { storage_type: "uint32_t", variant: "INT", load_func: (field_address, file) => `${field_address} = ${file}->get_32()`, widget: "IntWidget" },
+	"float": { variant: "FLOAT", load_func: (field_address, file) => `${field_address} = ${file}->get_float()`, widget: "FloatWidget" },
+	"String": field => ({ variant: "STRING", load_func: (field_address, file) => `${field_address} = get_string(${file}, ${field.length})`, widget: "StringWidget" }),
+	"Vector2": { variant: "VECTOR2", load_func: (field_address, file) => `${field_address} = get_vector2(${file})`, widget: "Vector2Widget" },
+	"Vector3": { variant: "VECTOR3", load_func: (field_address, file) => `${field_address} = get_vector3(${file})`, widget: "Vector3Widget" },
+	"Quaternion": { variant: "QUATERNION", load_func: (field_address, file) => `${field_address} = get_quaternion(${file})`, widget: "RotationWidget" }
 };
 
 const entry_types = {
@@ -90,7 +90,7 @@ function convertToArray(v) {
 	return [v];
 }
 
-const convert_from_record = Object.entries(entry_types).map(([typename, entry], i, array) => ({ ...entry, typename: typename, type: convertToArray(entry.type), parent: i == 0 ? undefined : array[0][0] }));
+const convert_from_record = Object.entries(entry_types).map(([typename, entry], i, array) => ({ ...entry, typename: typename, type: convertToArray(entry.type), parent: i == 0 ? "Object" : array[0][0] }));
 
 function get_data_type(field) {
 	let data_type = data_types[field.type];
@@ -139,10 +139,28 @@ const generated_includes = {
 		"}\n"
 	]),
 	"define_structs": apply_format_data.map((entry) => [
-		`struct ${entry.typename}${entry.parent == undefined ? "" : ` : public ${entry.parent}`} {`,
+		`struct ${entry.typename} : public ${entry.parent} {`,
+		`\tGDCLASS(${entry.typename}, ${entry.parent})`,
+		"\n  public:",
 		entry.fields.map(field =>
 			`\t${field.storage_type} ${field.name}${field.postfix};`
-		),
+		), "",
+		entry.fields.map(field => [
+			`\t${field.extern_type} get_${field.name} () {`,
+			field.getter(field.name),
+			"\t}",
+			`\tvoid set_${field.name}(${field.extern_type} value){`,
+			field.setter(field.name, "value"),
+			"\t}\n"
+		]),
+		"\n  protected:",
+		"\tstatic void _bind_methods() {",
+		entry.fields.map(field => [
+			`\t\tClassDB::bind_method(D_METHOD("get_${field.name}"), &${entry.typename}::get_${field.name});`,
+			`\t\tClassDB::bind_method(D_METHOD("set_${field.name}", "${field.name}"), &${entry.typename}::set_${field.name});`,
+			`\t\tADD_PROPERTY(PropertyInfo(Variant::${field.variant}, "${field.name}"), "set_${field.name}", "get_${field.name}");\n`,
+		]),
+		"\t}",
 		"};\n"
 	]),
 	"define_enums": [

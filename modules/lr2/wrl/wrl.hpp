@@ -24,6 +24,10 @@ class WRL : public RefCounted {
 	int get_index(String name);
 	int get_index(EntryID id);
 
+	List<PropertyInfo> get_entry_property_list(EntryID id);
+	Variant get_entry_property(EntryID id, String prop_name);
+	void set_entry_property(EntryID id, String prop_name, Variant value);
+
 	void select(EntryID);
 	void select(int index) { select(scene.get(index)); }
 
@@ -77,7 +81,7 @@ class WRL : public RefCounted {
 		void wrl_connect(Ref<WRL> p_wrl) {
 			wrl = p_wrl;
 			wrl->event_handlers.append(this);
-			// this->_wrl_event(Event{.event_type = Event::Type::Inited});
+			this->_wrl_event(Event{.event_type = Event::Type::Inited});
 		}
 	};
 

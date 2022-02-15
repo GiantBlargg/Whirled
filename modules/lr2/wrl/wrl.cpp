@@ -21,6 +21,14 @@ int WRL::get_index(EntryID id) {
 	return -1;
 }
 
+List<PropertyInfo> WRL::get_entry_property_list(EntryID id) {
+	List<PropertyInfo> property_info;
+	entries[id.id]->get_property_list(&property_info);
+	return property_info;
+}
+Variant WRL::get_entry_property(EntryID id, String prop_name) { return entries[id.id]->get(prop_name); }
+void WRL::set_entry_property(EntryID id, String prop_name, Variant value) { entries[id.id]->set(prop_name, value); }
+
 void WRL::select(EntryID id) {
 	int index = get_index(id);
 	emit_event(Event{

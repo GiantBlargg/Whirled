@@ -4,6 +4,7 @@
 #include "editor/whirled.h"
 #include "io/remap_fs_access.h"
 #include "servers/navigation_server_3d.h"
+#include "servers/physics_server_2d.h"
 
 void Init::_notification(int p_notification) {
 	if (p_notification == NOTIFICATION_READY) {

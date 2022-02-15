@@ -1,5 +1,6 @@
 #include "viewer.h"
 
+#include "core/config/project_settings.h"
 #include "core/os/keyboard.h"
 #include "modules/lr2/import/tdf.h"
 #include "scene/3d/camera_3d.h"
