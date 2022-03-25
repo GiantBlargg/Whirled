@@ -256,7 +256,6 @@ RES MDL2Loader::load(
 				switch (mat_prop.alpha_type) {
 				case 0:
 					mat->set_transparency(BaseMaterial3D::Transparency::TRANSPARENCY_ALPHA_SCISSOR);
-					mat->set_depth_draw_mode(BaseMaterial3D::DepthDrawMode::DEPTH_DRAW_ALWAYS);
 					mat->set_alpha_scissor_threshold(0.5f);
 					break;
 				case 1:
