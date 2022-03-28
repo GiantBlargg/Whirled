@@ -89,143 +89,71 @@ void Viewer::_notification(int p_what) {
 	}
 }
 
-void Viewer::_wrl_event(const WRL::Event& event) {
-	switch (event.event_type) {
-	case WRL::Event::Type::Inited:
-		_wrl_emit_add_all();
-		return;
+void Viewer::_wrl_changed(const WRL::Change& change, bool) {
+	for (auto r = change.removed.front(); r; r = r.next()) {
+		if (instances.has(r.value().id)) {
+			instances[r.value().id].mesh_instance->queue_delete();
+			instances.erase(r.value().id);
+		}
+	}
 
-	case WRL::Event::Type::Cleared:
-		_wrl_emit_remove_all();
-		return;
-
-	case WRL::Event::Type::Added:
-		switch (wrl->get_Entry_EntryType(event.id)) {
-		case WRL::EntryType::GeneralStatic: {
+	for (auto a = change.added.front(); a; a = a.next()) {
+		String type = wrl->get_entry_property(a.value(), "type");
+		if (type == "cGeneralStatic" || type == "cGoldenBrick" || type == "cGeneralMobile" || type == "cBonusPickup" ||
+			type == "cLegoTerrain" || type == "cSkyBox") {
 			auto mesh_instance = memnew(MeshInstance3D);
-			mesh_instance->set_layer_mask(RenderLayerProps);
+
+			if (type == "cLegoTerrain")
+				mesh_instance->set_layer_mask(RenderLayerTerrain);
+			else if (type == "cSkyBox")
+				mesh_instance->set_layer_mask(RenderLayerSkyBox);
+			else
+				mesh_instance->set_layer_mask(RenderLayerProps);
+
 			add_child(mesh_instance);
-			instances.insert(event.id.id, {mesh_instance});
-
-			WRL::Event ev = event;
-			ev.event_type = WRL::Event::Type::Modified;
-
-			ev.field = WRL::Field::GeneralStatic_model;
-			_wrl_event(ev);
-			ev.field = WRL::Field::GeneralStatic_position;
-			_wrl_event(ev);
-			// ev.field = WRL::Field::GeneralStatic_rotation;
-			// _wrl_event(ev);
+			instances.insert(a.value().id, {mesh_instance});
 		}
-			return;
-		case WRL::EntryType::GeneralMobile: {
-			auto mesh_instance = memnew(MeshInstance3D);
-			mesh_instance->set_layer_mask(RenderLayerProps);
-			add_child(mesh_instance);
-			instances.insert(event.id.id, {mesh_instance});
+	}
 
-			WRL::Event ev = event;
-			ev.event_type = WRL::Event::Type::Modified;
-
-			ev.field = WRL::Field::GeneralMobile_model;
-			_wrl_event(ev);
-			ev.field = WRL::Field::GeneralMobile_position;
-			_wrl_event(ev);
-			// ev.field = WRL::Field::GeneralMobile_rotation;
-			// _wrl_event(ev);
+	for (auto prop = change.propertyChanges.front(); prop; prop = prop.next()) {
+		WRL::EntryID entry = prop.key().first;
+		String type = wrl->get_entry_property(entry, "type");
+		String prop_name = prop.key().second;
+		if ((type == "cGeneralStatic" || type == "cGoldenBrick" || type == "cGeneralMobile" || type == "cBonusPickup" ||
+			 type == "cSkyBox") &&
+			prop_name == "model") {
+			instances[entry.id].model_path = prop.value();
+			pending.insert(entry.id);
 		}
-			return;
-		case WRL::EntryType::LegoTerrain: {
-			auto mesh_instance = memnew(MeshInstance3D);
-			mesh_instance->set_layer_mask(RenderLayerTerrain);
-			add_child(mesh_instance);
-			instances.insert(event.id.id, {mesh_instance});
 
-			WRL::Event ev = event;
-			ev.event_type = WRL::Event::Type::Modified;
-
-			ev.field = WRL::Field::LegoTerrain_model;
-			_wrl_event(ev);
-			ev.field = WRL::Field::LegoTerrain_position;
-			_wrl_event(ev);
-			// ev.field = WRL::Field::LegoTerrain_rotation;
-			// _wrl_event(ev);
-			// ev.field = WRL::Field::LegoTerrain_scale;
-			// _wrl_event(ev);
-			// ev.field = WRL::Field::LegoTerrain_texture_scale;
-			// _wrl_event(ev);
-		}
-			return;
-		case WRL::EntryType::SkyBox: {
-			auto mesh_instance = memnew(MeshInstance3D);
-			mesh_instance->set_layer_mask(RenderLayerSkyBox);
-			add_child(mesh_instance);
-			instances.insert(event.id.id, {mesh_instance});
-
-			WRL::Event ev = event;
-			ev.event_type = WRL::Event::Type::Modified;
-
-			ev.field = WRL::Field::SkyBox_model;
-			_wrl_event(ev);
-		}
-			return;
-		}
-		return;
-
-	case WRL::Event::Type::Modified:
-		switch (event.field) {
-		case WRL::Field::GeneralStatic_model:
-			instances[event.id.id].model_path = wrl->get_GeneralStatic_model(event.id);
-			pending.insert(event.id.id);
-			return;
-		case WRL::Field::GeneralStatic_position:
-		case WRL::Field::GeneralStatic_rotation:
-			instances[event.id.id].mesh_instance->set_transform(
-				Transform3D(Basis(wrl->get_GeneralStatic_rotation(event.id)), wrl->get_GeneralStatic_position(event.id))
-					.scaled({-1, 1, 1}));
-			return;
-		case WRL::Field::GeneralMobile_model:
-			instances[event.id.id].model_path = wrl->get_GeneralMobile_model(event.id);
-			pending.insert(event.id.id);
-			return;
-		case WRL::Field::GeneralMobile_position:
-		case WRL::Field::GeneralMobile_rotation:
-			instances[event.id.id].mesh_instance->set_transform(
-				Transform3D(Basis(wrl->get_GeneralMobile_rotation(event.id)), wrl->get_GeneralMobile_position(event.id))
-					.scaled({-1, 1, 1}));
-			return;
-		case WRL::Field::LegoTerrain_model:
-		case WRL::Field::LegoTerrain_texture_scale: {
+		else if (type == "cLegoTerrain" && (prop_name == "model" || prop_name == "texture_scale")) {
 			Ref<TDF> tdf = memnew(TDF);
-			tdf->load(ProjectSettings::get_singleton()->localize_path("res://" + wrl->get_LegoTerrain_model(event.id)));
+			tdf->load(ProjectSettings::get_singleton()->localize_path(
+				"res://" + static_cast<String>(wrl->get_entry_property(entry, "model"))));
 			Ref<TDFMesh> mesh = memnew(TDFMesh);
-			mesh->set_texture_scale(wrl->get_LegoTerrain_texture_scale(event.id));
+			mesh->set_texture_scale(wrl->get_entry_property(entry, "texture_scale"));
 			mesh->set_tdf(tdf);
-			instances[event.id.id].mesh_instance->set_mesh(mesh);
+			instances[entry.id].mesh_instance->set_mesh(mesh);
 		}
-			return;
-		case WRL::Field::LegoTerrain_position:
-		case WRL::Field::LegoTerrain_rotation:
-		case WRL::Field::LegoTerrain_scale:
-			instances[event.id.id].mesh_instance->set_transform(
-				Transform3D(
-					Basis(wrl->get_LegoTerrain_rotation(event.id)).scaled(wrl->get_LegoTerrain_scale(event.id)),
-					wrl->get_LegoTerrain_position(event.id))
-					.scaled({-1, 1, 1}));
-			return;
-		case WRL::Field::SkyBox_model:
-			instances[event.id.id].model_path = wrl->get_SkyBox_model(event.id);
-			pending.insert(event.id.id);
-			return;
-		}
-		return;
 
-	case WRL::Event::Type::Removed:
-		if (instances.has(event.id.id)) {
-			instances[event.id.id].mesh_instance->queue_delete();
-			instances.erase(event.id.id);
+		else if (
+			(type == "cGeneralStatic" || type == "cGoldenBrick" || type == "cGeneralMobile" ||
+			 type == "cBonusPickup") &&
+			(prop_name == "position" || prop_name == "rotation")) {
+			instances[entry.id].mesh_instance->set_transform(
+				Transform3D(
+					Basis(wrl->get_entry_property(entry, "rotation")), wrl->get_entry_property(entry, "position"))
+					.scaled({-1, 1, 1}));
 		}
-		return;
+
+		else if (
+			type == "cLegoTerrain" && (prop_name == "position" || prop_name == "rotation" || prop_name == "scale")) {
+			instances[entry.id].mesh_instance->set_transform(
+				Transform3D(
+					Basis(wrl->get_entry_property(entry, "rotation")).scaled(wrl->get_entry_property(entry, "scale")),
+					wrl->get_entry_property(entry, "position"))
+					.scaled({-1, 1, 1}));
+		}
 	}
 }
 

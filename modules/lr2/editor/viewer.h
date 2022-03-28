@@ -38,5 +38,5 @@ class Viewer : public BoxContainer, public WRL::EventHandler {
 	Viewer();
 
   protected:
-	void _wrl_event(const WRL::Event&) override;
+	void _wrl_changed(const WRL::Change&, bool) override;
 };

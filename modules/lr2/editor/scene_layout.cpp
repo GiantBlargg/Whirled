@@ -15,34 +15,21 @@ void SceneLayout::_notification(int p_what) {
 	}
 }
 
-void SceneLayout::_wrl_event(const WRL::Event& event) {
-	switch (event.event_type) {
-	case WRL::Event::Type::Inited:
-		_wrl_emit_add_all();
-		return;
-
-	case WRL::Event::Type::Cleared:
-		_wrl_emit_remove_all();
-		return;
-
-	case WRL::Event::Type::Added: {
-		TreeItem* item = create_item(nullptr, event.index);
-		item->set_text(0, wrl->get_Entry_name(event.id));
+void SceneLayout::_wrl_changed(const WRL::Change& change, bool reset) {
+	TreeItem* root = get_root();
+	for (auto r = change.removed.back(); r; r = r.prev()) {
+		root->remove_child(root->get_child(r.key()));
 	}
-		return;
-
-	case WRL::Event::Type::Removed: {
-		TreeItem* root = get_root();
-		root->remove_child(root->get_child(event.index));
+	for (auto a = change.added.front(); a; a = a.next()) {
+		TreeItem* item = create_item(nullptr, a.key());
+		item->set_text(0, wrl->get_entry_property(a.value(), "name"));
 	}
-		return;
-
-	case WRL::Event::Type::Selected:
-		get_root()->get_child(event.index)->select(0);
-		return;
-
-	case WRL::Event::Type::Deselected:
-		get_root()->get_child(event.index)->deselect(0);
-		return;
+	if (change.select_changed) {
+		if (change.select.first == -1) {
+			if (get_selected())
+				get_selected()->deselect(0);
+		} else {
+			root->get_child(change.select.first)->select(0);
+		}
 	}
 }

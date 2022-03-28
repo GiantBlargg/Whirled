@@ -2,7 +2,7 @@ const data_types = {
 	"uint8*": field => ({
 		storage_type: "Vector<uint8_t>", variant: "PACKED_BYTE_ARRAY", load_func: (field_address, file, next_chunk) => [
 			`${field_address}.resize(${next_chunk} - ${file}->get_position());`,
-			`\t\tfile->get_buffer(${field_address}.ptrw(), ${field_address}.size());`
+			`\t\tfile->get_buffer(${field_address}.ptrw(), ${field_address}.size())`
 		].join("\n")
 	}),
 	"uint8[]": field => ({
@@ -16,12 +16,12 @@ const data_types = {
 		],
 		setter: (field_address, value) => [`\tmemcpy(${field_address}, ${value}.ptrw(), ${field.length});`]
 	}),
-	"uint32": { storage_type: "uint32_t", variant: "INT", load_func: (field_address, file) => `${field_address} = ${file}->get_32()`, widget: "IntWidget" },
-	"float": { variant: "FLOAT", load_func: (field_address, file) => `${field_address} = ${file}->get_float()`, widget: "FloatWidget" },
-	"String": field => ({ variant: "STRING", load_func: (field_address, file) => `${field_address} = get_string(${file}, ${field.length})`, widget: "StringWidget" }),
-	"Vector2": { variant: "VECTOR2", load_func: (field_address, file) => `${field_address} = get_vector2(${file})`, widget: "Vector2Widget" },
-	"Vector3": { variant: "VECTOR3", load_func: (field_address, file) => `${field_address} = get_vector3(${file})`, widget: "Vector3Widget" },
-	"Quaternion": { variant: "QUATERNION", load_func: (field_address, file) => `${field_address} = get_quaternion(${file})`, widget: "RotationWidget" }
+	"uint32": { storage_type: "uint32_t", variant: "INT", load_func: (field_address, file) => `${field_address} = ${file}->get_32()` },
+	"float": { variant: "FLOAT", load_func: (field_address, file) => `${field_address} = ${file}->get_float()`, },
+	"String": field => ({ variant: "STRING", load_func: (field_address, file) => `${field_address} = get_string(${file}, ${field.length})` }),
+	"Vector2": { variant: "VECTOR2", load_func: (field_address, file) => `${field_address} = get_vector2(${file})` },
+	"Vector3": { variant: "VECTOR3", load_func: (field_address, file) => `${field_address} = get_vector3(${file})` },
+	"Quaternion": { variant: "QUATERNION", load_func: (field_address, file) => `${field_address} = get_quaternion(${file})` }
 };
 
 const entry_types = {
@@ -109,35 +109,7 @@ const apply_format_data = convert_from_record.map(entry => ({ ...entry, fields: 
 const mapped_fields = apply_format_data.flatMap((entry) => entry.fields.map(field => ({ ...field, typename: entry.typename })));
 const mutable_fields = mapped_fields.filter(field => !field.static);
 
-const widget_fields = mapped_fields.filter(field => field.widget != undefined);
-
 const generated_includes = {
-	"declare_getters": mapped_fields.map(field =>
-		`${field.extern_type} get_${field.typename}_${field.name}(EntryID id);`
-	),
-	"define_getters": mapped_fields.map(field => [
-		`${field.extern_type} WRL::get_${field.typename}_${field.name}(EntryID id) {`,
-		field.getter(`static_cast<${field.typename}*>(entries[id.id])->${field.name}`),
-		"}\n"]
-	),
-	"declare_setters": mutable_fields.map(field => [
-		`void set_${field.typename}_${field.name}(EntryID id, ${field.extern_type} value, bool commit = true) {__no_history_set_${field.typename}_${field.name}(id, value);}`
-	]),
-	"declare_internal_setters": mutable_fields.map(field =>
-		`void __no_history_set_${field.typename}_${field.name}(EntryID id, ${field.extern_type} value);`
-	),
-	"define_setters": mutable_fields.map(field => [
-		`void WRL::__no_history_set_${field.typename}_${field.name}(EntryID id, ${field.extern_type} value) {`,
-		field.setter(`static_cast<${field.typename}*>(entries[id.id])->${field.name}`, "value"),
-		`\temit_event(WRL::Event{`,
-		`\t\t.event_type = WRL::Event::Type::Modified,`,
-		`\t\t.entry_type = get_Entry_EntryType(id),`,
-		`\t\t.id = id,`,
-		`\t\t.index = get_index(id),`,
-		`\t\t.field = WRL::Field::${field.typename}_${field.name},`,
-		`\t});`,
-		"}\n"
-	]),
 	"define_structs": apply_format_data.map((entry) => [
 		`struct ${entry.typename} : public ${entry.parent} {`,
 		`\tGDCLASS(${entry.typename}, ${entry.parent})`,
@@ -163,29 +135,13 @@ const generated_includes = {
 		"\t}",
 		"};\n"
 	]),
-	"define_enums": [
-		"enum class EntryType {",
-		apply_format_data.map(entry => "\t" + entry.typename + ","),
-		"};",
-		"enum class Field {",
-		mutable_fields.map(field => `\t${field.typename}_${field.name},`),
-		"};"],
-	"get_entry_type": ["EntryType get_Entry_EntryType(EntryID id) {",
-		"\tString type = get_Entry_type(id);",
-		apply_format_data
-			.filter(entry => entry.type.length != 0)
-			.map(entry => [
-				`\tif (${entry.type.map(type => `type == "${type}"`).join(" || ")}) return EntryType::${entry.typename};`
-			]),
-		"return EntryType::Unknown;",
-		"}"],
 	"load_structs": [
 		"Entry* load_type(String type, FileAccess* file, uint64_t next_chunk) {",
 		apply_format_data
 			.filter(entry => entry.type.length != 0)
 			.map(entry => [
 				entry.type[0] != "_" ? `\tif (${entry.type.map(type => `type == "${type}"`).join(" || ")}) {` : "",
-				`\t\t${entry.typename}* entry = new ${entry.typename}();`,
+				`\t\t${entry.typename}* entry = memnew(${entry.typename});`,
 				entry.fields.map(field =>
 					`\t\t${field.load_func(`entry->${field.name}`, "file", "next_chunk")};`
 				),
@@ -194,60 +150,6 @@ const generated_includes = {
 			]),
 		"}"
 	],
-	"emit_all_modified": [
-		"private:",
-		apply_format_data
-			.map(entry => [
-				`void emit_${entry.typename}_modifed(Event event) {`,
-				"event.event_type = WRL::Event::Type::Modified;",
-				entry.fields.filter(field => !field.static).map(field => [
-					`event.field = Field::${entry.typename}_${field.name};`,
-					`_wrl_event(event);`
-				]),
-				"}"
-			]),
-		"protected:",
-		`void _wrl_emit_modified(WRL::Event event) {`,
-		"emit_Entry_modifed(event);",
-		apply_format_data
-			.filter(entry => entry.type.length != 0)
-			.map(entry => [
-				`if (event.entry_type == WRL::EntryType::${entry.typename}) return emit_${entry.typename}_modifed(event);`
-			]),
-		"}"
-	],
-	"declare_widgets": widget_fields.map(field => `${field.widget}* ${field.typename}_${field.name}_widget;`),
-	"init_widgets": [
-		apply_format_data
-			.map(entry => [
-				`void init_${entry.typename}_widgets() {`,
-				entry.fields.filter(field => field.widget != undefined).map(field => [
-					`\t{Label* label = memnew(Label);vbox->add_child(label);label->set_text("${field.name}");}`,
-					`\t${entry.typename}_${field.name}_widget = memnew(${field.widget});`,
-					field.static ?
-						[
-							`\t${entry.typename}_${field.name}_widget->set_enabled(false);`,
-							`\t${entry.typename}_${field.name}_widget->input_value(wrl->get_${entry.typename}_${field.name}(selected));`
-						] :
-						`\t${entry.typename}_${field.name}_widget->output_value=[this](${field.extern_type} value, bool commit) { wrl->set_${entry.typename}_${field.name}(selected, value, commit); };`,
-					`\tvbox->add_child(${entry.typename}_${field.name}_widget);\n`
-				]),
-				"}"
-			]),
-		`void init_widgets(WRL::EntryType type) {`,
-		"init_Entry_widgets();",
-		apply_format_data
-			.filter(entry => entry.type.length != 0)
-			.map(entry => [
-				`if (type == WRL::EntryType::${entry.typename}) return init_${entry.typename}_widgets();`
-			]),
-		"}"
-	],
-	"update_widgets": [
-		"void update_widgets(const WRL::Event& event) {",
-		widget_fields.filter(field => !field.static).map(field => `\tif (event.field == WRL::Field::${field.typename}_${field.name}) ${field.typename}_${field.name}_widget->input_value(wrl->get_${field.typename}_${field.name}(event.id)); `),
-		"}"
-	]
 };
 
 Object.entries(generated_includes).map(([path, data]) => Deno.writeTextFile(`./${path}.gen.ipp`, data.flat(5).join("\n")));

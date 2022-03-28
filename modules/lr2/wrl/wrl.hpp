@@ -2,6 +2,8 @@
 
 #include "core/io/file_access.h"
 #include "core/object/ref_counted.h"
+#include "core/templates/ordered_hash_map.h"
+#include "core/templates/pair.h"
 #include "core/templates/vector.h"
 
 struct Entry;
@@ -12,21 +14,55 @@ class WRL : public RefCounted {
   public:
 	struct EntryID {
 		int id = -1;
+		inline friend bool operator==(const EntryID& lhs, const EntryID& rhs) { return lhs.id == rhs.id; }
+		explicit operator bool() const { return id != -1; }
 	};
 
   private:
 	Vector<Entry*> entries;
 	Vector<EntryID> scene;
+	bool regen_scene_map = true;
+	OrderedHashMap<int, EntryID> scene_map;
 
   public:
 	Vector<EntryID> get_scene() { return scene.duplicate(); }
+	OrderedHashMap<int, EntryID> get_scene_map() {
+		if (regen_scene_map) {
+			scene_map.clear();
+			for (int i = 0; i < scene.size(); i++) {
+				scene_map.insert(i, scene[i]);
+			}
+			regen_scene_map = false;
+		}
+		return scene_map;
+	}
 
-	int get_index(String name);
-	int get_index(EntryID id);
+	int get_index(String name) const;
+	int get_index(EntryID id) const { return scene.find(id); }
 
-	List<PropertyInfo> get_entry_property_list(EntryID id);
-	Variant get_entry_property(EntryID id, String prop_name);
-	void set_entry_property(EntryID id, String prop_name, Variant value);
+	List<PropertyInfo> get_entry_property_list(EntryID id) const;
+	Variant get_entry_property(EntryID id, String prop_name) const;
+	[[deprecated]] void set_entry_property(EntryID id, String prop_name, Variant value, bool commit = true);
+
+	struct Change {
+		struct Hasher {
+			static _FORCE_INLINE_ uint32_t hash(const Pair<EntryID, String>& key) {
+				return ((key.first.id) + (key.second)).hash();
+			}
+		};
+		struct Comparator {
+			static bool compare(const Pair<EntryID, String>& p_lhs, const Pair<EntryID, String>& p_rhs) {
+				return p_lhs.first == p_rhs.first && p_lhs.second == p_rhs.second;
+			}
+		};
+		typedef OrderedHashMap<Pair<EntryID, String>, Variant, Hasher, Comparator> PropertyMap;
+		PropertyMap propertyChanges;
+		OrderedHashMap<int, EntryID> added;
+		OrderedHashMap<int, EntryID> removed;
+		bool select_changed;
+		Pair<int, EntryID> select;
+	};
+	void submit_change(const Change&, String action_name = "");
 
 	void select(EntryID);
 	void select(int index) { select(scene.get(index)); }
@@ -35,69 +71,50 @@ class WRL : public RefCounted {
 	Error load(FileAccess* file);
 
   public:
-#include "define_enums.gen.ipp"
-	struct Event {
-		enum class Type { Cleared, Inited, Added, Removed, Modified, Selected, Deselected };
-
-		Type event_type;
-		EntryType entry_type;
-		EntryID id;
-		int index;
-		Field field;
-	};
 	class EventHandler {
 	  protected:
 		friend class WRL;
 		Ref<WRL> wrl;
-		virtual void _wrl_event(const Event&) = 0;
 
-		void _wrl_emit_add_all() {
-			auto scene = wrl->get_scene();
-			for (int i = 0; i < scene.size(); i++) {
-				auto id = scene[i];
-				_wrl_event(Event{
-					.event_type = Event::Type::Added,
-					.entry_type = wrl->get_Entry_EntryType(id),
-					.id = id,
-					.index = i});
-			}
-		}
-
-		void _wrl_emit_remove_all() {
-			auto scene = wrl->get_scene();
-			for (int i = scene.size() - 1; i >= 0; i--) {
-				auto id = scene[i];
-				_wrl_event(Event{
-					.event_type = Event::Type::Removed,
-					.entry_type = wrl->get_Entry_EntryType(id),
-					.id = id,
-					.index = i});
-			}
-		}
-
-#include "../wrl/emit_all_modified.gen.ipp"
+		virtual void _wrl_changed(const Change&, bool reset = false) = 0;
+		virtual bool lite_init() { return false; }
 
 	  public:
 		void wrl_connect(Ref<WRL> p_wrl) {
+			if (wrl == p_wrl)
+				return;
+
+			Change change;
+			if (!lite_init()) {
+				if (wrl.is_valid()) {
+					change.removed = wrl->get_scene_map();
+					wrl->event_handlers.erase(this);
+				};
+			}
 			wrl = p_wrl;
-			wrl->event_handlers.append(this);
-			this->_wrl_event(Event{.event_type = Event::Type::Inited});
+			if (!lite_init()) {
+				if (wrl.is_valid()) {
+					wrl->event_handlers.append(this);
+					change.added = wrl->get_scene_map();
+					wrl->fixup_change(change);
+				}
+			}
+			this->_wrl_changed(change, true);
+		}
+		EventHandler() = default;
+		EventHandler(const EventHandler&) = delete;
+		EventHandler(EventHandler&&) = delete;
+		EventHandler& operator=(const EventHandler&) = delete;
+		EventHandler& operator=(EventHandler&&) = delete;
+
+		~EventHandler() {
+			if (wrl.is_valid())
+				wrl->event_handlers.erase(this);
 		}
 	};
 
   private:
-	void emit_event(const Event& event) {
-		for (int i = 0; i < event_handlers.size(); i++) {
-			event_handlers[i]->_wrl_event(event);
-		}
-	}
+	void fixup_change(Change&);
+	void emit_change(Change change, bool reset = false);
 	Vector<EventHandler*> event_handlers;
-
-  public:
-#include "declare_getters.gen.ipp"
-#include "get_entry_type.gen.ipp"
-  private:
-#include "declare_internal_setters.gen.ipp"
-  public:
-#include "declare_setters.gen.ipp"
 };

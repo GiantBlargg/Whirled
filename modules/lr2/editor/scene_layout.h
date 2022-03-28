@@ -12,5 +12,5 @@ class SceneLayout : public Tree, public WRL::EventHandler {
   protected:
 	void _notification(int p_what);
 
-	virtual void _wrl_event(const WRL::Event&) override;
+	void _wrl_changed(const WRL::Change&, bool) override;
 };
