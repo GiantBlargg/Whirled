@@ -1,9 +1,9 @@
 #include "tdf.h"
 
-void TDF::load(const String& p_path) {
+void TDF::load(const CustomFS& custom_fs, const String& p_path) {
 	path = p_path;
 	String terr_data_path = path + "/TERRDATA.TDF";
-	FileAccess* file = FileAccess::open(terr_data_path, FileAccess::READ);
+	FileAccessRef file = custom_fs.FileAccess_open(terr_data_path, FileAccess::READ);
 
 	file->seek(0x10);
 	height_scale = file->get_float();
@@ -72,7 +72,7 @@ struct TempSurface {
 	Vector<uint8_t> mix;
 };
 
-void TDFMesh::rebuild_mesh() {
+void TDFMesh::rebuild_mesh(AssetManager& assets) {
 	clear_surfaces();
 	if (tdf.is_null())
 		return;
@@ -160,18 +160,22 @@ void TDFMesh::rebuild_mesh() {
 
 		if (texture0 != 0xff) {
 			mat->set_shader_param(
-				"tex0", ResourceLoader::load(tdf->path + "/texture" + String::num_uint64(texture0 + 1) + ".tga"));
+				"tex0",
+				assets.block_get<Texture2D>(tdf->path + "/texture" + String::num_uint64(texture0 + 1) + ".tga"));
 			if (texture1 != 0xff) {
 				mat->set_shader_param(
-					"tex1", ResourceLoader::load(tdf->path + "/texture" + String::num_uint64(texture1 + 1) + ".tga"));
+					"tex1",
+					assets.block_get<Texture2D>(tdf->path + "/texture" + String::num_uint64(texture1 + 1) + ".tga"));
 				if (texture2 != 0xff) {
 					mat->set_shader_param(
 						"tex2",
-						ResourceLoader::load(tdf->path + "/texture" + String::num_uint64(texture2 + 1) + ".tga"));
+						assets.block_get<Texture2D>(
+							tdf->path + "/texture" + String::num_uint64(texture2 + 1) + ".tga"));
 					if (texture3 != 0xff) {
 						mat->set_shader_param(
 							"tex3",
-							ResourceLoader::load(tdf->path + "/texture" + String::num_uint64(texture3 + 1) + ".tga"));
+							assets.block_get<Texture2D>(
+								tdf->path + "/texture" + String::num_uint64(texture3 + 1) + ".tga"));
 					}
 				}
 			}

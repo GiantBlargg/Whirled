@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../io/asset_manager.hpp"
+#include "../io/custom_fs.hpp"
 #include "../wrl/wrl.hpp"
 #include "scene/3d/mesh_instance_3d.h"
 #include "scene/gui/box_container.h"
@@ -25,7 +27,7 @@ class Viewer : public BoxContainer, public WRL::EventHandler {
 		MeshInstance3D* mesh_instance;
 		String model_path;
 	};
-	Map<int, Instance> instances;
+	OrderedHashMap<int, Instance> instances;
 
 	Set<int> pending;
 
@@ -34,8 +36,12 @@ class Viewer : public BoxContainer, public WRL::EventHandler {
 	void gui_input(const Ref<InputEvent>& p_event) override;
 	void _notification(int p_what);
 
+  private:
+	const CustomFS& custom_fs;
+	AssetManager assets;
+
   public:
-	Viewer();
+	Viewer(const CustomFS&);
 
   protected:
 	void _wrl_changed(const WRL::Change&, bool) override;

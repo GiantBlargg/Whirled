@@ -10,7 +10,7 @@ void Whirled::_menu_new() {
 }
 void Whirled::_menu_open() {
 	_file_reset();
-	file->set_file_mode(FileDialog::FILE_MODE_OPEN_FILE);
+	file->set_file_mode(CustomFileDialog::FILE_MODE_OPEN_FILE);
 	file->connect("file_selected", callable_mp(this, &Whirled::_file_open));
 	file->popup_centered_clamped(Size2(600, 400));
 }
@@ -23,20 +23,20 @@ void Whirled::_menu_save() {
 }
 void Whirled::_menu_save_as() {
 	_file_reset();
-	file->set_file_mode(FileDialog::FILE_MODE_SAVE_FILE);
+	file->set_file_mode(CustomFileDialog::FILE_MODE_SAVE_FILE);
 	file->connect("file_selected", callable_mp(this, &Whirled::_file_save_as));
 	file->popup_centered_clamped(Size2(600, 400));
 }
 
 void Whirled::_file_open(String path) {
 	file_path = path;
-	FileAccess* file = FileAccess::open(path, FileAccess::ModeFlags::READ);
+	FileAccessRef file = custom_fs.FileAccess_open(path, FileAccess::ModeFlags::READ);
 	wrl->load(file);
 	file->close();
 }
 void Whirled::_file_save_as(String path) {
 	file_path = path;
-	FileAccess* file = FileAccess::open(path, FileAccess::ModeFlags::WRITE);
+	FileAccessRef file = custom_fs.FileAccess_open(path, FileAccess::ModeFlags::WRITE);
 	// wrl->save(file);
 	file->close();
 }
@@ -49,8 +49,7 @@ void Whirled::_file_reset() {
 	}
 }
 
-Whirled::Whirled() {
-
+Whirled::Whirled(const CustomFS p_custom_fs) : custom_fs(p_custom_fs) {
 	wrl.instantiate();
 
 	// TODO: Theme
@@ -59,9 +58,10 @@ Whirled::Whirled() {
 	add_child(base);
 	base->set_anchors_and_offsets_preset(Control::PRESET_WIDE);
 
-	file = memnew(FileDialog);
-	file->set_access(FileDialog::ACCESS_RESOURCES);
-	file->set_current_dir("res://game data/SAVED WORLDS");
+	ClassDB::register_class<CustomFileDialog>();
+	file = memnew(CustomFileDialog);
+	file->set_custom_fs(custom_fs);
+	file->set_current_dir("/game data/SAVED WORLDS");
 	file->add_filter("*.WRL; LR2 Worlds");
 	base->add_child(file);
 
@@ -105,7 +105,7 @@ Whirled::Whirled() {
 	HSplitContainer* left_drawer_split = memnew(HSplitContainer);
 	right_drawer_split->add_child(left_drawer_split);
 
-	viewer = memnew(Viewer);
+	viewer = memnew(Viewer(custom_fs));
 	left_drawer_split->add_child(viewer);
 	left_drawer_split->set_split_offset(-210);
 	viewer->set_h_size_flags(Control::SIZE_EXPAND_FILL);

@@ -1,4 +1,11 @@
 Import('env')
 
-env.add_source_files(env.modules_sources, "*.cpp")
-env.add_source_files(env.modules_sources, "**/*.cpp")
+module_env = env.Clone()
+
+if not module_env.msvc:
+    module_env.Append(CXXFLAGS=["-std=gnu++20", "-Wno-deprecated-volatile"])
+else:
+    module_env.Append(CCFLAGS=["/std:c++20"])
+
+module_env.add_source_files(env.modules_sources, "*.cpp")
+module_env.add_source_files(env.modules_sources, "**/*.cpp")

@@ -1,7 +1,8 @@
 #include "viewer.h"
 
-#include "core/config/project_settings.h"
-#include "core/os/keyboard.h"
+#include "../import/ifl.hpp"
+#include "../import/image_asset_loader.hpp"
+#include "../import/mdl2.hpp"
 #include "modules/lr2/import/tdf.h"
 #include "scene/3d/camera_3d.h"
 #include "scene/3d/light_3d.h"
@@ -68,22 +69,10 @@ void Viewer::_notification(int p_what) {
 		for (auto p = pending.front(); p; p = p->next()) {
 			int id = p->get();
 			Instance i = instances[id];
-			String resolved_path = "res://" + i.model_path;
-			switch (ResourceLoader::load_threaded_get_status(resolved_path)) {
-			case ResourceLoader::THREAD_LOAD_INVALID_RESOURCE:
-				ResourceLoader::load_threaded_request(resolved_path, "Mesh", true);
-				break;
-			case ResourceLoader::THREAD_LOAD_IN_PROGRESS:
-				break;
-			case ResourceLoader::THREAD_LOAD_FAILED:
-				Error err;
-				ResourceLoader::load_threaded_get(resolved_path, &err);
-				ERR_PRINT("Failed to load: " + resolved_path);
-				break;
-			case ResourceLoader::THREAD_LOAD_LOADED:
-				i.mesh_instance->set_mesh(ResourceLoader::load_threaded_get(resolved_path));
+			Ref<Mesh> mesh = assets.try_get<Mesh>(i.model_path);
+			if (mesh.is_valid()) {
+				i.mesh_instance->set_mesh(mesh);
 				pending.erase(p);
-				break;
 			}
 		}
 	}
@@ -128,11 +117,10 @@ void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 
 		else if (type == "cLegoTerrain" && (prop_name == "model" || prop_name == "texture_scale")) {
 			Ref<TDF> tdf = memnew(TDF);
-			tdf->load(ProjectSettings::get_singleton()->localize_path(
-				"res://" + static_cast<String>(wrl->get_entry_property(entry, "model"))));
+			tdf->load(custom_fs, wrl->get_entry_property(entry, "model"));
 			Ref<TDFMesh> mesh = memnew(TDFMesh);
-			mesh->set_texture_scale(wrl->get_entry_property(entry, "texture_scale"));
-			mesh->set_tdf(tdf);
+			mesh->set_texture_scale(wrl->get_entry_property(entry, "texture_scale"), assets);
+			mesh->set_tdf(tdf, assets);
 			instances[entry.id].mesh_instance->set_mesh(mesh);
 		}
 
@@ -157,7 +145,12 @@ void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 	}
 }
 
-Viewer::Viewer() {
+Viewer::Viewer(const CustomFS& p_custom_fs) : custom_fs(p_custom_fs), assets(custom_fs) {
+	assets.add_loader(Ref(memnew(ImageAssetLoader)));
+	assets.add_loader(Ref(memnew(ImageTextureAssetLoader)));
+	assets.add_loader(Ref(memnew(IFLAssetLoader)));
+	assets.add_loader(Ref(memnew(MDL2AssetLoader)));
+
 	set_process(true);
 	set_process_input(true);
 

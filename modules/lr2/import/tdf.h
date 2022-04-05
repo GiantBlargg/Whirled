@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../io/asset_manager.hpp"
+#include "../io/custom_fs.hpp"
 #include "scene/resources/mesh.h"
 
 class TDF : public RefCounted {
@@ -36,7 +38,7 @@ class TDF : public RefCounted {
 
 	Vector<Chunk> chunks;
 
-	void load(const String& p_path);
+	void load(const CustomFS&, const String& p_path);
 };
 
 class TDFMesh : public ArrayMesh {
@@ -50,24 +52,24 @@ class TDFMesh : public ArrayMesh {
 
 	mutable RID mesh;
 
-	void rebuild_mesh();
+	void rebuild_mesh(AssetManager&);
 
   public:
 	TDFMesh();
 
 	const Vector2& get_texture_scale() { return texture_scale; }
-	void set_texture_scale(const Vector2& p_texture_scale) {
+	void set_texture_scale(const Vector2& p_texture_scale, AssetManager& assets) {
 		if (texture_scale == p_texture_scale)
 			return;
 		texture_scale = p_texture_scale;
-		rebuild_mesh();
+		rebuild_mesh(assets);
 	}
 
 	const Ref<TDF>& get_tdf() { return tdf; }
-	void set_tdf(const Ref<TDF>& p_tdf) {
+	void set_tdf(const Ref<TDF>& p_tdf, AssetManager& assets) {
 		if (tdf == p_tdf)
 			return;
 		tdf = p_tdf;
-		rebuild_mesh();
+		rebuild_mesh(assets);
 	}
 };

@@ -1,7 +1,8 @@
 #pragma once
 
+#include "../io/custom_file_dialog.hpp"
+#include "../io/custom_fs.hpp"
 #include "../wrl/wrl.hpp"
-#include "scene/gui/file_dialog.h"
 #include "scene_layout.h"
 #include "viewer.h"
 
@@ -9,10 +10,11 @@ class Whirled : public Node {
 	GDCLASS(Whirled, Node);
 
   private:
-	String file_path;
+	const CustomFS custom_fs;
+	String file_path = "";
 	Ref<WRL> wrl;
 
-	FileDialog* file;
+	CustomFileDialog* file;
 
 	Viewer* viewer;
 	SceneLayout* scene;
@@ -27,5 +29,5 @@ class Whirled : public Node {
 	void _file_reset();
 
   public:
-	Whirled();
+	Whirled(const CustomFS);
 };

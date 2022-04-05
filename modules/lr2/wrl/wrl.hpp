@@ -50,12 +50,7 @@ class WRL : public RefCounted {
 				return ((key.first.id) + (key.second)).hash();
 			}
 		};
-		struct Comparator {
-			static bool compare(const Pair<EntryID, String>& p_lhs, const Pair<EntryID, String>& p_rhs) {
-				return p_lhs.first == p_rhs.first && p_lhs.second == p_rhs.second;
-			}
-		};
-		typedef OrderedHashMap<Pair<EntryID, String>, Variant, Hasher, Comparator> PropertyMap;
+		typedef OrderedHashMap<Pair<EntryID, String>, Variant, Hasher> PropertyMap;
 		PropertyMap propertyChanges;
 		OrderedHashMap<int, EntryID> added;
 		OrderedHashMap<int, EntryID> removed;

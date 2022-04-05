@@ -2,7 +2,6 @@
 
 #include "core/string/translation.h"
 #include "editor/whirled.h"
-#include "io/remap_fs_access.h"
 #include "servers/navigation_server_3d.h"
 #include "servers/physics_server_2d.h"
 
@@ -14,15 +13,7 @@ void Init::_notification(int p_notification) {
 		bool found = DirAccess::exists(lr2_dir);
 
 		if (found) {
-			RemapFSAccess::set_path(lr2_dir);
-			DirAccess::make_default<RemapDirAccess<RemapFSAccess, DefaultDirAccess<DirAccess::ACCESS_FILESYSTEM>>>(
-				DirAccess::ACCESS_RESOURCES);
-			FileAccess::make_default<CaseInsensitiveFileAccess<
-				New<RemapFileAccess<RemapFSAccess, DefaultFileAccess<FileAccess::ACCESS_FILESYSTEM>>>,
-				DefaultDirAccess<DirAccess::ACCESS_RESOURCES>>>(FileAccess::ACCESS_RESOURCES);
-
-			get_parent()->call_deferred("add_child", memnew(Whirled));
-			queue_delete();
+			add_child(memnew(Whirled(CustomFS(lr2_dir))));
 		} else {
 			OS::get_singleton()->alert("Could not locate Lego Racers 2.");
 			get_tree()->quit();

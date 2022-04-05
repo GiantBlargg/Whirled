@@ -1,4 +1,4 @@
-#include "mdl2.h"
+#include "mdl2.hpp"
 
 #include "../io/file_helper.h"
 #include "core/io/file_access.h"
@@ -118,11 +118,17 @@ void load_vertices(FileAccess* f, Array* group_arrays) {
 	f->seek(start_position + vertices_count * vertex_size);
 }
 
-RES MDL2Loader::load(
-	const String& p_path, const String& p_original_path, Error* r_error, bool p_use_sub_threads, float* r_progress,
-	CacheMode p_cache_mode) {
+bool MDL2AssetLoader::can_handle(const AssetKey& key, const CustomFS& fs) const {
+	if (!ClassDB::is_parent_class("ArrayMesh", key.type))
+		return false;
+	if (key.path.get_extension().to_lower() != "md2")
+		return false;
+	return true;
+}
+AssetKey MDL2AssetLoader::remap_key(const AssetKey& k, const CustomFS&) const { return {k.path, "ArrayMesh"}; }
+REF MDL2AssetLoader::load(const AssetKey& k, const CustomFS& fs, AssetManager& assets, Error* r_error) const {
 
-	FileAccess* f = FileAccess::open(p_path, FileAccess::READ);
+	FileAccess* f = fs.FileAccess_open(k.path, FileAccess::READ);
 
 	Ref<ArrayMesh> mesh;
 	mesh.instantiate();
@@ -155,11 +161,10 @@ RES MDL2Loader::load(
 
 			for (int i = 0; i < textures.size(); i++) {
 				f->seek(texture_start + i * (256 + 8));
-				auto path = ("res://" + get_string(f, 256)).simplify_path();
-				if (p_use_sub_threads)
-					ResourceLoader::load_threaded_request(path, "Texture2D", p_use_sub_threads, p_cache_mode);
-				textures.set(i, path);
+				textures.set(i, get_string(f, 256));
 			}
+
+			assets.vector_queue<Texture2D>(textures);
 
 			f->seek(texture_start + textures.size() * (256 + 8));
 
@@ -195,15 +200,6 @@ RES MDL2Loader::load(
 			f->get_float();
 			auto render_group_count = f->get_32();
 			f->get_64();
-
-			Vector<RES> loaded_textures;
-			loaded_textures.resize(textures.size());
-			for (int i = 0; i < textures.size(); i++) {
-				if (p_use_sub_threads)
-					loaded_textures.set(i, ResourceLoader::load_threaded_get(textures.get(i), r_error));
-				else
-					loaded_textures.set(i, ResourceLoader::load(textures.get(i), "Texture2D", p_cache_mode, r_error));
-			}
 
 			for (int render_group = 0; render_group < render_group_count; render_group++) {
 				f->seek(f->get_position() + 4);
@@ -269,14 +265,15 @@ RES MDL2Loader::load(
 					break;
 
 				default:
-					ERR_PRINT("Unkown Alpha Type " + itos(mat_prop.alpha_type) + " in " + p_path);
+					ERR_PRINT("Unkown Alpha Type " + itos(mat_prop.alpha_type) + " in " + k.path);
 					break;
 				}
 
 				mat->set_albedo(Color(1, 1, 1, alpha));
 
 				mat->set_texture(
-					BaseMaterial3D::TextureParam::TEXTURE_ALBEDO, loaded_textures.get(blends.get(0).texture_id));
+					BaseMaterial3D::TextureParam::TEXTURE_ALBEDO,
+					assets.block_get<Texture2D>(textures.get(blends.get(0).texture_id)));
 
 				mesh->surface_set_material(render_group, mat);
 			}
@@ -296,14 +293,4 @@ RES MDL2Loader::load(
 		}
 		f->seek(next_chunk);
 	}
-}
-
-void MDL2Loader::get_recognized_extensions(List<String>* p_extensions) const { p_extensions->push_back("md2"); }
-
-bool MDL2Loader::handles_type(const String& p_type) const { return ClassDB::is_parent_class("ArrayMesh", p_type); }
-
-String MDL2Loader::get_resource_type(const String& p_path) const {
-	if (p_path.get_extension().to_lower() == "md2")
-		return "ArrayMesh";
-	return "";
 }
