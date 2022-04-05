@@ -39,9 +39,7 @@ void AssetManager::_do_work(const AssetKey& key, bool asset_cache_locked) {
 	if (!asset_cache_locked) {
 		asset_cache_mutex.lock_shared();
 	}
-	asset_cache[key].mutex.lock();
 	asset_cache[key].state = AssetCache::State::WORKING;
-	asset_cache[key].mutex.unlock();
 	asset_cache_mutex.unlock_shared();
 
 	loader_mutex.lock_shared();
@@ -101,15 +99,17 @@ void AssetManager::_vector_queue(const Vector<AssetKey>& p_keys) {
 	if (p_keys.is_empty())
 		return;
 
+	int wake = 0;
 	asset_cache_mutex.lock();
 	for (auto& k : p_keys) {
 		if (!asset_cache.count(k)) {
 			asset_cache[k].work_semaphore.release();
 			asset_cache[k].state = AssetCache::State::QUEUED;
+			wake++;
 		}
 	}
 	asset_cache_mutex.unlock();
-	wake_semaphore.release(p_keys.size());
+	wake_semaphore.release(wake);
 }
 
 void AssetManager::_canon_paths(Vector<AssetKey>& keys) {
@@ -198,13 +198,33 @@ Vector<REF> AssetManager::vector_block_get(const Vector<AssetKey>& p_keys) {
 		// Some keys haven't been queued yet
 
 		// Don't queue one key that we can work on locally instead of fighting the pool for work
-		AssetKey work_key = new_keys[0];
-		new_keys.remove_at(0);
+		AssetKey work_key;
+		bool should_do_work = false;
+		int wake = 0;
+		asset_cache_mutex.lock();
+		for (auto k : new_keys) {
+			// Key could have been queued by another thread
+			if (!asset_cache.count(k)) {
+				if (!should_do_work) {
+					asset_cache[k].state = AssetCache::State::INIT;
+					work_key = k;
+					should_do_work = true;
+				} else {
+					asset_cache[k].work_semaphore.release();
+					asset_cache[k].state = AssetCache::State::QUEUED;
+					wake++;
+				}
+			}
+		}
+		asset_cache_mutex.unlock();
+		wake_semaphore.release(wake);
 
-		_vector_queue(new_keys);
+		// _vector_queue(new_keys); // Do queueing here to avoid extra locking
 
 		// Because this key wasn't queued we don't need to steal it from the pool
-		_do_work(work_key);
+		if (should_do_work) {
+			_do_work(work_key);
+		}
 	}
 
 	if (!queued.is_empty()) {
