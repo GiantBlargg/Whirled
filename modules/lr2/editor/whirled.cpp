@@ -58,7 +58,6 @@ Whirled::Whirled(const CustomFS p_custom_fs) : custom_fs(p_custom_fs) {
 	add_child(base);
 	base->set_anchors_and_offsets_preset(Control::PRESET_WIDE);
 
-	ClassDB::register_class<CustomFileDialog>();
 	file = memnew(CustomFileDialog);
 	file->set_custom_fs(custom_fs);
 	file->set_current_dir("/game data/SAVED WORLDS");

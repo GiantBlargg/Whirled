@@ -17,17 +17,7 @@ bool ImageAssetLoader::can_handle(const AssetKey& key, const CustomFS& fs) const
 			break;
 		}
 	}
-	if (!handles_file_type)
-		return false;
-
-	if (!fs.file_exists(key.path)) {
-		if (key.path.get_extension().to_lower() != "tga")
-			return false;
-		if (!fs.file_exists(key.path.get_basename() + ".mip"))
-			return false;
-	}
-
-	return true;
+	return handles_file_type;
 }
 AssetKey ImageAssetLoader::remap_key(const AssetKey& k, const CustomFS& fs) const {
 	String path = k.path;
@@ -87,17 +77,7 @@ bool ImageTextureAssetLoader::can_handle(const AssetKey& key, const CustomFS& fs
 			break;
 		}
 	}
-	if (!handles_file_type)
-		return false;
-
-	if (!fs.file_exists(key.path)) {
-		if (key.path.get_extension().to_lower() != "tga")
-			return false;
-		if (!fs.file_exists(key.path.get_basename() + ".mip"))
-			return false;
-	}
-
-	return true;
+	return handles_file_type;
 }
 AssetKey ImageTextureAssetLoader::remap_key(const AssetKey& k, const CustomFS& fs) const {
 	return {k.path, "ImageTexture"};

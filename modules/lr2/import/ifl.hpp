@@ -5,7 +5,7 @@
 class IFLAssetLoader : public AssetLoader {
 	GDCLASS(IFLAssetLoader, AssetLoader);
 
-	bool can_handle(const AssetKey& key, const CustomFS& fs) const override;
-	AssetKey remap_key(const AssetKey& k, const CustomFS& fs) const override;
-	REF load(const AssetKey& k, const CustomFS&, AssetManager& assets, Error* r_error) const override;
+	bool can_handle(const AssetKey&, const CustomFS&) const override;
+	AssetKey remap_key(const AssetKey&, const CustomFS&) const override;
+	REF load(const AssetKey&, const CustomFS&, AssetManager&, Error*) const override;
 };

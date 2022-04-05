@@ -67,11 +67,14 @@ void Viewer::_notification(int p_what) {
 		}
 
 		for (auto p = pending.front(); p; p = p->next()) {
-			int id = p->get();
+			WRL::EntryID id = p->get();
 			Instance i = instances[id];
 			Ref<Mesh> mesh = assets.try_get<Mesh>(i.model_path);
 			if (mesh.is_valid()) {
 				i.mesh_instance->set_mesh(mesh);
+				if (i.model_type == Instance::ModelType::TDF) {
+					TDF_set_scale(i.mesh_instance, wrl->get_entry_property(WRL::EntryID{id}, "texture_scale"));
+				}
 				pending.erase(p);
 			}
 		}
@@ -80,9 +83,9 @@ void Viewer::_notification(int p_what) {
 
 void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 	for (auto r = change.removed.front(); r; r = r.next()) {
-		if (instances.has(r.value().id)) {
-			instances[r.value().id].mesh_instance->queue_delete();
-			instances.erase(r.value().id);
+		if (instances.has(r.value())) {
+			instances[r.value()].mesh_instance->queue_delete();
+			instances.erase(r.value());
 		}
 	}
 
@@ -91,16 +94,18 @@ void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 		if (type == "cGeneralStatic" || type == "cGoldenBrick" || type == "cGeneralMobile" || type == "cBonusPickup" ||
 			type == "cLegoTerrain" || type == "cSkyBox") {
 			auto mesh_instance = memnew(MeshInstance3D);
+			Instance::ModelType model_type = Instance::ModelType::MDL2;
 
-			if (type == "cLegoTerrain")
+			if (type == "cLegoTerrain") {
 				mesh_instance->set_layer_mask(RenderLayerTerrain);
-			else if (type == "cSkyBox")
+				model_type = Instance::ModelType::TDF;
+			} else if (type == "cSkyBox")
 				mesh_instance->set_layer_mask(RenderLayerSkyBox);
 			else
 				mesh_instance->set_layer_mask(RenderLayerProps);
 
 			add_child(mesh_instance);
-			instances.insert(a.value().id, {mesh_instance});
+			instances.insert(a.value(), {mesh_instance, model_type});
 		}
 	}
 
@@ -109,26 +114,21 @@ void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 		String type = wrl->get_entry_property(entry, "type");
 		String prop_name = prop.key().second;
 		if ((type == "cGeneralStatic" || type == "cGoldenBrick" || type == "cGeneralMobile" || type == "cBonusPickup" ||
-			 type == "cSkyBox") &&
+			 type == "cLegoTerrain" || type == "cSkyBox") &&
 			prop_name == "model") {
-			instances[entry.id].model_path = prop.value();
-			pending.insert(entry.id);
+			instances[entry].model_path = prop.value();
+			pending.insert(entry);
 		}
 
-		else if (type == "cLegoTerrain" && (prop_name == "model" || prop_name == "texture_scale")) {
-			Ref<TDF> tdf = memnew(TDF);
-			tdf->load(custom_fs, wrl->get_entry_property(entry, "model"));
-			Ref<TDFMesh> mesh = memnew(TDFMesh);
-			mesh->set_texture_scale(wrl->get_entry_property(entry, "texture_scale"), assets);
-			mesh->set_tdf(tdf, assets);
-			instances[entry.id].mesh_instance->set_mesh(mesh);
+		else if (type == "cLegoTerrain" && prop_name == "texture_scale") {
+			TDF_set_scale(instances[entry].mesh_instance, prop.value());
 		}
 
 		else if (
 			(type == "cGeneralStatic" || type == "cGoldenBrick" || type == "cGeneralMobile" ||
 			 type == "cBonusPickup") &&
 			(prop_name == "position" || prop_name == "rotation")) {
-			instances[entry.id].mesh_instance->set_transform(
+			instances[entry].mesh_instance->set_transform(
 				Transform3D(
 					Basis(wrl->get_entry_property(entry, "rotation")), wrl->get_entry_property(entry, "position"))
 					.scaled({-1, 1, 1}));
@@ -136,7 +136,7 @@ void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 
 		else if (
 			type == "cLegoTerrain" && (prop_name == "position" || prop_name == "rotation" || prop_name == "scale")) {
-			instances[entry.id].mesh_instance->set_transform(
+			instances[entry].mesh_instance->set_transform(
 				Transform3D(
 					Basis(wrl->get_entry_property(entry, "rotation")).scaled(wrl->get_entry_property(entry, "scale")),
 					wrl->get_entry_property(entry, "position"))
@@ -150,6 +150,8 @@ Viewer::Viewer(const CustomFS& p_custom_fs) : custom_fs(p_custom_fs), assets(cus
 	assets.add_loader(Ref(memnew(ImageTextureAssetLoader)));
 	assets.add_loader(Ref(memnew(IFLAssetLoader)));
 	assets.add_loader(Ref(memnew(MDL2AssetLoader)));
+	assets.add_loader(Ref(memnew(TDFLoader)));
+	assets.add_loader(Ref(memnew(TDFMeshLoader)));
 
 	set_process(true);
 	set_process_input(true);

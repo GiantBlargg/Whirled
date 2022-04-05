@@ -25,11 +25,16 @@ class Viewer : public BoxContainer, public WRL::EventHandler {
 
 	struct Instance {
 		MeshInstance3D* mesh_instance;
+		enum class ModelType { MDL2, TDF };
+		ModelType model_type = ModelType::MDL2;
 		String model_path;
 	};
-	OrderedHashMap<int, Instance> instances;
+	struct Hasher {
+		static _FORCE_INLINE_ uint32_t hash(const WRL::EntryID& key) { return HashMapHasherDefault::hash(key.id); }
+	};
+	OrderedHashMap<WRL::EntryID, Instance, Hasher> instances;
 
-	Set<int> pending;
+	Set<WRL::EntryID> pending;
 
   protected:
 	void input(const Ref<InputEvent>& p_event) override;

@@ -15,6 +15,7 @@ class WRL : public RefCounted {
 	struct EntryID {
 		int id = -1;
 		inline friend bool operator==(const EntryID& lhs, const EntryID& rhs) { return lhs.id == rhs.id; }
+		inline friend auto operator<=>(const EntryID& lhs, const EntryID& rhs) { return lhs.id <=> rhs.id; }
 		explicit operator bool() const { return id != -1; }
 	};
 

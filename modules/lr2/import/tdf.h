@@ -2,6 +2,7 @@
 
 #include "../io/asset_manager.hpp"
 #include "../io/custom_fs.hpp"
+#include "scene/3d/mesh_instance_3d.h"
 #include "scene/resources/mesh.h"
 
 class TDF : public RefCounted {
@@ -37,39 +38,22 @@ class TDF : public RefCounted {
 	};
 
 	Vector<Chunk> chunks;
-
-	void load(const CustomFS&, const String& p_path);
 };
 
-class TDFMesh : public ArrayMesh {
-	GDCLASS(TDFMesh, ArrayMesh);
+class TDFLoader : public AssetLoader {
+	GDCLASS(TDFLoader, AssetLoader);
 
-  private:
-	Ref<Shader> shader;
-
-	Ref<TDF> tdf;
-	Vector2 texture_scale;
-
-	mutable RID mesh;
-
-	void rebuild_mesh(AssetManager&);
-
-  public:
-	TDFMesh();
-
-	const Vector2& get_texture_scale() { return texture_scale; }
-	void set_texture_scale(const Vector2& p_texture_scale, AssetManager& assets) {
-		if (texture_scale == p_texture_scale)
-			return;
-		texture_scale = p_texture_scale;
-		rebuild_mesh(assets);
-	}
-
-	const Ref<TDF>& get_tdf() { return tdf; }
-	void set_tdf(const Ref<TDF>& p_tdf, AssetManager& assets) {
-		if (tdf == p_tdf)
-			return;
-		tdf = p_tdf;
-		rebuild_mesh(assets);
-	}
+	bool can_handle(const AssetKey&, const CustomFS&) const override;
+	AssetKey remap_key(const AssetKey&, const CustomFS&) const override;
+	REF load(const AssetKey&, const CustomFS&, AssetManager&, Error*) const override;
 };
+
+class TDFMeshLoader : public AssetLoader {
+	GDCLASS(TDFMeshLoader, AssetLoader);
+
+	bool can_handle(const AssetKey&, const CustomFS&) const override;
+	AssetKey remap_key(const AssetKey&, const CustomFS&) const override;
+	REF load(const AssetKey&, const CustomFS&, AssetManager&, Error*) const override;
+};
+
+void TDF_set_scale(MeshInstance3D*, const Vector2& scale);

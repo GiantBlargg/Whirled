@@ -21,17 +21,18 @@ class AssetLoader : public RefCounted {
 	GDCLASS(AssetLoader, RefCounted);
 
   public:
-	virtual bool can_handle(const AssetKey&, const CustomFS&) const { return false; }
-	virtual AssetKey remap_key(const AssetKey& k, const CustomFS&) const { return k; }
-	virtual REF load(const AssetKey&, const CustomFS&, AssetManager&, Error* r_error = nullptr) const { return REF(); }
+	virtual bool can_handle(const AssetKey&, const CustomFS&) const = 0;
+	virtual AssetKey remap_key(const AssetKey&, const CustomFS&) const = 0;
+	virtual REF load(const AssetKey&, const CustomFS&, AssetManager&, Error* r_error = nullptr) const = 0;
 	virtual ~AssetLoader() {}
 };
 
 class AssetManager {
 
-  private:
+  public:
 	const CustomFS custom_fs;
 
+  private:
 	std::vector<std::thread> thread_pool;
 	std::counting_semaphore<> wake_semaphore{0}; // Released when there is work to do
 	volatile bool shut_down = false;
@@ -73,14 +74,14 @@ class AssetManager {
 	}
 
   public:
-	template <class T> void queue(String p_path) { queue({p_path, T::get_class_static()}); }
+	template <class T> void queue(const String& p_path) { queue({p_path, T::get_class_static()}); }
 	void queue(const AssetKey& key) { vector_queue({key}); }
 	template <class T> void vector_queue(const Vector<String>& paths) { vector_queue(_type_keys<T>(paths)); }
 
-	template <class T> Ref<T> try_get(String p_path) { return try_get({p_path, T::get_class_static()}); }
+	template <class T> Ref<T> try_get(const String& p_path) { return try_get({p_path, T::get_class_static()}); }
 	REF try_get(const AssetKey& key) { return vector_try_get({key})[0]; }
 
-	template <class T> Ref<T> block_get(String p_path) { return block_get({p_path, T::get_class_static()}); }
+	template <class T> Ref<T> block_get(const String& p_path) { return block_get({p_path, T::get_class_static()}); }
 	REF block_get(const AssetKey& key) { return vector_block_get({key})[0]; }
 
   private:

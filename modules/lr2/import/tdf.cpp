@@ -1,19 +1,32 @@
 #include "tdf.h"
 
-void TDF::load(const CustomFS& custom_fs, const String& p_path) {
-	path = p_path;
-	String terr_data_path = path + "/TERRDATA.TDF";
-	FileAccessRef file = custom_fs.FileAccess_open(terr_data_path, FileAccess::READ);
+bool TDFLoader::can_handle(const AssetKey& key, const CustomFS& fs) const {
+	if (!ClassDB::is_parent_class("TDF", key.type))
+		return false;
+	if (key.path.get_extension().to_lower() != "")
+		return false;
+	return true;
+}
+
+AssetKey TDFLoader::remap_key(const AssetKey& k, const CustomFS& fs) const { return {k.path, "TDF"}; }
+
+REF TDFLoader::load(const AssetKey& k, const CustomFS& fs, AssetManager& assets, Error* r_error) const {
+	Ref<TDF> tdf;
+	tdf.instantiate();
+
+	tdf->path = k.path;
+	String terr_data_path = k.path + "/TERRDATA.TDF";
+	FileAccessRef file = fs.FileAccess_open(terr_data_path, FileAccess::READ);
 
 	file->seek(0x10);
-	height_scale = file->get_float();
+	tdf->height_scale = file->get_float();
 
-	chunks.resize(num_chunks * num_chunks);
-	for (int i = 0; i < chunks.size(); i++) {
+	tdf->chunks.resize(tdf->num_chunks * tdf->num_chunks);
+	for (int i = 0; i < tdf->chunks.size(); i++) {
 		file->seek(0x3AE020 + i * 4);
 		uint32_t surface_offset = file->get_32();
 
-		Chunk chunk;
+		TDF::Chunk chunk;
 
 		file->seek(0x366020 + surface_offset + 3 * 4);
 		chunk.pos_x = file->get_16();
@@ -23,9 +36,9 @@ void TDF::load(const CustomFS& custom_fs, const String& p_path) {
 		uint32_t verticies_offset = file->get_32();
 
 		file->seek(0x20 + verticies_offset);
-		chunk.verticies.resize(vertex_chunk * vertex_chunk);
+		chunk.verticies.resize(tdf->vertex_chunk * tdf->vertex_chunk);
 		for (int v = 0; v < chunk.verticies.size(); v++) {
-			Chunk::Vertex vertex;
+			TDF::Chunk::Vertex vertex;
 
 			vertex.height = file->get_16();
 			vertex.normal_x = file->get_8();
@@ -43,26 +56,22 @@ void TDF::load(const CustomFS& custom_fs, const String& p_path) {
 		chunk.texture2 = file->get_8();
 		chunk.texture3 = file->get_8();
 
-		chunks.set(i, chunk);
+		tdf->chunks.set(i, chunk);
 	}
+
+	return tdf;
+}
+bool TDFMeshLoader::can_handle(const AssetKey& k, const CustomFS&) const {
+	if (!ClassDB::is_parent_class("ArrayMesh", k.type))
+		return false;
+	if (k.path.get_extension().to_lower() != "")
+		return false;
+	return true;
 }
 
-TDFMesh::TDFMesh() {
-	shader.instantiate();
-	shader->set_code(R"(
-		shader_type spatial;
-		render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_lambert, specular_disabled, vertex_lighting;
-		varying vec4 mix;
-		void vertex() {mix = CUSTOM0;}
-		uniform sampler2D tex0 : hint_black_albedo;
-		uniform sampler2D tex1 : hint_black_albedo;
-		uniform sampler2D tex2 : hint_black_albedo;
-		uniform sampler2D tex3 : hint_black_albedo;
-		void fragment() {
-			ALBEDO = (mat4(texture(tex0, UV),texture(tex1, UV),texture(tex2, UV),texture(tex3, UV)) * mix).rgb;
-		}
-	)");
-}
+AssetKey TDFMeshLoader::remap_key(const AssetKey& k, const CustomFS&) const { return {k.path, "ArrayMesh"}; }
+
+Ref<Shader> tdf_shader;
 
 struct TempSurface {
 	Vector<Vector3> vertices;
@@ -72,10 +81,35 @@ struct TempSurface {
 	Vector<uint8_t> mix;
 };
 
-void TDFMesh::rebuild_mesh(AssetManager& assets) {
-	clear_surfaces();
-	if (tdf.is_null())
-		return;
+REF TDFMeshLoader::load(const AssetKey& k, const CustomFS&, AssetManager& assets, Error*) const {
+	if (tdf_shader.is_null()) {
+		tdf_shader.instantiate();
+		tdf_shader->set_code(R"(
+		shader_type spatial;
+		render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_lambert, specular_disabled, vertex_lighting;
+		varying vec4 mix;
+		void vertex() {mix = CUSTOM0;}
+		uniform sampler2D tex0 : hint_black_albedo;
+		uniform sampler2D tex1 : hint_black_albedo;
+		uniform sampler2D tex2 : hint_black_albedo;
+		uniform sampler2D tex3 : hint_black_albedo;
+		uniform vec2 texture_scale;
+		void fragment() {
+			vec2 scaled_uv = UV * texture_scale;
+			ALBEDO = (mat4(
+				texture(tex0, scaled_uv),
+				texture(tex1, scaled_uv),
+				texture(tex2, scaled_uv),
+				texture(tex3, scaled_uv)
+			) * mix).rgb;
+		}
+	)");
+	}
+
+	Ref<ArrayMesh> mesh;
+	mesh.instantiate();
+
+	Ref<TDF> tdf = assets.block_get<TDF>(k.path);
 
 	Map<uint32_t, TempSurface> surfaces;
 
@@ -96,11 +130,9 @@ void TDFMesh::rebuild_mesh(AssetManager& assets) {
 					chunk.pos_x + sx - tdf->chunk_width * tdf->num_chunks / 2, vertex.height * tdf->height_scale,
 					chunk.pos_y + sz - tdf->chunk_width * tdf->num_chunks / 2));
 				temp_surface.normals.push_back(Vector3(vertex.normal_x, vertex.normal_y, vertex.normal_z).normalized());
-				temp_surface.uv.push_back(
-					Vector2(
-						static_cast<float>(chunk.pos_x + sx) / tdf->chunk_width,
-						static_cast<float>(chunk.pos_y + sz) / tdf->chunk_width) *
-					texture_scale);
+				temp_surface.uv.push_back(Vector2(
+					static_cast<float>(chunk.pos_x + sx) / tdf->chunk_width,
+					static_cast<float>(chunk.pos_y + sz) / tdf->chunk_width));
 				temp_surface.cutout.push_back((vertex.flags & 0b10000000) == 0b10000000);
 				temp_surface.mix.push_back(((vertex.mix_ratios >> 0x0) & 0xf) * 0x11);
 				temp_surface.mix.push_back(((vertex.mix_ratios >> 0x4) & 0xf) * 0x11);
@@ -146,12 +178,12 @@ void TDFMesh::rebuild_mesh(AssetManager& assets) {
 		array.set(ArrayMesh::ARRAY_TEX_UV, E.value.uv);
 		array.set(ArrayMesh::ARRAY_CUSTOM0, E.value.mix);
 		array.set(ArrayMesh::ARRAY_INDEX, indices);
-		add_surface_from_arrays(
+		mesh->add_surface_from_arrays(
 			Mesh::PRIMITIVE_TRIANGLES, array, Array(), Dictionary(),
-			ARRAY_CUSTOM_RGBA8_UNORM << ARRAY_FORMAT_CUSTOM0_SHIFT);
+			Mesh::ARRAY_CUSTOM_RGBA8_UNORM << Mesh::ARRAY_FORMAT_CUSTOM0_SHIFT);
 
 		Ref<ShaderMaterial> mat = memnew(ShaderMaterial);
-		mat->set_shader(shader);
+		mat->set_shader(tdf_shader);
 
 		uint8_t texture0 = E.key;
 		uint8_t texture1 = E.key >> 8;
@@ -181,6 +213,21 @@ void TDFMesh::rebuild_mesh(AssetManager& assets) {
 			}
 		}
 
-		surface_set_material(get_surface_count() - 1, mat);
+		mesh->surface_set_material(mesh->get_surface_count() - 1, mat);
+	}
+	return mesh;
+}
+
+void TDF_set_scale(MeshInstance3D* instance, const Vector2& scale) {
+	Ref<Mesh> mesh = instance->get_mesh();
+	if (mesh.is_null())
+		return;
+	int surface_count = mesh->get_surface_count();
+	for (int i = 0; i < surface_count; i++) {
+		Ref<ShaderMaterial> mat = mesh->surface_get_material(i)->duplicate();
+		if (mat.is_null())
+			continue;
+		mat->set_shader_param("texture_scale", scale);
+		instance->set_surface_override_material(i, mat);
 	}
 }
