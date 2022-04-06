@@ -37,7 +37,7 @@ void Whirled::_file_open(String path) {
 void Whirled::_file_save_as(String path) {
 	file_path = path;
 	FileAccessRef file = custom_fs.FileAccess_open(path, FileAccess::ModeFlags::WRITE);
-	// wrl->save(file);
+	wrl->save(file);
 	file->close();
 }
 void Whirled::_file_reset() {
@@ -83,13 +83,11 @@ Whirled::Whirled(const CustomFS p_custom_fs) : custom_fs(p_custom_fs) {
 	Button* save_button = memnew(Button);
 	menu->add_child(save_button);
 	save_button->set_text("Save");
-	save_button->set_disabled(true);
 	save_button->connect("pressed", callable_mp(this, &Whirled::_menu_save));
 
 	Button* save_as_button = memnew(Button);
 	menu->add_child(save_as_button);
 	save_as_button->set_text("Save As");
-	save_as_button->set_disabled(true);
 	save_as_button->connect("pressed", callable_mp(this, &Whirled::_menu_save_as));
 
 	HSplitContainer* right_drawer_split = memnew(HSplitContainer);

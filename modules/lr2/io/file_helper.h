@@ -7,6 +7,10 @@ inline Vector2 get_vector2(FileAccess* f) {
 	float y = f->get_float();
 	return Vector2(x, y);
 }
+inline void store_vector2(FileAccess* f, Vector2 v) {
+	f->store_float(v.x);
+	f->store_float(v.y);
+}
 inline Vector3 get_vector3(FileAccess* f) {
 	float x = f->get_float();
 	float y = f->get_float();

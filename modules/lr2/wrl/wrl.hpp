@@ -65,6 +65,7 @@ class WRL : public RefCounted {
 
 	void clear();
 	Error load(FileAccess* file);
+	Error save(FileAccess* file);
 
   public:
 	class EventHandler {
