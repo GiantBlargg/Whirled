@@ -67,13 +67,14 @@ void Viewer::_notification(int p_what) {
 		}
 
 		for (auto p = pending.front(); p; p = p->next()) {
-			WRL::EntryID id = p->get();
-			Instance i = instances[id];
+			WRL::EntryID entry = p->get();
+			Instance i = instances[entry];
 			Ref<Mesh> mesh = assets.try_get<Mesh>(i.model_path);
 			if (mesh.is_valid()) {
 				i.mesh_instance->set_mesh(mesh);
 				if (i.model_type == Instance::ModelType::TDF) {
-					TDF_set_scale(i.mesh_instance, wrl->get_entry_property(WRL::EntryID{id}, "texture_scale"));
+					instances[entry].mesh_instance->set_shader_instance_uniform(
+						"texture_scale", wrl->get_entry_property(WRL::EntryID{entry}, "texture_scale"));
 				}
 				pending.erase(p);
 			}
@@ -121,7 +122,7 @@ void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 		}
 
 		else if (type == "cLegoTerrain" && prop_name == "texture_scale") {
-			TDF_set_scale(instances[entry].mesh_instance, prop.value());
+			instances[entry].mesh_instance->set_shader_instance_uniform("texture_scale", prop.value());
 		}
 
 		else if (

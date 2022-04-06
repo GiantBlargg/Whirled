@@ -93,7 +93,7 @@ REF TDFMeshLoader::load(const AssetKey& k, const CustomFS&, AssetManager& assets
 		uniform sampler2D tex1 : hint_black_albedo;
 		uniform sampler2D tex2 : hint_black_albedo;
 		uniform sampler2D tex3 : hint_black_albedo;
-		uniform vec2 texture_scale;
+		instance uniform vec2 texture_scale;
 		void fragment() {
 			vec2 scaled_uv = UV * texture_scale;
 			ALBEDO = (mat4(
@@ -216,18 +216,4 @@ REF TDFMeshLoader::load(const AssetKey& k, const CustomFS&, AssetManager& assets
 		mesh->surface_set_material(mesh->get_surface_count() - 1, mat);
 	}
 	return mesh;
-}
-
-void TDF_set_scale(MeshInstance3D* instance, const Vector2& scale) {
-	Ref<Mesh> mesh = instance->get_mesh();
-	if (mesh.is_null())
-		return;
-	int surface_count = mesh->get_surface_count();
-	for (int i = 0; i < surface_count; i++) {
-		Ref<ShaderMaterial> mat = mesh->surface_get_material(i)->duplicate();
-		if (mat.is_null())
-			continue;
-		mat->set_shader_param("texture_scale", scale);
-		instance->set_surface_override_material(i, mat);
-	}
 }

@@ -55,5 +55,3 @@ class TDFMeshLoader : public AssetLoader {
 	AssetKey remap_key(const AssetKey&, const CustomFS&) const override;
 	REF load(const AssetKey&, const CustomFS&, AssetManager&, Error*) const override;
 };
-
-void TDF_set_scale(MeshInstance3D*, const Vector2& scale);
