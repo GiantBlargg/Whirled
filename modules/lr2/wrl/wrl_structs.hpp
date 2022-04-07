@@ -228,13 +228,13 @@ struct LegoTerrain : public Entry {
 	void set_scale(Vector3 value) { scale = value; }
 
 	Vector<uint8_t> get_u5() { return u5; }
-	void set_u5(Vector<uint8_t> value) { u5 = value; }
+	void set_u5(const Vector<uint8_t>& value) { u5 = value; }
 
 	Vector2 get_texture_scale() { return texture_scale; }
 	void set_texture_scale(Vector2 value) { texture_scale = value; }
 
 	Vector<uint8_t> get_u6() { return u6; }
-	void set_u6(Vector<uint8_t> value) { u6 = value; }
+	void set_u6(const Vector<uint8_t>& value) { u6 = value; }
 
   protected:
 	static void _bind_methods() {

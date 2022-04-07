@@ -136,7 +136,7 @@ Error WRL::load(FileAccess* file) {
 					} else if (prop.hint == PROPERTY_HINT_FILE || prop.hint == PROPERTY_HINT_DIR) {
 						entry->set(prop.name, get_string(file, 0x80));
 					} else {
-						print_error("Unknown String length");
+						return Error::ERR_FILE_UNRECOGNIZED;
 					}
 				}
 
@@ -229,7 +229,7 @@ Error WRL::save(FileAccess* file) {
 				} else if (prop.hint == PROPERTY_HINT_FILE || prop.hint == PROPERTY_HINT_DIR) {
 					store_string(file, entry->get(prop.name), 0x80);
 				} else {
-					print_error("Unknown String length");
+					return Error::ERR_FILE_UNRECOGNIZED;
 				}
 			}
 
