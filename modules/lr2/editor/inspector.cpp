@@ -7,7 +7,9 @@ class Widget : public WRL::EventHandler {
   protected:
 	virtual void input_value(Variant value) = 0;
 	void output_value(Variant value, bool commit) {
-		wrl->set_entry_property(field_key.first, field_key.second, value, commit);
+		WRL::Change::PropertyMap propertyChanges;
+		propertyChanges.insert({field_key.first, field_key.second}, value);
+		wrl->submit_change(WRL::Change{.propertyChanges = propertyChanges});
 	}
 
   public:

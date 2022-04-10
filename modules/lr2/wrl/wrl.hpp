@@ -43,7 +43,6 @@ class WRL : public RefCounted {
 
 	List<PropertyInfo> get_entry_property_list(EntryID id) const;
 	Variant get_entry_property(EntryID id, String prop_name) const;
-	[[deprecated]] void set_entry_property(EntryID id, String prop_name, Variant value, bool commit = true);
 
 	struct Change {
 		struct Hasher {

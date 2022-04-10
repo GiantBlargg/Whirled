@@ -33,11 +33,6 @@ Variant WRL::get_entry_property(EntryID id, String prop_name) const {
 		return entries[id.id]->get(prop_name);
 	return Variant();
 }
-void WRL::set_entry_property(EntryID id, String prop_name, Variant value, bool) {
-	Change::PropertyMap propertyChanges;
-	propertyChanges.insert({id, prop_name}, value);
-	submit_change(Change{.propertyChanges = propertyChanges});
-}
 
 void WRL::submit_change(const Change& change, String action_name) {
 	for (auto prop = change.propertyChanges.front(); prop; prop = prop.next()) {
