@@ -19,9 +19,10 @@ class Viewer : public BoxContainer, public WRL::EventHandler {
 
 	Camera3D* bg_camera;
 	Camera3D* camera;
-	bool right = false;
+	enum class Mode { Default, FPS };
+	Mode mode = Mode::Default;
 	const float look_speed = 0.2 * (Math_PI / 180.0);
-	float move_speed = 100;
+	const float move_speed = 100;
 
 	struct Instance {
 		MeshInstance3D* mesh_instance;

@@ -11,7 +11,7 @@
 
 void Viewer::input(const Ref<InputEvent>& p_event) {
 	Ref<InputEventKey> k = p_event;
-	if (right && k.is_valid())
+	if (mode == Mode::FPS && k.is_valid())
 		get_viewport()->set_input_as_handled();
 }
 
@@ -19,7 +19,7 @@ void Viewer::gui_input(const Ref<InputEvent>& p_event) {
 	Ref<InputEventMouseButton> mb = p_event;
 	if (mb.is_valid()) {
 		if (mb->get_button_index() == MouseButton::RIGHT) {
-			right = mb->is_pressed();
+			mode = mb->is_pressed() ? Mode::FPS : Mode::Default;
 			Input::get_singleton()->set_mouse_mode(
 				mb->is_pressed() ? Input::MOUSE_MODE_CAPTURED : Input::MOUSE_MODE_VISIBLE);
 		}
@@ -27,7 +27,7 @@ void Viewer::gui_input(const Ref<InputEvent>& p_event) {
 
 	Ref<InputEventMouseMotion> mm = p_event;
 	if (mm.is_valid()) {
-		if (right) {
+		if (mode == Mode::FPS) {
 			Vector3 old_rot = camera->get_rotation();
 			Vector2 rel = mm->get_relative() * look_speed;
 			Vector3 new_rot(CLAMP(old_rot.x - rel.y, -Math_PI / 2, Math_PI / 2), (old_rot.y - rel.x), 0);
@@ -39,7 +39,7 @@ void Viewer::gui_input(const Ref<InputEvent>& p_event) {
 
 void Viewer::_notification(int p_what) {
 	if (p_what == NOTIFICATION_PROCESS) {
-		if (right) {
+		if (mode == Mode::FPS) {
 			Vector3 movement;
 
 			Input* i = Input::get_singleton();
@@ -159,6 +159,7 @@ Viewer::Viewer(const CustomFS& p_custom_fs) : custom_fs(p_custom_fs), assets(cus
 
 	SubViewportContainer* viewport_container = memnew(SubViewportContainer);
 	viewport_container->set_stretch(true);
+	viewport_container->set_custom_minimum_size(Size2(2, 2));
 	viewport_container->set_v_size_flags(Control::SIZE_EXPAND_FILL);
 	viewport_container->set_h_size_flags(Control::SIZE_EXPAND_FILL);
 	add_child(viewport_container);

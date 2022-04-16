@@ -93,9 +93,9 @@ Whirled::Whirled(const CustomFS p_custom_fs) : custom_fs(p_custom_fs) {
 	HSplitContainer* right_drawer_split = memnew(HSplitContainer);
 	main_vbox->add_child(right_drawer_split);
 	right_drawer_split->set_v_size_flags(Control::SIZE_EXPAND_FILL);
-	right_drawer_split->set_split_offset(210);
 
 	scene = memnew(SceneLayout);
+	scene->set_custom_minimum_size(Size2(256, 0));
 	right_drawer_split->add_child(scene);
 	scene->wrl_connect(wrl);
 
@@ -104,11 +104,11 @@ Whirled::Whirled(const CustomFS p_custom_fs) : custom_fs(p_custom_fs) {
 
 	viewer = memnew(Viewer(custom_fs));
 	left_drawer_split->add_child(viewer);
-	left_drawer_split->set_split_offset(-210);
 	viewer->set_h_size_flags(Control::SIZE_EXPAND_FILL);
 	viewer->wrl_connect(wrl);
 
 	Inspector* inspector = memnew(Inspector);
+	inspector->set_custom_minimum_size(Size2(256, 0));
 	left_drawer_split->add_child(inspector);
 	inspector->wrl_connect(wrl);
 }

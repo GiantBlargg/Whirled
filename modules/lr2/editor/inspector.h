@@ -16,4 +16,7 @@ class Inspector : public ScrollContainer, public WRL::EventHandler {
 
   protected:
 	void _wrl_changed(const WRL::Change&, bool) override;
+
+  public:
+	Inspector() { set_horizontal_scroll_mode(ScrollContainer::SCROLL_MODE_DISABLED); }
 };

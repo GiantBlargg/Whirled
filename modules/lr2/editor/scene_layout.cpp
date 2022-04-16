@@ -24,6 +24,7 @@ void SceneLayout::_wrl_changed(const WRL::Change& change, bool reset) {
 		TreeItem* item = create_item(nullptr, a.key());
 		item->set_text(0, wrl->get_entry_property(a.value(), "name"));
 	}
+
 	if (change.select_changed) {
 		if (change.select.first == -1) {
 			if (get_selected())
