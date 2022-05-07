@@ -89,6 +89,7 @@ class AssetManager {
 	std::shared_mutex loader_mutex;
 
   public:
+	template <class T> void add_loader() { add_loader(Ref(memnew(T))); }
 	void add_loader(Ref<AssetLoader> loader) {
 		loader_mutex.lock();
 		loaders.push_back(loader);

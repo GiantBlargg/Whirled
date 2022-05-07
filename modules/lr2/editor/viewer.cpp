@@ -18,6 +18,57 @@ void Viewer::input(const Ref<InputEvent>& p_event) {
 void Viewer::gui_input(const Ref<InputEvent>& p_event) {
 	Ref<InputEventMouseButton> mb = p_event;
 	if (mb.is_valid()) {
+		if (mode == Mode::Default) {
+			if (mb->get_button_index() == MouseButton::LEFT) {
+				// Pick object under cursor
+				const Vector2 cursor_pos = get_local_mouse_position();
+
+				PhysicsDirectSpaceState3D::RayParameters ray_params{
+					.collide_with_bodies = true,
+					.collide_with_areas = true,
+					.hit_from_inside = true,
+					.hit_back_faces = true};
+
+				const Vector3 ray_origin = camera->project_ray_origin(cursor_pos);
+				const Vector3 ray_normal = camera->project_ray_normal(cursor_pos);
+				ray_params.from = ray_origin;
+				ray_params.to = ray_origin + ray_normal * camera->get_far();
+				ray_params.collision_mask = RenderLayerProps | RenderLayerTerrain;
+
+				PhysicsDirectSpaceState3D::RayResult rr;
+				bool found = PhysicsServer3D::get_singleton()
+								 ->space_get_direct_state(camera->get_world_3d()->get_space())
+								 ->intersect_ray(ray_params, rr);
+
+				if (!found) {
+					const Vector3 ray_origin = bg_camera->project_ray_origin(cursor_pos);
+					const Vector3 ray_normal = bg_camera->project_ray_normal(cursor_pos);
+					ray_params.from = ray_origin;
+					ray_params.to = ray_origin + ray_normal * camera->get_far();
+					ray_params.collision_mask = RenderLayerSkyBox;
+
+					found = PhysicsServer3D::get_singleton()
+								->space_get_direct_state(bg_camera->get_world_3d()->get_space())
+								->intersect_ray(ray_params, rr);
+				}
+
+				if (found) {
+					WRL::EntryID found_entry;
+
+					for (auto i = instances.front(); i; i = i.next()) {
+						if (i.value().collider == rr.collider) {
+							found_entry = i.key();
+							break;
+						}
+					}
+
+					if (found_entry) {
+						wrl->submit_change(
+							WRL::Change{.select_changed = true, .select = {wrl->get_index(found_entry), found_entry}});
+					}
+				}
+			}
+		}
 		if (mb->get_button_index() == MouseButton::RIGHT) {
 			mode = mb->is_pressed() ? Mode::FPS : Mode::Default;
 			Input::get_singleton()->set_mouse_mode(
@@ -68,7 +119,7 @@ void Viewer::_notification(int p_what) {
 
 		for (auto p = pending.front(); p; p = p->next()) {
 			WRL::EntryID entry = p->get();
-			Instance i = instances[entry];
+			Instance& i = instances[entry];
 			Ref<Mesh> mesh = assets.try_get<Mesh>(i.model_path);
 			if (mesh.is_valid()) {
 				i.mesh_instance->set_mesh(mesh);
@@ -76,6 +127,9 @@ void Viewer::_notification(int p_what) {
 					instances[entry].mesh_instance->set_shader_instance_uniform(
 						"texture_scale", wrl->get_entry_property(WRL::EntryID{entry}, "texture_scale"));
 				}
+				i.collider = Object::cast_to<StaticBody3D>(i.mesh_instance->create_trimesh_collision_node());
+				i.mesh_instance->add_child(i.collider);
+				i.collider->set_collision_layer(i.mesh_instance->get_layer_mask());
 				pending.erase(p);
 			}
 		}
@@ -105,54 +159,55 @@ void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 			else
 				mesh_instance->set_layer_mask(RenderLayerProps);
 
-			add_child(mesh_instance);
+			root->add_child(mesh_instance);
 			instances.insert(a.value(), {mesh_instance, model_type});
 		}
 	}
 
 	for (auto prop = change.propertyChanges.front(); prop; prop = prop.next()) {
 		WRL::EntryID entry = prop.key().first;
+		if (!instances.has(entry))
+			continue;
+
 		String type = wrl->get_entry_property(entry, "type");
 		String prop_name = prop.key().second;
-		if ((type == "cGeneralStatic" || type == "cGoldenBrick" || type == "cGeneralMobile" || type == "cBonusPickup" ||
-			 type == "cLegoTerrain" || type == "cSkyBox") &&
-			prop_name == "model") {
-			instances[entry].model_path = prop.value();
-			pending.insert(entry);
+		if (prop_name == "model") {
+			const String& model = prop.value();
+			if (instances[entry].model_path != model) {
+				if (instances[entry].collider) {
+					instances[entry].collider->queue_delete();
+				}
+				instances[entry].model_path = model;
+				pending.insert(entry);
+			}
 		}
 
 		else if (type == "cLegoTerrain" && prop_name == "texture_scale") {
 			instances[entry].mesh_instance->set_shader_instance_uniform("texture_scale", prop.value());
 		}
 
-		else if (
-			(type == "cGeneralStatic" || type == "cGoldenBrick" || type == "cGeneralMobile" ||
-			 type == "cBonusPickup") &&
-			(prop_name == "position" || prop_name == "rotation")) {
-			instances[entry].mesh_instance->set_transform(
-				Transform3D(
-					Basis(wrl->get_entry_property(entry, "rotation")), wrl->get_entry_property(entry, "position"))
-					.scaled({-1, 1, 1}));
-		}
+		else if (prop_name == "position" || prop_name == "rotation" || prop_name == "scale") {
+			if (prop_name == "position") {
+				instances[entry].position = prop.value();
+			} else if (prop_name == "rotation") {
+				instances[entry].rotation = prop.value();
+			} else if (prop_name == "scale") {
+				instances[entry].scale = prop.value();
+			}
 
-		else if (
-			type == "cLegoTerrain" && (prop_name == "position" || prop_name == "rotation" || prop_name == "scale")) {
-			instances[entry].mesh_instance->set_transform(
-				Transform3D(
-					Basis(wrl->get_entry_property(entry, "rotation")).scaled(wrl->get_entry_property(entry, "scale")),
-					wrl->get_entry_property(entry, "position"))
-					.scaled({-1, 1, 1}));
+			instances[entry].mesh_instance->set_transform(Transform3D(
+				Basis(instances[entry].rotation).scaled(instances[entry].scale), instances[entry].position));
 		}
 	}
 }
 
 Viewer::Viewer(const CustomFS& p_custom_fs) : custom_fs(p_custom_fs), assets(custom_fs) {
-	assets.add_loader(Ref(memnew(ImageAssetLoader)));
-	assets.add_loader(Ref(memnew(ImageTextureAssetLoader)));
-	assets.add_loader(Ref(memnew(IFLAssetLoader)));
-	assets.add_loader(Ref(memnew(MDL2AssetLoader)));
-	assets.add_loader(Ref(memnew(TDFLoader)));
-	assets.add_loader(Ref(memnew(TDFMeshLoader)));
+	assets.add_loader<ImageAssetLoader>();
+	assets.add_loader<ImageTextureAssetLoader>();
+	assets.add_loader<IFLAssetLoader>();
+	assets.add_loader<MDL2AssetLoader>();
+	assets.add_loader<TDFLoader>();
+	assets.add_loader<TDFMeshLoader>();
 
 	set_process(true);
 	set_process_input(true);
@@ -195,6 +250,10 @@ void fragment() { ALBEDO = texture(skybox, UV).rgb; }
 	skybox_viewer->set_material_override(skybox_viewer_material);
 	skybox_viewer->set_position(Vector3(0, 0, -2));
 	camera->add_child(skybox_viewer);
+
+	root = memnew(Node3D);
+	root->set_scale({-1, 1, 1});
+	add_child(root);
 
 	DirectionalLight3D* l = memnew(DirectionalLight3D);
 	l->rotate_x(-Math_PI / 4);

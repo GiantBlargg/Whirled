@@ -31,6 +31,7 @@ void SceneLayout::_wrl_changed(const WRL::Change& change, bool reset) {
 				get_selected()->deselect(0);
 		} else {
 			root->get_child(change.select.first)->select(0);
+			ensure_cursor_is_visible();
 		}
 	}
 }
