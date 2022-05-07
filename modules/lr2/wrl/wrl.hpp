@@ -63,8 +63,8 @@ class WRL : public RefCounted {
 	void select(int index) { select(scene.get(index)); }
 
 	void clear();
-	Error load(FileAccess* file);
-	Error save(FileAccess* file);
+	Error load(Ref<FileAccess> file);
+	Error save(Ref<FileAccess> file);
 
   public:
 	class EventHandler {

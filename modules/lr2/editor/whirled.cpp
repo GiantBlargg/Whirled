@@ -30,15 +30,13 @@ void Whirled::_menu_save_as() {
 
 void Whirled::_file_open(String path) {
 	file_path = path;
-	FileAccessRef file = custom_fs.FileAccess_open(path, FileAccess::ModeFlags::READ);
+	Ref<FileAccess> file = custom_fs.FileAccess_open(path, FileAccess::ModeFlags::READ);
 	wrl->load(file);
-	file->close();
 }
 void Whirled::_file_save_as(String path) {
 	file_path = path;
-	FileAccessRef file = custom_fs.FileAccess_open(path, FileAccess::ModeFlags::WRITE);
+	Ref<FileAccess> file = custom_fs.FileAccess_open(path, FileAccess::ModeFlags::WRITE);
 	wrl->save(file);
-	file->close();
 }
 void Whirled::_file_reset() {
 	if (file->is_connected("file_selected", callable_mp(this, &Whirled::_file_open))) {

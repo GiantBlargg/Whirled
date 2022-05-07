@@ -49,7 +49,7 @@ struct MDL2Material {
 	uint64_t anim_name;
 };
 
-void load_vertices(FileAccess* f, Array* group_arrays) {
+void load_vertices(Ref<FileAccess> f, Array* group_arrays) {
 	auto vertex_vector_offset = f->get_32();
 	auto vertex_normal_offset = f->get_32();
 	auto vertex_colour_offset = f->get_32();
@@ -128,7 +128,7 @@ bool MDL2AssetLoader::can_handle(const AssetKey& key, const CustomFS& fs) const 
 AssetKey MDL2AssetLoader::remap_key(const AssetKey& k, const CustomFS&) const { return {k.path, "ArrayMesh"}; }
 REF MDL2AssetLoader::load(const AssetKey& k, const CustomFS& fs, AssetManager& assets, Error* r_error) const {
 
-	FileAccess* f = fs.FileAccess_open(k.path, FileAccess::READ);
+	Ref<FileAccess> f = fs.FileAccess_open(k.path, FileAccess::READ);
 
 	Ref<ArrayMesh> mesh;
 	mesh.instantiate();
@@ -280,8 +280,6 @@ REF MDL2AssetLoader::load(const AssetKey& k, const CustomFS& fs, AssetManager& a
 
 		} break;
 		case MDL2Chunk::END: {
-			f->close();
-			memdelete(f);
 			return mesh;
 		} break;
 		case MDL2Chunk::MDL0:

@@ -60,7 +60,7 @@ const uint32_t WRL_MAGIC = 0x57324352;
 const uint32_t WRL_VERSION = 0xb;
 const uint32_t OBMG_MAGIC = 0x474d424f;
 
-Error WRL::load(FileAccess* file) {
+Error WRL::load(Ref<FileAccess> file) {
 	static OrderedHashMap<String, StringName> load_types;
 	if (load_types.is_empty()) {
 		ClassDB::register_class<GeneralStatic>();
@@ -184,7 +184,7 @@ Error WRL::load(FileAccess* file) {
 	return OK;
 }
 
-Error WRL::save(FileAccess* file) {
+Error WRL::save(Ref<FileAccess> file) {
 	file->store_32(WRL_MAGIC);
 	file->store_32(WRL_VERSION);
 

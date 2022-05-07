@@ -239,7 +239,7 @@ Error ImageLoaderMIP::convert_to_image(
 	return OK;
 }
 
-Error ImageLoaderMIP::load_image(Ref<Image> p_image, FileAccess* f, bool p_force_linear, float p_scale) {
+Error ImageLoaderMIP::load_image(Ref<Image> p_image, Ref<FileAccess> f, bool p_force_linear, float p_scale) {
 	Vector<uint8_t> src_image;
 	uint64_t src_image_len = f->get_length();
 	ERR_FAIL_COND_V(src_image_len == 0, ERR_FILE_CORRUPT);
@@ -343,7 +343,6 @@ Error ImageLoaderMIP::load_image(Ref<Image> p_image, FileAccess* f, bool p_force
 		}
 	}
 
-	f->close();
 	return err;
 }
 

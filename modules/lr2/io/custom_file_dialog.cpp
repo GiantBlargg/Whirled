@@ -94,7 +94,7 @@ void CustomFileDialog::_notification(int p_what) {
 	switch (p_what) {
 	case NOTIFICATION_VISIBILITY_CHANGED: {
 		if (!is_visible()) {
-			set_process_unhandled_input(false);
+			set_process_shortcut_input(false);
 		}
 	} break;
 
@@ -118,7 +118,7 @@ void CustomFileDialog::_notification(int p_what) {
 	}
 }
 
-void CustomFileDialog::unhandled_input(const Ref<InputEvent>& p_event) {
+void CustomFileDialog::shortcut_input(const Ref<InputEvent>& p_event) {
 	ERR_FAIL_COND(p_event.is_null());
 
 	Ref<InputEventKey> k = p_event;
@@ -214,7 +214,7 @@ void CustomFileDialog::_post_popup() {
 		tree->grab_focus();
 	}
 
-	set_process_unhandled_input(true);
+	set_process_shortcut_input(true);
 
 	// For open dir mode, deselect all items on file dialog open.
 	if (mode == FILE_MODE_OPEN_DIR) {
@@ -782,7 +782,6 @@ CustomFileDialog::FileMode CustomFileDialog::get_file_mode() const { return mode
 // 	if (access == p_access) {
 // 		return;
 // 	}
-// 	memdelete(dir_access);
 // 	switch (p_access) {
 // 	case ACCESS_FILESYSTEM: {
 // 		dir_access = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
@@ -802,9 +801,8 @@ CustomFileDialog::FileMode CustomFileDialog::get_file_mode() const { return mode
 // }
 
 void CustomFileDialog::set_custom_fs(const CustomFS& p_custom_fs) {
-	DirAccess* p_dir_access = p_custom_fs.DirAccess_create();
+	Ref<DirAccess> p_dir_access = p_custom_fs.DirAccess_create();
 	ERR_FAIL_NULL(p_dir_access);
-	memdelete(dir_access);
 	dir_access = p_dir_access;
 	_update_drives();
 	invalidate();
@@ -989,7 +987,7 @@ CustomFileDialog::CustomFileDialog() {
 	hbc->add_child(drives);
 
 	dir = memnew(LineEdit);
-	dir->set_structured_text_bidi_override(Control::STRUCTURED_TEXT_FILE);
+	dir->set_structured_text_bidi_override(TextServer::STRUCTURED_TEXT_FILE);
 	hbc->add_child(dir);
 	dir->set_h_size_flags(Control::SIZE_EXPAND_FILL);
 
@@ -1030,7 +1028,7 @@ CustomFileDialog::CustomFileDialog() {
 	file_box = memnew(HBoxContainer);
 	file_box->add_child(memnew(Label(TTRC("File:"))));
 	file = memnew(LineEdit);
-	file->set_structured_text_bidi_override(Control::STRUCTURED_TEXT_FILE);
+	file->set_structured_text_bidi_override(TextServer::STRUCTURED_TEXT_FILE);
 	file->set_stretch_ratio(4);
 	file->set_h_size_flags(Control::SIZE_EXPAND_FILL);
 	file_box->add_child(file);
@@ -1065,7 +1063,7 @@ CustomFileDialog::CustomFileDialog() {
 	makedialog->add_child(makevb);
 
 	makedirname = memnew(LineEdit);
-	makedirname->set_structured_text_bidi_override(Control::STRUCTURED_TEXT_FILE);
+	makedirname->set_structured_text_bidi_override(TextServer::STRUCTURED_TEXT_FILE);
 	makevb->add_margin_child(TTRC("Name:"), makedirname);
 	add_child(makedialog, false, INTERNAL_MODE_FRONT);
 	makedialog->register_text_enter(makedirname);
@@ -1092,5 +1090,4 @@ CustomFileDialog::~CustomFileDialog() {
 	if (unregister_func) {
 		unregister_func(this);
 	}
-	memdelete(dir_access);
 }

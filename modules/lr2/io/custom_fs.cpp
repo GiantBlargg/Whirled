@@ -1,7 +1,7 @@
 #include "custom_fs.hpp"
 
 String FSResolve::resolve_path(const String& p_path) const {
-	DirAccessRef dir_access(DirAccess::create_for_path(root));
+	Ref<DirAccess> dir_access(DirAccess::create_for_path(root));
 
 	String path = p_path.simplify_path();
 	if (!path.begins_with("/")) {
@@ -36,7 +36,7 @@ String FSResolve::map_path(const String& p_path) const { return root.plus_file(p
 class LR2DirAccess : public DirAccess {
   private:
 	const FSResolve fs_resolve;
-	DirAccessRef dir_access;
+	Ref<DirAccess> dir_access;
 	String current_dir;
 
 	String _resolve_path(String p_path) {
@@ -53,8 +53,8 @@ class LR2DirAccess : public DirAccess {
 
 	Error list_dir_begin() override { return dir_access->list_dir_begin(); }
 	String get_next() override { return dir_access->get_next(); }
-	bool current_is_dir() const override { return dir_access.f->current_is_dir(); }
-	bool current_is_hidden() const override { return dir_access.f->current_is_hidden(); }
+	bool current_is_dir() const override { return dir_access->current_is_dir(); }
+	bool current_is_hidden() const override { return dir_access->current_is_hidden(); }
 	void list_dir_end() override { dir_access->list_dir_end(); }
 
 	int get_drive_count() override { return 0; }
@@ -67,7 +67,7 @@ class LR2DirAccess : public DirAccess {
 			current_dir = try_path;
 		return err;
 	}
-	String get_current_dir(bool p_include_drive = true) override { return current_dir; }
+	String get_current_dir(bool p_include_drive = true) const override { return current_dir; }
 	Error make_dir(String p_dir) override {
 		ERR_PRINT("NOT IMPLEMENTED");
 		return dir_access->make_dir(p_dir);
@@ -106,111 +106,107 @@ class LR2DirAccess : public DirAccess {
 
 	String get_filesystem_type() const override {
 		ERR_PRINT("NOT IMPLEMENTED");
-		return dir_access.f->get_filesystem_type();
+		return dir_access->get_filesystem_type();
 	}
 };
 
 class LR2FileAccess : public FileAccess {
   private:
 	const FSResolve fs_resolve;
-	FileAccessRef file;
+	Ref<FileAccess> file;
 
   public:
 	LR2FileAccess(const FSResolve& p_fs_resolve)
 		: fs_resolve(p_fs_resolve), file(FileAccess::create(FileAccess::ACCESS_FILESYSTEM)) {}
 
   public:
-	uint32_t _get_unix_permissions(const String& p_file) {
+	uint32_t _get_unix_permissions(const String& p_file) override {
 		ERR_PRINT("NOT IMPLEMENTED");
 		return file->_get_unix_permissions(p_file);
 	}
-	Error _set_unix_permissions(const String& p_file, uint32_t p_permissions) {
+	Error _set_unix_permissions(const String& p_file, uint32_t p_permissions) override {
 		ERR_PRINT("NOT IMPLEMENTED");
 		return file->_set_unix_permissions(p_file, p_permissions);
 	}
 
   protected:
-	Error _open(const String& p_path, int p_mode_flags) {
+	Error _open(const String& p_path, int p_mode_flags) override {
 		return file->reopen(fs_resolve.map_path(fs_resolve.resolve_path(p_path)), p_mode_flags);
 	}
-	uint64_t _get_modified_time(const String& p_file) {
+	uint64_t _get_modified_time(const String& p_file) override {
 		ERR_PRINT("NOT IMPLEMENTED");
 		return file->get_modified_time(p_file);
 	}
 
   public:
-	void close() { file->close(); }
-	bool is_open() const {
+	bool is_open() const override {
 		ERR_PRINT("NOT IMPLEMENTED");
-		return file.f->is_open();
+		return file->is_open();
 	}
 
-	String get_path() const {
+	String get_path() const override {
 		ERR_PRINT("NOT IMPLEMENTED");
-		return file.f->get_path();
+		return file->get_path();
 	}
-	String get_path_absolute() const {
+	String get_path_absolute() const override {
 		ERR_PRINT("NOT IMPLEMENTED");
-		return file.f->get_path_absolute();
+		return file->get_path_absolute();
 	}
 
-	void seek(uint64_t p_position) { file->seek(p_position); }
-	void seek_end(int64_t p_position = 0) {
+	void seek(uint64_t p_position) override { file->seek(p_position); }
+	void seek_end(int64_t p_position = 0) override {
 		ERR_PRINT("NOT IMPLEMENTED");
 		file->seek_end();
 	}
-	uint64_t get_position() const { return file.f->get_position(); }
-	uint64_t get_length() const { return file.f->get_length(); }
+	uint64_t get_position() const override { return file->get_position(); }
+	uint64_t get_length() const override { return file->get_length(); }
 
-	bool eof_reached() const { return file.f->eof_reached(); }
+	bool eof_reached() const override { return file->eof_reached(); }
 
-	uint8_t get_8() const { return file.f->get_8(); }
+	uint8_t get_8() const override { return file->get_8(); }
 
-	Error get_error() const {
+	Error get_error() const override {
 		ERR_PRINT("NOT IMPLEMENTED");
-		return file.f->get_error();
+		return file->get_error();
 	}
 
-	void flush() {
+	void flush() override {
 		ERR_PRINT("NOT IMPLEMENTED");
 		file->flush();
 	}
-	void store_8(uint8_t p_dest) { file->store_8(p_dest); }
+	void store_8(uint8_t p_dest) override { file->store_8(p_dest); }
 
-	bool file_exists(const String& p_name) {
+	bool file_exists(const String& p_name) override {
 		ERR_PRINT("NOT IMPLEMENTED");
 		return file->file_exists(p_name);
 	}
 };
 
-FileAccess* CustomFS::FileAccess_create() const { return memnew(LR2FileAccess(fs_resolve)); }
-DirAccess* CustomFS::DirAccess_create() const { return memnew(LR2DirAccess(fs_resolve)); }
+Ref<FileAccess> CustomFS::FileAccess_create() const { return memnew(LR2FileAccess(fs_resolve)); }
+Ref<DirAccess> CustomFS::DirAccess_create() const { return memnew(LR2DirAccess(fs_resolve)); }
 
-FileAccess* CustomFS::FileAccess_open(const String& p_path, int p_mode_flags, Error* r_error) const {
-	FileAccess* ret = FileAccess_create();
+Ref<FileAccess> CustomFS::FileAccess_open(const String& p_path, int p_mode_flags, Error* r_error) const {
+	Ref<FileAccess> ret = FileAccess_create();
 	Error err = ret->reopen(p_path, p_mode_flags);
 
 	if (r_error) {
 		*r_error = err;
 	}
 	if (err != OK) {
-		memdelete(ret);
-		ret = nullptr;
+		ret.unref();
 	}
 
 	return ret;
 }
 
-DirAccess* CustomFS::DirAccess_open(const String& p_path, Error* r_error) const {
-	DirAccess* da = DirAccess_create();
-
-	ERR_FAIL_COND_V_MSG(!da, nullptr, "Cannot create DirAccess for path '" + p_path + "'.");
+Ref<DirAccess> CustomFS::DirAccess_open(const String& p_path, Error* r_error) const {
+	Ref<DirAccess> da = DirAccess_create();
+	ERR_FAIL_COND_V_MSG(da.is_null(), nullptr, "Cannot create DirAccess for path '" + p_path + "'.");
 	Error err = da->change_dir(p_path);
 	if (r_error) {
 		*r_error = err;
 	}
 	if (err != OK) {
-		memdelete(da);
 		return nullptr;
 	}
 
@@ -220,18 +216,18 @@ DirAccess* CustomFS::DirAccess_open(const String& p_path, Error* r_error) const 
 String CustomFS::canon_path(const String& p_path) const { return fs_resolve.resolve_path(p_path); }
 
 bool CustomFS::file_exists(const String& p_path) const {
-	DirAccessRef f = DirAccess_create();
+	Ref<DirAccess> f = DirAccess_create();
 	return f->file_exists(p_path);
 }
 bool CustomFS::dir_exists(const String& p_path) const {
-	DirAccessRef f = DirAccess_create();
+	Ref<DirAccess> f = DirAccess_create();
 	return f->dir_exists(p_path);
 }
 bool CustomFS::exists(const String& p_path) const { return file_exists(p_path) || dir_exists(p_path); }
 
 Vector<uint8_t> CustomFS::get_file_as_array(const String& p_path, Error* r_error) const {
-	FileAccess* f = FileAccess_open(p_path, FileAccess::READ, r_error);
-	if (!f) {
+	Ref<FileAccess> f = FileAccess_open(p_path, FileAccess::READ, r_error);
+	if (f.is_null()) {
 		if (r_error) { // if error requested, do not throw error
 			return Vector<uint8_t>();
 		}
@@ -240,7 +236,6 @@ Vector<uint8_t> CustomFS::get_file_as_array(const String& p_path, Error* r_error
 	Vector<uint8_t> data;
 	data.resize(f->get_length());
 	f->get_buffer(data.ptrw(), data.size());
-	memdelete(f);
 	return data;
 }
 String CustomFS::get_file_as_string(const String& p_path, Error* r_error) const {

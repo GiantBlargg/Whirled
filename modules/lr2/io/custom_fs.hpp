@@ -19,11 +19,11 @@ class CustomFS {
   public:
 	CustomFS(const String& p_root) : fs_resolve(p_root) {}
 
-	FileAccess* FileAccess_create() const;
-	FileAccess* FileAccess_open(const String& p_path, int p_mode_flags, Error* = nullptr) const;
+	Ref<FileAccess> FileAccess_create() const;
+	Ref<FileAccess> FileAccess_open(const String& p_path, int p_mode_flags, Error* = nullptr) const;
 
-	DirAccess* DirAccess_create() const;
-	DirAccess* DirAccess_open(const String& p_path, Error* = nullptr) const;
+	Ref<DirAccess> DirAccess_create() const;
+	Ref<DirAccess> DirAccess_open(const String& p_path, Error* = nullptr) const;
 
 	String canon_path(const String& p_path) const;
 

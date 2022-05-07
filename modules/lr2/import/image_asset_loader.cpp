@@ -33,15 +33,16 @@ REF ImageAssetLoader::load(const AssetKey& k, const CustomFS& fs, AssetManager&,
 	Ref<Image> image;
 	image.instantiate();
 	Error err;
-	FileAccess* f = fs.FileAccess_open(k.path, FileAccess::READ, &err);
-	if (err) {
-		if (r_error)
-			*r_error = err;
-		return NULL;
-	}
+	{
+		Ref<FileAccess> f = fs.FileAccess_open(k.path, FileAccess::READ, &err);
+		if (err) {
+			if (r_error)
+				*r_error = err;
+			return NULL;
+		}
 
-	err = ImageLoader::load_image(k.path, image, f);
-	memdelete(f);
+		err = ImageLoader::load_image(k.path, image, f);
+	}
 
 	if (err) {
 		if (r_error)

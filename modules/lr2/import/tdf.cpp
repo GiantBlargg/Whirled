@@ -16,7 +16,7 @@ REF TDFLoader::load(const AssetKey& k, const CustomFS& fs, AssetManager& assets,
 
 	tdf->path = k.path;
 	String terr_data_path = k.path + "/TERRDATA.TDF";
-	FileAccessRef file = fs.FileAccess_open(terr_data_path, FileAccess::READ);
+	Ref<FileAccess> file = fs.FileAccess_open(terr_data_path, FileAccess::READ);
 
 	file->seek(0x10);
 	tdf->height_scale = file->get_float();
