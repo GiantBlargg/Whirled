@@ -283,7 +283,11 @@ REF MDL2AssetLoader::load(const AssetKey& k, const CustomFS& fs, AssetManager& a
 			return mesh;
 		} break;
 		case MDL2Chunk::MDL0:
+			ERR_PRINT("Chunk MDL0 in " + k.path + " not implemented.");
+			break;
 		case MDL2Chunk::GEO0:
+			ERR_PRINT("Chunk GEO0 in " + k.path + " not implemented.");
+			break;
 		case MDL2Chunk::P2G0:
 		case MDL2Chunk::COLD:
 		case MDL2Chunk::SHA0:

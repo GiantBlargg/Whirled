@@ -27,14 +27,16 @@ class Viewer : public BoxContainer, public WRL::EventHandler {
 	const float move_speed = 100;
 
 	struct Instance {
+		Vector3 position;
+		Quaternion rotation;
+		Vector3 scale = {1, 1, 1};
+
 		MeshInstance3D* mesh_instance;
 		enum class ModelType { MDL2, TDF };
 		ModelType model_type = ModelType::MDL2;
 		String model_path;
-		Vector3 position;
-		Quaternion rotation;
-		Vector3 scale = {1, 1, 1};
-		StaticBody3D* collider = nullptr;
+
+		CollisionObject3D* collider = nullptr;
 	};
 	struct Hasher {
 		static _FORCE_INLINE_ uint32_t hash(const WRL::EntryID& key) { return HashMapHasherDefault::hash(key.id); }

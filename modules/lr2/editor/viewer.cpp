@@ -3,8 +3,10 @@
 #include "../import/ifl.hpp"
 #include "../import/image_asset_loader.hpp"
 #include "../import/mdl2.hpp"
+#include "../import/mesh_shape.hpp"
 #include "modules/lr2/import/tdf.h"
 #include "scene/3d/camera_3d.h"
+#include "scene/3d/collision_shape_3d.h"
 #include "scene/3d/light_3d.h"
 #include "scene/gui/subviewport_container.h"
 #include "scene/resources/primitive_meshes.h"
@@ -127,9 +129,17 @@ void Viewer::_notification(int p_what) {
 					instances[entry].mesh_instance->set_shader_instance_uniform(
 						"texture_scale", wrl->get_entry_property(WRL::EntryID{entry}, "texture_scale"));
 				}
-				i.collider = Object::cast_to<StaticBody3D>(i.mesh_instance->create_trimesh_collision_node());
+			}
+			Ref<Shape3D> shape = assets.try_get<Shape3D>(i.model_path);
+			if (shape.is_valid()) {
+				i.collider = memnew(StaticBody3D);
 				i.mesh_instance->add_child(i.collider);
 				i.collider->set_collision_layer(i.mesh_instance->get_layer_mask());
+				CollisionShape3D* cshape = memnew(CollisionShape3D);
+				i.collider->add_child(cshape, true);
+				cshape->set_shape(shape);
+			}
+			if (mesh.is_valid() && shape.is_valid()) {
 				pending.erase(p);
 			}
 		}
@@ -149,18 +159,19 @@ void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 		if (type == "cGeneralStatic" || type == "cGoldenBrick" || type == "cGeneralMobile" || type == "cBonusPickup" ||
 			type == "cLegoTerrain" || type == "cSkyBox") {
 			auto mesh_instance = memnew(MeshInstance3D);
-			Instance::ModelType model_type = Instance::ModelType::MDL2;
 
+			Instance::ModelType model_type = Instance::ModelType::MDL2;
+			uint32_t layer = RenderLayerProps;
 			if (type == "cLegoTerrain") {
-				mesh_instance->set_layer_mask(RenderLayerTerrain);
+				layer = RenderLayerTerrain;
 				model_type = Instance::ModelType::TDF;
-			} else if (type == "cSkyBox")
-				mesh_instance->set_layer_mask(RenderLayerSkyBox);
-			else
-				mesh_instance->set_layer_mask(RenderLayerProps);
+			} else if (type == "cSkyBox") {
+				layer = RenderLayerSkyBox;
+			}
+			mesh_instance->set_layer_mask(layer);
 
 			root->add_child(mesh_instance);
-			instances.insert(a.value(), {mesh_instance, model_type});
+			instances.insert(a.value(), {.mesh_instance = mesh_instance, .model_type = model_type});
 		}
 	}
 
@@ -174,9 +185,8 @@ void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 		if (prop_name == "model") {
 			const String& model = prop.value();
 			if (instances[entry].model_path != model) {
-				if (instances[entry].collider) {
+				if (instances[entry].collider)
 					instances[entry].collider->queue_delete();
-				}
 				instances[entry].model_path = model;
 				pending.insert(entry);
 			}
@@ -208,6 +218,7 @@ Viewer::Viewer(const CustomFS& p_custom_fs) : custom_fs(p_custom_fs), assets(cus
 	assets.add_loader<MDL2AssetLoader>();
 	assets.add_loader<TDFLoader>();
 	assets.add_loader<TDFMeshLoader>();
+	assets.add_loader<MeshShapeLoader>();
 
 	set_process(true);
 	set_process_input(true);

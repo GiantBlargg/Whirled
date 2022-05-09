@@ -2,10 +2,7 @@
 
 #include <optional>
 
-thread_local bool is_work_thread = false;
-
 void AssetManager::_thread_func() {
-	is_work_thread = true;
 	while (true) {
 		wake_semaphore.acquire();
 		if (shut_down)
@@ -288,13 +285,7 @@ Vector<REF> AssetManager::vector_block_get(const Vector<AssetKey>& p_keys) {
 
 		not_ready = new_not_ready;
 
-		if (is_work_thread && wake_semaphore.try_acquire()) {
-			// I'm a work thread! I can't be sleeping when there's work to do
-			_find_work();
-		} else {
-			// I'm not a work thread or there's no work to do.
-			std::this_thread::yield();
-		}
+		std::this_thread::yield();
 	}
 }
 
