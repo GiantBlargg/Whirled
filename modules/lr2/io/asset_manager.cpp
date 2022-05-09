@@ -84,13 +84,13 @@ void AssetManager::vector_queue(const Vector<AssetKey>& p_keys) {
 	Vector<AssetKey> keys(p_keys);
 	_canon_paths(keys);
 	Vector<AssetKey> new_keys;
-	asset_cache_mutex.lock();
+	asset_cache_mutex.lock_shared();
 	for (auto& k : keys) {
 		if (!asset_cache.count(k))
 			if (!new_keys.has(k))
 				new_keys.push_back(k);
 	}
-	asset_cache_mutex.unlock();
+	asset_cache_mutex.unlock_shared();
 
 	_vector_queue(new_keys);
 }
@@ -177,7 +177,7 @@ Vector<REF> AssetManager::vector_block_get(const Vector<AssetKey>& p_keys) {
 				if (!queued.has(k))
 					queued.push_back(k);
 				not_ready.push_back(i);
-			} else if (state == AssetCache::State::WORKING) {
+			} else if (state == AssetCache::State::WORKING || state == AssetCache::State::INIT) {
 				not_ready.push_back(i);
 			}
 		} else {
@@ -272,7 +272,7 @@ Vector<REF> AssetManager::vector_block_get(const Vector<AssetKey>& p_keys) {
 				asset_cache[k].mutex.unlock();
 			} else if (state == AssetCache::State::QUEUED) {
 				new_not_ready.push_back(i);
-			} else if (state == AssetCache::State::WORKING) {
+			} else if (state == AssetCache::State::WORKING || state == AssetCache::State::INIT) {
 				new_not_ready.push_back(i);
 			}
 		}
