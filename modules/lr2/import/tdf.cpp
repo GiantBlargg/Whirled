@@ -10,7 +10,7 @@ bool TDFLoader::can_handle(const AssetKey& key, const CustomFS& fs) const {
 
 AssetKey TDFLoader::remap_key(const AssetKey& k, const CustomFS& fs) const { return {k.path, "TDF"}; }
 
-REF TDFLoader::load(const AssetKey& k, const CustomFS& fs, AssetManager& assets, Error* r_error) const {
+Ref<RefCounted> TDFLoader::load(const AssetKey& k, const CustomFS& fs, AssetManager& assets, Error* r_error) const {
 	Ref<TDF> tdf;
 	tdf.instantiate();
 
@@ -81,7 +81,7 @@ struct TempSurface {
 	Vector<uint8_t> mix;
 };
 
-REF TDFMeshLoader::load(const AssetKey& k, const CustomFS&, AssetManager& assets, Error*) const {
+Ref<RefCounted> TDFMeshLoader::load(const AssetKey& k, const CustomFS&, AssetManager& assets, Error*) const {
 	if (tdf_shader.is_null()) {
 		tdf_shader.instantiate();
 		tdf_shader->set_code(R"(

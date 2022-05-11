@@ -2,10 +2,10 @@
 
 #include "../io/asset_manager.hpp"
 
-class MDL2AssetLoader : public AssetLoader {
-	GDCLASS(MDL2AssetLoader, AssetLoader);
+class MDL2Loader : public AssetLoader {
+	GDCLASS(MDL2Loader, AssetLoader);
 
 	bool can_handle(const AssetKey&, const CustomFS&) const override;
 	AssetKey remap_key(const AssetKey&, const CustomFS&) const override;
-	REF load(const AssetKey&, const CustomFS&, AssetManager&, Error*) const override;
+	Ref<RefCounted> load(const AssetKey&, const CustomFS&, AssetManager&, Error*) const override;
 };

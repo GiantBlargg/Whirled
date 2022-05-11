@@ -6,7 +6,7 @@
 
 const float delay_time = 1.0f / 30.0f;
 
-bool IFLAssetLoader::can_handle(const AssetKey& key, const CustomFS& fs) const {
+bool IFLLoader::can_handle(const AssetKey& key, const CustomFS& fs) const {
 	if (!ClassDB::is_parent_class("AnimatedTexture", key.type))
 		return false;
 	if (key.path.get_extension().to_lower() != "ifl")
@@ -14,9 +14,9 @@ bool IFLAssetLoader::can_handle(const AssetKey& key, const CustomFS& fs) const {
 	return true;
 }
 
-AssetKey IFLAssetLoader::remap_key(const AssetKey& k, const CustomFS& fs) const { return {k.path, "AnimatedTexture"}; }
+AssetKey IFLLoader::remap_key(const AssetKey& k, const CustomFS& fs) const { return {k.path, "AnimatedTexture"}; }
 
-REF IFLAssetLoader::load(const AssetKey& k, const CustomFS& fs, AssetManager& assets, Error* r_error) const {
+Ref<RefCounted> IFLLoader::load(const AssetKey& k, const CustomFS& fs, AssetManager& assets, Error* r_error) const {
 	auto dir_path = k.path.get_base_dir();
 
 	String contents = fs.get_file_as_string(k.path);

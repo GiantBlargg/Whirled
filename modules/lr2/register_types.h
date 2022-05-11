@@ -1,4 +1,6 @@
 #pragma once
 
-void register_lr2_types();
-void unregister_lr2_types();
+#include "modules/register_module_types.h"
+
+void initialize_lr2_module(ModuleInitializationLevel p_level);
+void uninitialize_lr2_module(ModuleInitializationLevel p_level);

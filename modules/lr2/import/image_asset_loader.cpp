@@ -29,7 +29,7 @@ AssetKey ImageAssetLoader::remap_key(const AssetKey& k, const CustomFS& fs) cons
 	}
 	return {path, "Image"};
 }
-REF ImageAssetLoader::load(const AssetKey& k, const CustomFS& fs, AssetManager&, Error* r_error) const {
+Ref<RefCounted> ImageAssetLoader::load(const AssetKey& k, const CustomFS& fs, AssetManager&, Error* r_error) const {
 	Ref<Image> image;
 	image.instantiate();
 	Error err;
@@ -64,7 +64,7 @@ REF ImageAssetLoader::load(const AssetKey& k, const CustomFS& fs, AssetManager&,
 	return image;
 }
 
-bool ImageTextureAssetLoader::can_handle(const AssetKey& key, const CustomFS& fs) const {
+bool ImageTextureLoader::can_handle(const AssetKey& key, const CustomFS& fs) const {
 	if (!ClassDB::is_parent_class("ImageTexture", key.type))
 		return false;
 
@@ -80,10 +80,9 @@ bool ImageTextureAssetLoader::can_handle(const AssetKey& key, const CustomFS& fs
 	}
 	return handles_file_type;
 }
-AssetKey ImageTextureAssetLoader::remap_key(const AssetKey& k, const CustomFS& fs) const {
-	return {k.path, "ImageTexture"};
-}
-REF ImageTextureAssetLoader::load(const AssetKey& k, const CustomFS&, AssetManager& assets, Error* r_error) const {
+AssetKey ImageTextureLoader::remap_key(const AssetKey& k, const CustomFS& fs) const { return {k.path, "ImageTexture"}; }
+Ref<RefCounted>
+ImageTextureLoader::load(const AssetKey& k, const CustomFS&, AssetManager& assets, Error* r_error) const {
 	Ref<ImageTexture> texture = memnew(ImageTexture);
 	Ref<Image> image = assets.block_get<Image>(k.path);
 	texture->create_from_image(image);

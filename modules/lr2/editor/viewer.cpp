@@ -213,9 +213,9 @@ void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 
 Viewer::Viewer(const CustomFS& p_custom_fs) : custom_fs(p_custom_fs), assets(custom_fs) {
 	assets.add_loader<ImageAssetLoader>();
-	assets.add_loader<ImageTextureAssetLoader>();
-	assets.add_loader<IFLAssetLoader>();
-	assets.add_loader<MDL2AssetLoader>();
+	assets.add_loader<ImageTextureLoader>();
+	assets.add_loader<IFLLoader>();
+	assets.add_loader<MDL2Loader>();
 	assets.add_loader<TDFLoader>();
 	assets.add_loader<TDFMeshLoader>();
 	assets.add_loader<MeshShapeLoader>();

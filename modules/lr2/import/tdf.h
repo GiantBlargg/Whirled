@@ -45,7 +45,7 @@ class TDFLoader : public AssetLoader {
 
 	bool can_handle(const AssetKey&, const CustomFS&) const override;
 	AssetKey remap_key(const AssetKey&, const CustomFS&) const override;
-	REF load(const AssetKey&, const CustomFS&, AssetManager&, Error*) const override;
+	Ref<RefCounted> load(const AssetKey&, const CustomFS&, AssetManager&, Error*) const override;
 };
 
 class TDFMeshLoader : public AssetLoader {
@@ -53,5 +53,5 @@ class TDFMeshLoader : public AssetLoader {
 
 	bool can_handle(const AssetKey&, const CustomFS&) const override;
 	AssetKey remap_key(const AssetKey&, const CustomFS&) const override;
-	REF load(const AssetKey&, const CustomFS&, AssetManager&, Error*) const override;
+	Ref<RefCounted> load(const AssetKey&, const CustomFS&, AssetManager&, Error*) const override;
 };

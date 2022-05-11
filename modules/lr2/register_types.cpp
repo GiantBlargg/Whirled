@@ -8,7 +8,11 @@
 
 static ImageLoaderMIP* image_loader_mip = NULL;
 
-void register_lr2_types() {
+void initialize_lr2_module(ModuleInitializationLevel p_level) {
+	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
+		return;
+	}
+
 	image_loader_mip = memnew(ImageLoaderMIP);
 	ImageLoader::add_image_format_loader(image_loader_mip);
 
@@ -19,7 +23,11 @@ void register_lr2_types() {
 
 extern Ref<Shader> tdf_shader;
 
-void unregister_lr2_types() {
+void uninitialize_lr2_module(ModuleInitializationLevel p_level) {
+	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
+		return;
+	}
+
 	tdf_shader.unref();
 
 	ImageLoader::remove_image_format_loader(image_loader_mip);

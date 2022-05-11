@@ -62,7 +62,7 @@ void AssetManager::_do_work(const AssetKey& key, bool asset_cache_locked) {
 		return;
 	}
 
-	REF asset;
+	Ref<RefCounted> asset;
 	AssetKey remap_key = loader->remap_key(key, custom_fs);
 	if (key == remap_key) {
 		// No remap, let's load it!
@@ -118,7 +118,7 @@ void AssetManager::_canon_paths(Vector<AssetKey>& keys) {
 	}
 }
 
-Vector<REF> AssetManager::vector_try_get(const Vector<AssetKey>& p_keys) {
+Vector<Ref<RefCounted>> AssetManager::vector_try_get(const Vector<AssetKey>& p_keys) {
 	if (thread_pool.size() == 0) {
 		// There's no threads so waiting would be pointless
 		return vector_block_get(p_keys);
@@ -129,7 +129,7 @@ Vector<REF> AssetManager::vector_try_get(const Vector<AssetKey>& p_keys) {
 
 	Vector<AssetKey> new_keys;
 
-	Vector<REF> ret;
+	Vector<Ref<RefCounted>> ret;
 	ret.resize(keys.size());
 
 	asset_cache_mutex.lock_shared();
@@ -153,7 +153,7 @@ Vector<REF> AssetManager::vector_try_get(const Vector<AssetKey>& p_keys) {
 	return ret;
 }
 
-Vector<REF> AssetManager::vector_block_get(const Vector<AssetKey>& p_keys) {
+Vector<Ref<RefCounted>> AssetManager::vector_block_get(const Vector<AssetKey>& p_keys) {
 	Vector<AssetKey> keys(p_keys);
 	_canon_paths(keys);
 
@@ -161,7 +161,7 @@ Vector<REF> AssetManager::vector_block_get(const Vector<AssetKey>& p_keys) {
 	Vector<AssetKey> queued;   // Keys that this thread could work on while waiting
 	Vector<int> not_ready;     // Keys not loaded
 
-	Vector<REF> ret;
+	Vector<Ref<RefCounted>> ret;
 	ret.resize(keys.size());
 
 	asset_cache_mutex.lock_shared();

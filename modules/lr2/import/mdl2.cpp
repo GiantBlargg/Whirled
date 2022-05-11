@@ -118,15 +118,15 @@ void load_vertices(Ref<FileAccess> f, Array* group_arrays) {
 	f->seek(start_position + vertices_count * vertex_size);
 }
 
-bool MDL2AssetLoader::can_handle(const AssetKey& key, const CustomFS& fs) const {
+bool MDL2Loader::can_handle(const AssetKey& key, const CustomFS& fs) const {
 	if (!ClassDB::is_parent_class("ArrayMesh", key.type))
 		return false;
 	if (key.path.get_extension().to_lower() != "md2")
 		return false;
 	return true;
 }
-AssetKey MDL2AssetLoader::remap_key(const AssetKey& k, const CustomFS&) const { return {k.path, "ArrayMesh"}; }
-REF MDL2AssetLoader::load(const AssetKey& k, const CustomFS& fs, AssetManager& assets, Error* r_error) const {
+AssetKey MDL2Loader::remap_key(const AssetKey& k, const CustomFS&) const { return {k.path, "ArrayMesh"}; }
+Ref<RefCounted> MDL2Loader::load(const AssetKey& k, const CustomFS& fs, AssetManager& assets, Error* r_error) const {
 
 	Ref<FileAccess> f = fs.FileAccess_open(k.path, FileAccess::READ);
 
