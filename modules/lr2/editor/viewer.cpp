@@ -152,6 +152,9 @@ void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 			instances[r.value()].mesh_instance->queue_delete();
 			instances.erase(r.value());
 		}
+		if (pending.has(r.value())) {
+			pending.erase(r.value());
+		}
 	}
 
 	for (auto a = change.added.front(); a; a = a.next()) {
