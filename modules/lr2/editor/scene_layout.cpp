@@ -17,9 +17,15 @@ void SceneLayout::_notification(int p_what) {
 
 void SceneLayout::_wrl_changed(const WRL::Change& change, bool reset) {
 	TreeItem* root = get_root();
+
+	Vector<TreeItem*> removed_children;
 	for (const auto& r : change.removed) {
-		root->remove_child(root->get_child(r.key));
+		removed_children.push_back(root->get_child(r.key));
 	}
+	for (auto& c : removed_children) {
+		root->remove_child(c);
+	}
+
 	for (const auto& a : change.added) {
 		TreeItem* item = create_item(nullptr, a.key);
 		item->set_text(0, wrl->get_entry_property(a.value, "name"));
