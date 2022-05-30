@@ -6,12 +6,27 @@
 #include "core/templates/pair.h"
 #include "core/templates/vector.h"
 
-struct Entry;
-
 class WRL : public RefCounted {
 	GDCLASS(WRL, RefCounted);
 
   public:
+	struct Format {
+		String type;
+		uint32_t u;
+
+		struct Property {
+			Variant::Type type;
+			String name;
+			uint32_t length;
+			enum Flags { EntryID, File };
+			Flags flags;
+			String hint;
+		};
+		Vector<Property> properties;
+
+		size_t find_property(const String& name) const;
+	};
+
 	struct EntryID {
 		int id = -1;
 		inline friend bool operator==(const EntryID& lhs, const EntryID& rhs) { return lhs.id == rhs.id; }
@@ -20,7 +35,18 @@ class WRL : public RefCounted {
 	};
 
   private:
-	Vector<Entry*> entries;
+	static Vector<Format::Property> common_properties;
+	static const OrderedHashMap<String, Format>& get_formats();
+
+	struct Entry {
+		Format format;
+		Vector<Variant> properties;
+
+		const Variant& get(const String& name) const;
+		template <class T> T get(const String& name) const { return get(name); };
+		void set(const String& name, const Variant& value);
+	};
+	Vector<Entry> entries;
 	Vector<EntryID> scene;
 	bool regen_scene_map = true;
 	OrderedHashMap<int, EntryID> scene_map;
@@ -41,8 +67,11 @@ class WRL : public RefCounted {
 	int get_index(String name) const;
 	int get_index(EntryID id) const { return scene.find(id); }
 
-	List<PropertyInfo> get_entry_property_list(EntryID id) const;
+	const Format& get_entry_format(EntryID id) const;
 	Variant get_entry_property(EntryID id, String prop_name) const;
+	template <class T> T get_entry_property(EntryID id, String prop_name) const {
+		return get_entry_property(id, prop_name);
+	}
 
 	struct Change {
 		struct Hasher {

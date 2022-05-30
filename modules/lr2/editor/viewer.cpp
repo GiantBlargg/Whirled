@@ -158,7 +158,7 @@ void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 	}
 
 	for (auto a = change.added.front(); a; a = a.next()) {
-		String type = wrl->get_entry_property(a.value(), "type");
+		String type = wrl->get_entry_format(a.value()).type;
 		if (type == "cGeneralStatic" || type == "cGoldenBrick" || type == "cGeneralMobile" || type == "cBonusPickup" ||
 			type == "cLegoTerrain" || type == "cSkyBox") {
 			auto mesh_instance = memnew(MeshInstance3D);
@@ -183,7 +183,7 @@ void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 		if (!instances.has(entry))
 			continue;
 
-		String type = wrl->get_entry_property(entry, "type");
+		String type = wrl->get_entry_format(entry).type;
 		String prop_name = prop.key().second;
 		if (prop_name == "model") {
 			const String& model = prop.value();

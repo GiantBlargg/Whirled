@@ -229,7 +229,15 @@ void Inspector::_wrl_changed(const WRL::Change& change, bool) {
 			vbox = memnew(VBoxContainer);
 			add_child(vbox);
 			vbox->set_h_size_flags(SIZE_EXPAND_FILL);
-			for (const auto& prop : wrl->get_entry_property_list(selected)) {
+			const WRL::Format& format = wrl->get_entry_format(selected);
+			{
+				Label* type_label = memnew(Label);
+				type_label->set_text(format.type);
+				type_label->add_theme_font_size_override(
+					"font_size", type_label->get_theme_font_size("font_size") * 1.2);
+				vbox->add_child(type_label);
+			}
+			for (const auto& prop : format.properties) {
 				Label* label = memnew(Label);
 				label->set_text(prop.name);
 				vbox->add_child(label);
@@ -258,9 +266,6 @@ void Inspector::_wrl_changed(const WRL::Change& change, bool) {
 				default:
 					continue;
 				}
-
-				if (prop.name == "type")
-					widget->set_enabled(false);
 
 				widget->field_key = {selected, prop.name};
 				vbox->add_child(dynamic_cast<Control*>(widget));

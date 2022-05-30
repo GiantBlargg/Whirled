@@ -3,40 +3,42 @@
 #include "../io/file_helper.h"
 #include "core/templates/ordered_hash_map.h"
 
-#include "wrl_structs.hpp"
+size_t WRL::Format::find_property(const String& name) const {
+	for (int i = 0; i < properties.size(); i++) {
+		if (name == properties[i].name)
+			return i;
+	}
+	throw std::out_of_range("");
+}
+
+const Variant& WRL::Entry::get(const String& name) const {
+	auto i = format.find_property(name);
+	return properties[i];
+}
+
+void WRL::Entry::set(const String& name, const Variant& value) {
+	auto i = format.find_property(name);
+	const WRL::Format::Property& prop = format.properties[i];
+	if (value.get_type() != prop.type)
+		throw std::invalid_argument("");
+	properties.set(i, value);
+}
 
 int WRL::get_index(String name) const {
 	for (int i = 0; i < scene.size(); i++) {
-		if (entries[scene[i].id]->name == name) {
+		if (entries[scene[i].id].get<String>("name") == name) {
 			return i;
 		}
 	}
 	return -1;
 }
 
-List<PropertyInfo> WRL::get_entry_property_list(EntryID id) const {
-	List<PropertyInfo> property_info;
-	entries[id.id]->get_property_list(&property_info);
-	List<PropertyInfo> ret;
-	for (auto prop : property_info) {
-		if (prop.hint_string == "Script")
-			continue;
-		if (prop.type == Variant::Type::NIL)
-			continue;
-
-		ret.push_back(prop);
-	}
-	return ret;
-}
-Variant WRL::get_entry_property(EntryID id, String prop_name) const {
-	if (entries.size() > id.id)
-		return entries[id.id]->get(prop_name);
-	return Variant();
-}
+const WRL::Format& WRL::get_entry_format(EntryID id) const { return entries[id.id].format; }
+Variant WRL::get_entry_property(EntryID id, String prop_name) const { return entries[id.id].get(prop_name); }
 
 void WRL::submit_change(const Change& change, String action_name) {
 	for (auto prop = change.propertyChanges.front(); prop; prop = prop.next()) {
-		entries[prop.key().first.id]->set(prop.key().second, prop.value());
+		entries.write[prop.key().first.id].set(prop.key().second, prop.value());
 	}
 	emit_change(change);
 }
@@ -50,9 +52,6 @@ void WRL::clear() {
 	emit_change(Change{.removed = get_scene_map(), .select_changed = true, .select = {-1, EntryID()}}, true);
 	scene.clear();
 	regen_scene_map = true;
-	for (auto& e : entries) {
-		memdelete(e);
-	}
 	entries.clear();
 }
 
@@ -61,19 +60,7 @@ const uint32_t WRL_VERSION = 0xb;
 const uint32_t OBMG_MAGIC = 0x474d424f;
 
 Error WRL::load(Ref<FileAccess> file) {
-	static OrderedHashMap<String, StringName> load_types;
-	if (load_types.is_empty()) {
-		ClassDB::register_class<GeneralStatic>();
-		load_types.insert("cGeneralStatic", "GeneralStatic");
-		load_types.insert("cGoldenBrick", "GeneralStatic");
-		ClassDB::register_class<GeneralMobile>();
-		load_types.insert("cGeneralMobile", "GeneralMobile");
-		load_types.insert("cBonusPickup", "GeneralMobile");
-		ClassDB::register_class<LegoTerrain>();
-		load_types.insert("cLegoTerrain", "LegoTerrain");
-		ClassDB::register_class<SkyBox>();
-		load_types.insert("cSkyBox", "SkyBox");
-	}
+	const OrderedHashMap<String, Format>& load_types = get_formats();
 
 	clear();
 
@@ -91,85 +78,53 @@ Error WRL::load(Ref<FileAccess> file) {
 		uint32_t length = file->get_32();
 		next_chunk = file->get_position() + length;
 
-		StringName class_type;
-		if (load_types.has(type)) {
-			class_type = load_types[type];
+		Format format;
+		if (load_types.has(type) && load_types[type].type == type && load_types[type].u == u) {
+			format = load_types[type];
+		} else {
+			format = Format{type, u};
+			format.properties.append_array(common_properties);
+			format.properties.push_back({Variant::PACKED_BYTE_ARRAY, "data", length - 28});
 		}
 
-		Entry* entry;
+		Entry entry{.format = format};
+		entry.properties.resize(format.properties.size());
 
-		if (class_type != "") {
-			entry = static_cast<Entry*>(ClassDB::instantiate(class_type));
-
-			entry->type = type;
-			entry->u = u;
-
-			List<PropertyInfo> property_info;
-			entry->get_property_list(&property_info);
-			for (auto prop : property_info) {
-				if (prop.hint_string == "Script")
-					continue;
-				if (prop.type == Variant::NIL)
-					continue;
-
-				if (prop.name == "type")
-					continue;
-				if (prop.name == "u")
-					continue;
-
-				if (prop.type == Variant::INT) {
-					entry->set(prop.name, file->get_32());
-				}
-
-				else if (prop.type == Variant::FLOAT) {
-					entry->set(prop.name, file->get_float());
-				}
-
-				else if (prop.type == Variant::STRING) {
-					if (prop.name == "name" || prop.hint == PROPERTY_HINT_NODE_PATH_VALID_TYPES) {
-						entry->set(prop.name, get_string(file, 24));
-					} else if (prop.hint == PROPERTY_HINT_FILE || prop.hint == PROPERTY_HINT_DIR) {
-						entry->set(prop.name, get_string(file, 0x80));
-					} else {
-						return Error::ERR_FILE_UNRECOGNIZED;
-					}
-				}
-
-				else if (prop.type == Variant::VECTOR2) {
-					entry->set(prop.name, get_vector2(file));
-				}
-
-				else if (prop.type == Variant::VECTOR3) {
-					entry->set(prop.name, get_vector3(file));
-				}
-
-				else if (prop.type == Variant::QUATERNION) {
-					entry->set(prop.name, get_quaternion(file));
-				}
-
-				else if (prop.type == Variant::PACKED_BYTE_ARRAY) {
-					Vector<uint8_t> data;
-					data.resize(prop.hint_string.to_int());
-					file->get_buffer(data.ptrw(), data.size());
-					entry->set(prop.name, data);
-				}
-
-				else {
-					return Error::ERR_FILE_UNRECOGNIZED;
-				}
+		for (auto prop : format.properties) {
+			if (prop.type == Variant::INT) {
+				entry.set(prop.name, file->get_32());
 			}
-		} else {
-			Unknown* e = memnew(Unknown);
 
-			e->type = type;
-			e->u = u;
-			e->layer = file->get_32();
-			e->name = get_string(file, 24);
-			e->binding = get_string(file, 24);
+			else if (prop.type == Variant::FLOAT) {
+				entry.set(prop.name, file->get_float());
+			}
 
-			e->data.resize(next_chunk - file->get_position());
-			file->get_buffer(e->data.ptrw(), e->data.size());
-			entry = e;
+			else if (prop.type == Variant::STRING) {
+				entry.set(prop.name, get_string(file, prop.length));
+			}
+
+			else if (prop.type == Variant::VECTOR2) {
+				entry.set(prop.name, get_vector2(file));
+			}
+
+			else if (prop.type == Variant::VECTOR3) {
+				entry.set(prop.name, get_vector3(file));
+			}
+
+			else if (prop.type == Variant::QUATERNION) {
+				entry.set(prop.name, get_quaternion(file));
+			}
+
+			else if (prop.type == Variant::PACKED_BYTE_ARRAY) {
+				Vector<uint8_t> data;
+				data.resize(prop.length);
+				file->get_buffer(data.ptrw(), data.size());
+				entry.set(prop.name, data);
+			}
+
+			else {
+				return Error::ERR_FILE_UNRECOGNIZED;
+			}
 		}
 
 		scene.append(EntryID{entries.size()});
@@ -189,60 +144,42 @@ Error WRL::save(Ref<FileAccess> file) {
 	file->store_32(WRL_VERSION);
 
 	for (auto i : scene) {
-		Entry* entry = entries[i.id];
+		const Entry& entry = entries[i.id];
 		file->store_32(OBMG_MAGIC);
-		store_string(file, entry->type, 24);
-		file->store_32(entry->u);
+		store_string(file, entry.format.type, 24);
+		file->store_32(entry.format.u);
 
 		file->store_32(0); // Placeholder for length
 		uint64_t length_start = file->get_position();
 
-		List<PropertyInfo> property_info;
-		entry->get_property_list(&property_info);
-		for (auto prop : property_info) {
-			if (prop.hint_string == "Script")
-				continue;
-			if (prop.type == Variant::NIL)
-				continue;
-
-			if (prop.name == "type")
-				continue;
-			if (prop.name == "u")
-				continue;
-
+		for (auto prop : entry.format.properties) {
 			if (prop.type == Variant::INT) {
-				file->store_32(entry->get(prop.name));
+				file->store_32(entry.get(prop.name));
 			}
 
 			else if (prop.type == Variant::FLOAT) {
-				file->store_float(entry->get(prop.name));
+				file->store_float(entry.get(prop.name));
 			}
 
 			else if (prop.type == Variant::STRING) {
-				if (prop.name == "name" || prop.hint == PROPERTY_HINT_NODE_PATH_VALID_TYPES) {
-					store_string(file, entry->get(prop.name), 24);
-				} else if (prop.hint == PROPERTY_HINT_FILE || prop.hint == PROPERTY_HINT_DIR) {
-					store_string(file, entry->get(prop.name), 0x80);
-				} else {
-					return Error::ERR_FILE_UNRECOGNIZED;
-				}
+				store_string(file, entry.get(prop.name), prop.length);
 			}
 
 			else if (prop.type == Variant::VECTOR2) {
-				store_vector2(file, entry->get(prop.name));
+				store_vector2(file, entry.get(prop.name));
 			}
 
 			else if (prop.type == Variant::VECTOR3) {
-				store_vector3(file, entry->get(prop.name));
+				store_vector3(file, entry.get(prop.name));
 			}
 
 			else if (prop.type == Variant::QUATERNION) {
-				store_quaternion(file, entry->get(prop.name));
+				store_quaternion(file, entry.get(prop.name));
 			}
 
 			else if (prop.type == Variant::PACKED_BYTE_ARRAY) {
-				Vector<uint8_t> data = entry->get(prop.name);
-				file->store_buffer(data.ptr(), data.size());
+				Vector<uint8_t> data = entry.get(prop.name);
+				file->store_buffer(data.ptr(), prop.length);
 			}
 
 			else {
@@ -262,7 +199,7 @@ Error WRL::save(Ref<FileAccess> file) {
 void WRL::fixup_change(Change& change) {
 	for (auto add = change.added.front(); add; add = add.next()) {
 		EntryID entry = add.value();
-		auto prop_list = get_entry_property_list(entry);
+		auto prop_list = get_entry_format(entry).properties;
 		for (auto prop : prop_list) {
 			Pair<EntryID, String> change_key(entry, prop.name);
 			if (!change.propertyChanges.has(change_key)) {
