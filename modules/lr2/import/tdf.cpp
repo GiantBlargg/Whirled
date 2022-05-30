@@ -89,10 +89,10 @@ Ref<RefCounted> TDFMeshLoader::load(const AssetKey& k, const CustomFS&, AssetMan
 		render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_lambert, specular_disabled, vertex_lighting;
 		varying vec4 mix;
 		void vertex() {mix = CUSTOM0;}
-		uniform sampler2D tex0 : source_color;
-		uniform sampler2D tex1 : source_color;
-		uniform sampler2D tex2 : source_color;
-		uniform sampler2D tex3 : source_color;
+		uniform sampler2D tex0 : hint_black_albedo;
+		uniform sampler2D tex1 : hint_black_albedo;
+		uniform sampler2D tex2 : hint_black_albedo;
+		uniform sampler2D tex3 : hint_black_albedo;
 		instance uniform vec2 texture_scale;
 		void fragment() {
 			vec2 scaled_uv = UV * texture_scale;
