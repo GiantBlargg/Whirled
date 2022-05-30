@@ -1,7 +1,6 @@
 #include "wrl.hpp"
 
 #include "../io/file_helper.h"
-#include "core/templates/ordered_hash_map.h"
 
 size_t WRL::Format::find_property(const String& name) const {
 	for (int i = 0; i < properties.size(); i++) {
@@ -37,8 +36,8 @@ const WRL::Format& WRL::get_entry_format(EntryID id) const { return entries[id.i
 Variant WRL::get_entry_property(EntryID id, String prop_name) const { return entries[id.id].get(prop_name); }
 
 void WRL::submit_change(const Change& change, String action_name) {
-	for (auto prop = change.propertyChanges.front(); prop; prop = prop.next()) {
-		entries.write[prop.key().first.id].set(prop.key().second, prop.value());
+	for (const auto& prop : change.propertyChanges) {
+		entries.write[prop.key.first.id].set(prop.key.second, prop.value);
 	}
 	emit_change(change);
 }
@@ -60,7 +59,7 @@ const uint32_t WRL_VERSION = 0xb;
 const uint32_t OBMG_MAGIC = 0x474d424f;
 
 Error WRL::load(Ref<FileAccess> file) {
-	const OrderedHashMap<String, Format>& load_types = get_formats();
+	const HashMap<String, Format>& load_types = get_formats();
 
 	clear();
 
@@ -197,8 +196,8 @@ Error WRL::save(Ref<FileAccess> file) {
 }
 
 void WRL::fixup_change(Change& change) {
-	for (auto add = change.added.front(); add; add = add.next()) {
-		EntryID entry = add.value();
+	for (const auto& add : change.added) {
+		EntryID entry = add.value;
 		auto prop_list = get_entry_format(entry).properties;
 		for (auto prop : prop_list) {
 			Pair<EntryID, String> change_key(entry, prop.name);

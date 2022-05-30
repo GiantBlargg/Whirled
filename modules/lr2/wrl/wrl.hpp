@@ -2,7 +2,7 @@
 
 #include "core/io/file_access.h"
 #include "core/object/ref_counted.h"
-#include "core/templates/ordered_hash_map.h"
+#include "core/templates/hash_map.h"
 #include "core/templates/pair.h"
 #include "core/templates/vector.h"
 
@@ -36,7 +36,7 @@ class WRL : public RefCounted {
 
   private:
 	static Vector<Format::Property> common_properties;
-	static const OrderedHashMap<String, Format>& get_formats();
+	static const HashMap<String, Format>& get_formats();
 
 	struct Entry {
 		Format format;
@@ -49,11 +49,11 @@ class WRL : public RefCounted {
 	Vector<Entry> entries;
 	Vector<EntryID> scene;
 	bool regen_scene_map = true;
-	OrderedHashMap<int, EntryID> scene_map;
+	HashMap<int, EntryID> scene_map;
 
   public:
 	Vector<EntryID> get_scene() { return scene.duplicate(); }
-	OrderedHashMap<int, EntryID> get_scene_map() {
+	HashMap<int, EntryID> get_scene_map() {
 		if (regen_scene_map) {
 			scene_map.clear();
 			for (int i = 0; i < scene.size(); i++) {
@@ -79,10 +79,10 @@ class WRL : public RefCounted {
 				return ((key.first.id) + (key.second)).hash();
 			}
 		};
-		typedef OrderedHashMap<Pair<EntryID, String>, Variant, Hasher> PropertyMap;
+		typedef HashMap<Pair<EntryID, String>, Variant, Hasher> PropertyMap;
 		PropertyMap propertyChanges;
-		OrderedHashMap<int, EntryID> added;
-		OrderedHashMap<int, EntryID> removed;
+		HashMap<int, EntryID> added;
+		HashMap<int, EntryID> removed;
 		bool select_changed;
 		Pair<int, EntryID> select;
 	};

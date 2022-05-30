@@ -2,8 +2,8 @@
 
 Vector<WRL::Format::Property> WRL::common_properties;
 
-const OrderedHashMap<String, WRL::Format>& WRL::get_formats() {
-	static OrderedHashMap<String, WRL::Format> formats;
+const HashMap<String, WRL::Format>& WRL::get_formats() {
+	static HashMap<String, WRL::Format> formats;
 	if (formats.is_empty()) {
 		common_properties.push_back({Variant::INT, "layer"});
 		common_properties.push_back({Variant::STRING, "name", 24});

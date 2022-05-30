@@ -41,9 +41,9 @@ class Viewer : public BoxContainer, public WRL::EventHandler {
 	struct Hasher {
 		static _FORCE_INLINE_ uint32_t hash(const WRL::EntryID& key) { return HashMapHasherDefault::hash(key.id); }
 	};
-	OrderedHashMap<WRL::EntryID, Instance, Hasher> instances;
+	HashMap<WRL::EntryID, Instance, Hasher> instances;
 
-	Set<WRL::EntryID> pending;
+	HashSet<WRL::EntryID, Hasher> pending;
 
   protected:
 	void input(const Ref<InputEvent>& p_event) override;

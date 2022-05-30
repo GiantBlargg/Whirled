@@ -57,9 +57,9 @@ void Viewer::gui_input(const Ref<InputEvent>& p_event) {
 				if (found) {
 					WRL::EntryID found_entry;
 
-					for (auto i = instances.front(); i; i = i.next()) {
-						if (i.value().collider == rr.collider) {
-							found_entry = i.key();
+					for (const auto& i : instances) {
+						if (i.value.collider == rr.collider) {
+							found_entry = i.key;
 							break;
 						}
 					}
@@ -119,8 +119,7 @@ void Viewer::_notification(int p_what) {
 			camera->translate(movement);
 		}
 
-		for (auto p = pending.front(); p; p = p->next()) {
-			WRL::EntryID entry = p->get();
+		for (WRL::EntryID entry : pending) {
 			Instance& i = instances[entry];
 			Ref<Mesh> mesh = assets.try_get<Mesh>(i.model_path);
 			if (mesh.is_valid()) {
@@ -140,25 +139,25 @@ void Viewer::_notification(int p_what) {
 				cshape->set_shape(shape);
 			}
 			if (mesh.is_valid() && shape.is_valid()) {
-				pending.erase(p);
+				pending.erase(entry);
 			}
 		}
 	}
 }
 
 void Viewer::_wrl_changed(const WRL::Change& change, bool) {
-	for (auto r = change.removed.front(); r; r = r.next()) {
-		if (instances.has(r.value())) {
-			instances[r.value()].mesh_instance->queue_delete();
-			instances.erase(r.value());
+	for (const auto& r : change.removed) {
+		if (instances.has(r.value)) {
+			instances[r.value].mesh_instance->queue_delete();
+			instances.erase(r.value);
 		}
-		if (pending.has(r.value())) {
-			pending.erase(r.value());
+		if (pending.has(r.value)) {
+			pending.erase(r.value);
 		}
 	}
 
-	for (auto a = change.added.front(); a; a = a.next()) {
-		String type = wrl->get_entry_format(a.value()).type;
+	for (const auto& a : change.added) {
+		String type = wrl->get_entry_format(a.value).type;
 		if (type == "cGeneralStatic" || type == "cGoldenBrick" || type == "cGeneralMobile" || type == "cBonusPickup" ||
 			type == "cLegoTerrain" || type == "cSkyBox") {
 			auto mesh_instance = memnew(MeshInstance3D);
@@ -174,19 +173,19 @@ void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 			mesh_instance->set_layer_mask(layer);
 
 			root->add_child(mesh_instance);
-			instances.insert(a.value(), {.mesh_instance = mesh_instance, .model_type = model_type});
+			instances.insert(a.value, {.mesh_instance = mesh_instance, .model_type = model_type});
 		}
 	}
 
-	for (auto prop = change.propertyChanges.front(); prop; prop = prop.next()) {
-		WRL::EntryID entry = prop.key().first;
+	for (const auto& prop : change.propertyChanges) {
+		WRL::EntryID entry = prop.key.first;
 		if (!instances.has(entry))
 			continue;
 
 		String type = wrl->get_entry_format(entry).type;
-		String prop_name = prop.key().second;
+		String prop_name = prop.key.second;
 		if (prop_name == "model") {
-			const String& model = prop.value();
+			const String& model = prop.value;
 			if (instances[entry].model_path != model) {
 				if (instances[entry].collider)
 					instances[entry].collider->queue_delete();
@@ -196,16 +195,16 @@ void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 		}
 
 		else if (type == "cLegoTerrain" && prop_name == "texture_scale") {
-			instances[entry].mesh_instance->set_shader_instance_uniform("texture_scale", prop.value());
+			instances[entry].mesh_instance->set_shader_instance_uniform("texture_scale", prop.value);
 		}
 
 		else if (prop_name == "position" || prop_name == "rotation" || prop_name == "scale") {
 			if (prop_name == "position") {
-				instances[entry].position = prop.value();
+				instances[entry].position = prop.value;
 			} else if (prop_name == "rotation") {
-				instances[entry].rotation = prop.value();
+				instances[entry].rotation = prop.value;
 			} else if (prop_name == "scale") {
-				instances[entry].scale = prop.value();
+				instances[entry].scale = prop.value;
 			}
 
 			instances[entry].mesh_instance->set_transform(Transform3D(
@@ -254,7 +253,7 @@ Viewer::Viewer(const CustomFS& p_custom_fs) : custom_fs(p_custom_fs), assets(cus
 	skybox_viewer_shader->set_code(R"(
 shader_type spatial;
 render_mode unshaded;
-uniform sampler2D skybox : hint_albedo;
+uniform sampler2D skybox : source_color;
 void vertex() { POSITION = vec4(VERTEX.x * 2.0, VERTEX.y * -2.0, 1.0, 1.0); }
 void fragment() { ALBEDO = texture(skybox, UV).rgb; }
 )");

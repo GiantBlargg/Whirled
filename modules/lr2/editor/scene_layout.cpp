@@ -17,12 +17,12 @@ void SceneLayout::_notification(int p_what) {
 
 void SceneLayout::_wrl_changed(const WRL::Change& change, bool reset) {
 	TreeItem* root = get_root();
-	for (auto r = change.removed.back(); r; r = r.prev()) {
-		root->remove_child(root->get_child(r.key()));
+	for (const auto& r : change.removed) {
+		root->remove_child(root->get_child(r.key));
 	}
-	for (auto a = change.added.front(); a; a = a.next()) {
-		TreeItem* item = create_item(nullptr, a.key());
-		item->set_text(0, wrl->get_entry_property(a.value(), "name"));
+	for (const auto& a : change.added) {
+		TreeItem* item = create_item(nullptr, a.key);
+		item->set_text(0, wrl->get_entry_property(a.value, "name"));
 	}
 
 	if (change.select_changed) {
