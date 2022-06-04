@@ -32,8 +32,6 @@ class Viewer : public BoxContainer, public WRL::EventHandler {
 		Vector3 scale = {1, 1, 1};
 
 		MeshInstance3D* mesh_instance;
-		enum class ModelType { MDL2, TDF };
-		ModelType model_type = ModelType::MDL2;
 		String model_path;
 
 		CollisionObject3D* collider = nullptr;

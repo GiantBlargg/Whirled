@@ -24,6 +24,21 @@ class WRL : public RefCounted {
 		};
 		Vector<Property> properties;
 
+		struct Model {
+			String model;
+			String position;
+			String rotation;
+			String scale;
+			enum class Type { Prop, Terrain, Skybox };
+			Type type = Type::Prop;
+			Vector<String> uniforms;
+
+			explicit operator bool() const {
+				return !model.is_empty() || !position.is_empty() || !rotation.is_empty() || !scale.is_empty();
+			}
+		};
+		Model model;
+
 		size_t find_property(const String& name) const;
 	};
 

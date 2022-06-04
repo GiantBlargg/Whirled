@@ -124,10 +124,6 @@ void Viewer::_notification(int p_what) {
 			Ref<Mesh> mesh = assets.try_get<Mesh>(i.model_path);
 			if (mesh.is_valid()) {
 				i.mesh_instance->set_mesh(mesh);
-				if (i.model_type == Instance::ModelType::TDF) {
-					instances[entry].mesh_instance->set_shader_instance_uniform(
-						"texture_scale", wrl->get_entry_property(WRL::EntryID{entry}, "texture_scale"));
-				}
 			}
 			Ref<Shape3D> shape = assets.try_get<Shape3D>(i.model_path);
 			if (shape.is_valid()) {
@@ -157,23 +153,17 @@ void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 	}
 
 	for (const auto& a : change.added) {
-		String type = wrl->get_entry_format(a.value).type;
-		if (type == "cGeneralStatic" || type == "cGoldenBrick" || type == "cGeneralMobile" || type == "cBonusPickup" ||
-			type == "cLegoTerrain" || type == "cSkyBox") {
+		auto& model = wrl->get_entry_format(a.value).model;
+		if (model) {
 			auto mesh_instance = memnew(MeshInstance3D);
-
-			Instance::ModelType model_type = Instance::ModelType::MDL2;
-			uint32_t layer = RenderLayerProps;
-			if (type == "cLegoTerrain") {
-				layer = RenderLayerTerrain;
-				model_type = Instance::ModelType::TDF;
-			} else if (type == "cSkyBox") {
-				layer = RenderLayerSkyBox;
-			}
-			mesh_instance->set_layer_mask(layer);
-
+			static std::unordered_map<WRL::Format::Model::Type, RenderLayer> layer_lookup = {
+				{WRL::Format::Model::Type::Prop, RenderLayerProps},
+				{WRL::Format::Model::Type::Terrain, RenderLayerTerrain},
+				{WRL::Format::Model::Type::Skybox, RenderLayerSkyBox},
+			};
+			mesh_instance->set_layer_mask(layer_lookup.at(model.type));
 			root->add_child(mesh_instance);
-			instances.insert(a.value, {.mesh_instance = mesh_instance, .model_type = model_type});
+			instances.insert(a.value, {.mesh_instance = mesh_instance});
 		}
 	}
 
@@ -182,9 +172,9 @@ void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 		if (!instances.has(entry))
 			continue;
 
-		String type = wrl->get_entry_format(entry).type;
+		auto& model = wrl->get_entry_format(entry).model;
 		String prop_name = prop.key.second;
-		if (prop_name == "model") {
+		if (prop_name == model.model) {
 			const String& model = prop.value;
 			if (instances[entry].model_path != model) {
 				if (instances[entry].collider)
@@ -194,21 +184,21 @@ void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 			}
 		}
 
-		else if (type == "cLegoTerrain" && prop_name == "texture_scale") {
-			instances[entry].mesh_instance->set_shader_instance_uniform("texture_scale", prop.value);
-		}
-
-		else if (prop_name == "position" || prop_name == "rotation" || prop_name == "scale") {
-			if (prop_name == "position") {
+		else if (prop_name == model.position || prop_name == model.rotation || prop_name == model.scale) {
+			if (prop_name == model.position) {
 				instances[entry].position = prop.value;
-			} else if (prop_name == "rotation") {
+			} else if (prop_name == model.rotation) {
 				instances[entry].rotation = prop.value;
-			} else if (prop_name == "scale") {
+			} else if (prop_name == model.scale) {
 				instances[entry].scale = prop.value;
 			}
 
 			instances[entry].mesh_instance->set_transform(Transform3D(
 				Basis(instances[entry].rotation).scaled(instances[entry].scale), instances[entry].position));
+		}
+
+		else if (model.uniforms.has(prop_name)) {
+			instances[entry].mesh_instance->set_shader_instance_uniform(prop_name, prop.value);
 		}
 	}
 }
