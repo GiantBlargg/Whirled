@@ -253,7 +253,7 @@ Viewer::Viewer(const CustomFS& p_custom_fs) : custom_fs(p_custom_fs), assets(cus
 	skybox_viewer_shader->set_code(R"(
 shader_type spatial;
 render_mode unshaded;
-uniform sampler2D skybox : hint_albedo;
+uniform sampler2D skybox : source_color;
 void vertex() { POSITION = vec4(VERTEX.x * 2.0, VERTEX.y * -2.0, 1.0, 1.0); }
 void fragment() { ALBEDO = texture(skybox, UV).rgb; }
 )");
