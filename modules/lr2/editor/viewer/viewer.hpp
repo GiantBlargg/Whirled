@@ -1,12 +1,13 @@
 #pragma once
 
-#include "../io/asset_manager.hpp"
-#include "../io/custom_fs.hpp"
-#include "../wrl/wrl.hpp"
 #include "scene/3d/mesh_instance_3d.h"
 #include "scene/3d/physics_body_3d.h"
 #include "scene/gui/box_container.h"
 #include "scene/main/viewport.h"
+
+#include "lr2/assets/asset_manager.hpp"
+#include "lr2/io/custom_fs.hpp"
+#include "lr2/wrl/wrl.hpp"
 
 class Viewer : public BoxContainer, public WRL::EventHandler {
 	GDCLASS(Viewer, BoxContainer);

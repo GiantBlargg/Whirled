@@ -1,15 +1,16 @@
-#include "viewer.h"
+#include "viewer.hpp"
 
-#include "../import/ifl.hpp"
-#include "../import/image_asset_loader.hpp"
-#include "../import/mdl2.hpp"
-#include "../import/mesh_shape.hpp"
-#include "modules/lr2/import/tdf.h"
 #include "scene/3d/camera_3d.h"
 #include "scene/3d/collision_shape_3d.h"
 #include "scene/3d/light_3d.h"
 #include "scene/gui/subviewport_container.h"
 #include "scene/resources/primitive_meshes.h"
+
+#include "lr2/assets/ifl.hpp"
+#include "lr2/assets/image_asset_loader.hpp"
+#include "lr2/assets/mdl2.hpp"
+#include "lr2/assets/mesh_shape.hpp"
+#include "lr2/assets/tdf.hpp"
 
 void Viewer::input(const Ref<InputEvent>& p_event) {
 	Ref<InputEventKey> k = p_event;

@@ -1,8 +1,9 @@
-#include "whirled.h"
+#include "whirled.hpp"
 
-#include "inspector.h"
 #include "scene/gui/panel_container.h"
 #include "scene/gui/split_container.h"
+
+#include "inspector.hpp"
 
 void Whirled::_menu_new() {
 	file_path = "";

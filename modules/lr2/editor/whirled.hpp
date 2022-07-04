@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../io/custom_file_dialog.hpp"
-#include "../io/custom_fs.hpp"
-#include "../wrl/wrl.hpp"
-#include "scene_layout.h"
-#include "viewer.h"
+#include "lr2/io/custom_file_dialog.hpp"
+#include "lr2/io/custom_fs.hpp"
+#include "lr2/wrl/wrl.hpp"
+#include "scene_layout.hpp"
+#include "viewer/viewer.hpp"
 
 class Whirled : public Node {
 	GDCLASS(Whirled, Node);

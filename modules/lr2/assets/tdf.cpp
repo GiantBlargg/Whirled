@@ -1,4 +1,4 @@
-#include "tdf.h"
+#include "tdf.hpp"
 
 bool TDFLoader::can_handle(const AssetKey& key, const CustomFS& fs) const {
 	if (!ClassDB::is_parent_class("TDF", key.type))

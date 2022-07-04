@@ -1,12 +1,14 @@
 #pragma once
 
-#include "core/object/ref_counted.h"
-#include "core/templates/pair.h"
-#include "custom_fs.hpp"
 #include <semaphore>
 #include <thread>
 #include <unordered_map>
 #include <vector>
+
+#include "core/object/ref_counted.h"
+#include "core/templates/pair.h"
+
+#include "lr2/io/custom_fs.hpp"
 
 struct AssetKey {
 	String path;

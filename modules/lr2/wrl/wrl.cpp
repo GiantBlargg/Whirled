@@ -1,6 +1,6 @@
 #include "wrl.hpp"
 
-#include "../io/file_helper.h"
+#include "lr2/io/file_helper.hpp"
 
 size_t WRL::Format::find_property(const String& name) const {
 	for (int i = 0; i < properties.size(); i++) {

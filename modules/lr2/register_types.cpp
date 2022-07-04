@@ -1,10 +1,10 @@
 #include "register_types.h"
 
+#include "assets/tdf.hpp"
 #include "core/config/engine.h"
-#include "import/image_loader_mip.h"
-#include "import/tdf.h"
-#include "init.h"
+#include "init.hpp"
 #include "io/custom_file_dialog.hpp"
+#include "io/image_loader_mip.h"
 
 static ImageLoaderMIP* image_loader_mip = NULL;
 

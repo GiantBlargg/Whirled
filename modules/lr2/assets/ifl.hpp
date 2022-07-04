@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../io/asset_manager.hpp"
+#include "asset_manager.hpp"
 
-class MeshShapeLoader : public AssetLoader {
-	GDCLASS(MeshShapeLoader, AssetLoader);
+class IFLLoader : public AssetLoader {
+	GDCLASS(IFLLoader, AssetLoader);
 
 	bool can_handle(const AssetKey&, const CustomFS&) const override;
 	AssetKey remap_key(const AssetKey&, const CustomFS&) const override;

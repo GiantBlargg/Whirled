@@ -1,9 +1,10 @@
-#include "init.h"
+#include "init.hpp"
 
 #include "core/string/translation.h"
-#include "editor/whirled.h"
 #include "servers/navigation_server_3d.h"
 #include "servers/physics_server_2d.h"
+
+#include "editor/whirled.hpp"
 
 void Init::_notification(int p_notification) {
 	if (p_notification == NOTIFICATION_READY) {

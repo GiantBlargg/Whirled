@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../io/asset_manager.hpp"
-#include "../io/custom_fs.hpp"
+#include "asset_manager.hpp"
+#include "lr2/io/custom_fs.hpp"
 #include "scene/3d/mesh_instance_3d.h"
 #include "scene/resources/mesh.h"
 

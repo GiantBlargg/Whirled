@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../io/asset_manager.hpp"
+#include "asset_manager.hpp"
 
 class MDL2Loader : public AssetLoader {
 	GDCLASS(MDL2Loader, AssetLoader);

@@ -1,8 +1,9 @@
 #include "mdl2.hpp"
 
-#include "../io/file_helper.h"
 #include "core/io/file_access.h"
 #include "scene/resources/mesh.h"
+
+#include "lr2/io/file_helper.hpp"
 
 enum class MDL2Chunk : uint32_t {
 	END = 0,

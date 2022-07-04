@@ -1,4 +1,4 @@
-#include "inspector.h"
+#include "inspector.hpp"
 
 #include "scene/gui/label.h"
 #include "scene/gui/line_edit.h"

@@ -1,4 +1,4 @@
-#include "scene_layout.h"
+#include "scene_layout.hpp"
 
 void SceneLayout::_item_selected() {
 	TreeItem* item = get_selected();

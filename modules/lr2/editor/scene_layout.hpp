@@ -1,7 +1,8 @@
 #pragma once
 
-#include "../wrl/wrl.hpp"
 #include "scene/gui/tree.h"
+
+#include "lr2/wrl/wrl.hpp"
 
 class SceneLayout : public Tree, public WRL::EventHandler {
 	GDCLASS(SceneLayout, Tree);

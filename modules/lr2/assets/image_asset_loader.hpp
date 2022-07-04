@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../io/asset_manager.hpp"
+#include "asset_manager.hpp"
 
 class ImageAssetLoader : public AssetLoader {
 	GDCLASS(ImageAssetLoader, AssetLoader);
