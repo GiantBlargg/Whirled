@@ -55,7 +55,7 @@ Whirled::Whirled(const CustomFS p_custom_fs) : custom_fs(p_custom_fs) {
 
 	PanelContainer* base = memnew(PanelContainer);
 	add_child(base);
-	base->set_anchors_and_offsets_preset(Control::PRESET_WIDE);
+	base->set_anchors_and_offsets_preset(Control::PRESET_FULL_RECT);
 
 	file = memnew(CustomFileDialog);
 	file->set_custom_fs(custom_fs);

@@ -191,20 +191,20 @@ Ref<RefCounted> TDFMeshLoader::load(const AssetKey& k, const CustomFS&, AssetMan
 		uint8_t texture3 = E.key >> 24;
 
 		if (texture0 != 0xff) {
-			mat->set_shader_param(
+			mat->set_shader_uniform(
 				"tex0",
 				assets.block_get<Texture2D>(tdf->path + "/texture" + String::num_uint64(texture0 + 1) + ".tga"));
 			if (texture1 != 0xff) {
-				mat->set_shader_param(
+				mat->set_shader_uniform(
 					"tex1",
 					assets.block_get<Texture2D>(tdf->path + "/texture" + String::num_uint64(texture1 + 1) + ".tga"));
 				if (texture2 != 0xff) {
-					mat->set_shader_param(
+					mat->set_shader_uniform(
 						"tex2",
 						assets.block_get<Texture2D>(
 							tdf->path + "/texture" + String::num_uint64(texture2 + 1) + ".tga"));
 					if (texture3 != 0xff) {
-						mat->set_shader_param(
+						mat->set_shader_uniform(
 							"tex3",
 							assets.block_get<Texture2D>(
 								tdf->path + "/texture" + String::num_uint64(texture3 + 1) + ".tga"));

@@ -83,9 +83,8 @@ bool ImageTextureLoader::can_handle(const AssetKey& key, const CustomFS& fs) con
 AssetKey ImageTextureLoader::remap_key(const AssetKey& k, const CustomFS& fs) const { return {k.path, "ImageTexture"}; }
 Ref<RefCounted>
 ImageTextureLoader::load(const AssetKey& k, const CustomFS&, AssetManager& assets, Error* r_error) const {
-	Ref<ImageTexture> texture = memnew(ImageTexture);
 	Ref<Image> image = assets.block_get<Image>(k.path);
-	texture->create_from_image(image);
+	Ref<ImageTexture> texture = ImageTexture::create_from_image(image);
 
 	if (r_error)
 		*r_error = OK;

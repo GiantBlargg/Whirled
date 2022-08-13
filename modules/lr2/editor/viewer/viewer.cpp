@@ -199,7 +199,7 @@ void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 		}
 
 		else if (model.uniforms.has(prop_name)) {
-			instances[entry].mesh_instance->set_shader_instance_uniform(prop_name, prop.value);
+			instances[entry].mesh_instance->set_instance_shader_uniform(prop_name, prop.value);
 		}
 	}
 }
@@ -250,7 +250,7 @@ void fragment() { ALBEDO = texture(skybox, UV).rgb; }
 )");
 	Ref<ShaderMaterial> skybox_viewer_material = memnew(ShaderMaterial);
 	skybox_viewer_material->set_shader(skybox_viewer_shader);
-	skybox_viewer_material->set_shader_param("skybox", bg_viewport->get_texture());
+	skybox_viewer_material->set_shader_uniform("skybox", bg_viewport->get_texture());
 	skybox_viewer->set_material_override(skybox_viewer_material);
 	skybox_viewer->set_position(Vector3(0, 0, -2));
 	camera->add_child(skybox_viewer);
