@@ -33,9 +33,8 @@
 
 #include "core/io/image_loader.h"
 
-/**
-	@author SaracenOne
-*/
+#define TGA_IMAGE_DESCRIPTOR_ALPHA_MASK 0xf
+
 class ImageLoaderMIP : public ImageFormatLoader {
 	enum tga_type_e {
 		TGA_TYPE_NO_DATA = 0,
@@ -80,7 +79,9 @@ class ImageLoaderMIP : public ImageFormatLoader {
 		const bool p_is_monochrome, size_t p_input_size);
 
   public:
-	virtual Error load_image(Ref<Image> p_image, Ref<FileAccess> f, bool p_force_linear, float p_scale) override;
+	virtual Error load_image(
+		Ref<Image> p_image, Ref<FileAccess> f, BitField<ImageFormatLoader::LoaderFlags> p_flags,
+		float p_scale) override;
 	virtual void get_recognized_extensions(List<String>* p_extensions) const override;
 };
 

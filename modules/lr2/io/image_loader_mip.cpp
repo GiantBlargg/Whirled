@@ -104,7 +104,7 @@ Error ImageLoaderMIP::convert_to_image(
 	uint32_t width = p_header.image_width;
 	uint32_t height = p_header.image_height;
 	tga_origin_e origin = static_cast<tga_origin_e>((p_header.image_descriptor & TGA_ORIGIN_MASK) >> TGA_ORIGIN_SHIFT);
-
+	uint8_t alpha_bits = p_header.image_descriptor & TGA_IMAGE_DESCRIPTOR_ALPHA_MASK;
 	uint32_t x_start;
 	int32_t x_step;
 	uint32_t x_end;
@@ -212,6 +212,25 @@ Error ImageLoaderMIP::convert_to_image(
 			x = x_start;
 			y += y_step;
 		}
+	} else if (p_header.pixel_depth == 24) {
+		while (y != y_end) {
+			while (x != x_end) {
+				if (i + 2 >= p_input_size) {
+					return ERR_PARSE_ERROR;
+				}
+
+				uint8_t r = p_buffer[i + 2];
+				uint8_t g = p_buffer[i + 1];
+				uint8_t b = p_buffer[i + 0];
+
+				TGA_PUT_PIXEL(r, g, b, 0xff)
+
+				x += x_step;
+				i += 3;
+			}
+			x = x_start;
+			y += y_step;
+		}
 	} else if (p_header.pixel_depth == 32) {
 		while (y != y_end) {
 			while (x != x_end) {
@@ -239,7 +258,8 @@ Error ImageLoaderMIP::convert_to_image(
 	return OK;
 }
 
-Error ImageLoaderMIP::load_image(Ref<Image> p_image, Ref<FileAccess> f, bool p_force_linear, float p_scale) {
+Error ImageLoaderMIP::load_image(
+	Ref<Image> p_image, Ref<FileAccess> f, BitField<ImageFormatLoader::LoaderFlags> p_flags, float p_scale) {
 	Vector<uint8_t> src_image;
 	uint64_t src_image_len = f->get_length();
 	ERR_FAIL_COND_V(src_image_len == 0, ERR_FILE_CORRUPT);
@@ -290,7 +310,8 @@ Error ImageLoaderMIP::load_image(Ref<Image> p_image, Ref<FileAccess> f, bool p_f
 		err = FAILED;
 	}
 
-	if (!(tga_header.pixel_depth == 8 || tga_header.pixel_depth == 24 || tga_header.pixel_depth == 32)) {
+	if (!(tga_header.pixel_depth == 8 || tga_header.pixel_depth == 16 || tga_header.pixel_depth == 24 ||
+		  tga_header.pixel_depth == 32)) {
 		err = FAILED;
 	}
 

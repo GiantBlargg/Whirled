@@ -4,8 +4,6 @@
 #include "modules/regex/regex.h"
 #include "scene/resources/texture.h"
 
-const float delay_time = 1.0f / 30.0f;
-
 bool IFLLoader::can_handle(const AssetKey& key, const CustomFS& fs) const {
 	if (!ClassDB::is_parent_class("AnimatedTexture", key.type))
 		return false;
@@ -28,7 +26,7 @@ Ref<RefCounted> IFLLoader::load(const AssetKey& k, const CustomFS& fs, AssetMana
 
 	Ref<AnimatedTexture> texture;
 	texture.instantiate();
-	texture->set_fps(0);
+	texture->set_speed_scale(30);
 
 	texture->set_frames(matches.size());
 	for (int i = 0; i < matches.size(); i++) {
@@ -37,7 +35,7 @@ Ref<RefCounted> IFLLoader::load(const AssetKey& k, const CustomFS& fs, AssetMana
 		String tex_path = dir_path + "/" + match->get_string(1);
 
 		texture->set_frame_texture(i, assets.block_get<Texture2D>(tex_path));
-		texture->set_frame_delay(i, delay_time * match->get_string(2).to_int());
+		texture->set_frame_duration(i, match->get_string(2).to_int());
 	}
 
 	return texture;

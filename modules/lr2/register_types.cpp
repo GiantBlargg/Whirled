@@ -6,14 +6,14 @@
 #include "io/custom_file_dialog.hpp"
 #include "io/image_loader_mip.h"
 
-static ImageLoaderMIP* image_loader_mip = NULL;
+static Ref<ImageLoaderMIP> image_loader_mip;
 
 void initialize_lr2_module(ModuleInitializationLevel p_level) {
 	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
 		return;
 	}
 
-	image_loader_mip = memnew(ImageLoaderMIP);
+	image_loader_mip.instantiate();
 	ImageLoader::add_image_format_loader(image_loader_mip);
 
 	ClassDB::register_class<Init>();
@@ -31,5 +31,5 @@ void uninitialize_lr2_module(ModuleInitializationLevel p_level) {
 	tdf_shader.unref();
 
 	ImageLoader::remove_image_format_loader(image_loader_mip);
-	memdelete(image_loader_mip);
+	image_loader_mip.unref();
 }

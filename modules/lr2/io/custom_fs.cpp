@@ -8,7 +8,7 @@ String FSResolve::resolve_path(const String& p_path) const {
 		path = "/" + path;
 	}
 
-	if (DirAccess::exists(root.plus_file(p_path)) || FileAccess::exists(root.plus_file(p_path)))
+	if (DirAccess::exists(root.path_join(p_path)) || FileAccess::exists(root.path_join(p_path)))
 		return path;
 
 	dir_access->change_dir(root);
@@ -25,13 +25,13 @@ String FSResolve::resolve_path(const String& p_path) const {
 				return path;
 		} while (next.to_lower() != path_seg);
 		dir_access->list_dir_end();
-		ret_path = ret_path.plus_file(next);
+		ret_path = ret_path.path_join(next);
 	}
 
 	return ret_path;
 }
 
-String FSResolve::map_path(const String& p_path) const { return root.plus_file(p_path); }
+String FSResolve::map_path(const String& p_path) const { return root.path_join(p_path); }
 
 class LR2DirAccess : public DirAccess {
   private:
@@ -41,7 +41,7 @@ class LR2DirAccess : public DirAccess {
 
 	String _resolve_path(String p_path) {
 		if (p_path.is_relative_path()) {
-			p_path = current_dir.plus_file(p_path);
+			p_path = current_dir.path_join(p_path);
 		}
 		p_path = p_path.simplify_path();
 		return fs_resolve.resolve_path(p_path);
@@ -130,7 +130,7 @@ class LR2FileAccess : public FileAccess {
 	}
 
   protected:
-	Error _open(const String& p_path, int p_mode_flags) override {
+	Error open_internal(const String& p_path, int p_mode_flags) override {
 		return file->reopen(fs_resolve.map_path(fs_resolve.resolve_path(p_path)), p_mode_flags);
 	}
 	uint64_t _get_modified_time(const String& p_file) override {

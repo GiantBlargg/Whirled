@@ -8,6 +8,7 @@
 
 void Init::_notification(int p_notification) {
 	if (p_notification == NOTIFICATION_READY) {
+		get_viewport()->set_embedding_subwindows(false);
 		// TODO: Locate lr2
 
 		String lr2_dir = OS::get_singleton()->get_environment("LR2_PATH");
