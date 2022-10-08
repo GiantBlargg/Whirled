@@ -5,6 +5,8 @@
 #include "scene/gui/box_container.h"
 #include "scene/main/viewport.h"
 
+#include "gizmo.hpp"
+#include "layer.hpp"
 #include "lr2/assets/asset_manager.hpp"
 #include "lr2/io/custom_fs.hpp"
 #include "lr2/wrl/wrl.hpp"
@@ -13,16 +15,10 @@ class Viewer : public BoxContainer, public WRL::EventHandler {
 	GDCLASS(Viewer, BoxContainer);
 
   private:
-	enum RenderLayer {
-		RenderLayerProps = 1 << 0,
-		RenderLayerTerrain = 1 << 1,
-		RenderLayerSkyBox = 1 << 2,
-	};
-
 	Node3D* root;
 	Camera3D* bg_camera;
 	Camera3D* camera;
-	enum class Mode { Default, FPS };
+	enum class Mode { Default, Gizmo, FPS };
 	Mode mode = Mode::Default;
 	const float look_speed = 0.2 * (Math_PI / 180.0);
 	const float move_speed = 100;
@@ -43,6 +39,11 @@ class Viewer : public BoxContainer, public WRL::EventHandler {
 	HashMap<WRL::EntryID, Instance, Hasher> instances;
 
 	HashSet<WRL::EntryID, Hasher> pending;
+
+	Vector<Gizmo*> gizmos;
+	Gizmo* current_gizmo = nullptr;
+	void update_gizmos(WRL::EntryID);
+	void update_cameras();
 
   protected:
 	void input(const Ref<InputEvent>& p_event) override;

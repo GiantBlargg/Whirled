@@ -27,7 +27,7 @@ class Widget : public WRL::EventHandler {
 			}
 		}
 		if (change.propertyChanges.has(field_key)) {
-			input_value(change.propertyChanges[field_key]);
+			input_value(change.propertyChanges.get(field_key));
 		}
 	}
 	bool lite_init() override { return true; }

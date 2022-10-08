@@ -6,11 +6,42 @@
 #include "scene/gui/subviewport_container.h"
 #include "scene/resources/primitive_meshes.h"
 
+#include "gizmo.hpp"
 #include "lr2/assets/ifl.hpp"
 #include "lr2/assets/image_asset_loader.hpp"
 #include "lr2/assets/mdl2.hpp"
 #include "lr2/assets/mesh_shape.hpp"
 #include "lr2/assets/tdf.hpp"
+
+void Viewer::update_cameras() {
+	bg_camera->set_basis(camera->get_basis());
+
+	for (Gizmo* g : gizmos) {
+		g->update_camera(camera->get_position());
+	}
+}
+
+void Viewer::update_gizmos(WRL::EntryID selected) {
+	for (Gizmo* g : gizmos) {
+		g->queue_delete();
+	}
+	gizmos.clear();
+	if (selected) {
+		auto& model = wrl->get_entry_format(selected).model;
+		if (model) {
+			if (model.position != "") {
+				gizmos.append(memnew(Trans1DGizmo(selected, model.position, GizmoDir::X_AXIS)));
+				gizmos.append(memnew(Trans1DGizmo(selected, model.position, GizmoDir::Y_AXIS)));
+				gizmos.append(memnew(Trans1DGizmo(selected, model.position, GizmoDir::Z_AXIS)));
+			}
+		}
+	}
+	for (Gizmo* g : gizmos) {
+		root->add_child(g);
+		g->wrl_connect(wrl);
+	}
+	update_cameras();
+}
 
 void Viewer::input(const Ref<InputEvent>& p_event) {
 	Ref<InputEventKey> k = p_event;
@@ -21,22 +52,24 @@ void Viewer::input(const Ref<InputEvent>& p_event) {
 void Viewer::gui_input(const Ref<InputEvent>& p_event) {
 	Ref<InputEventMouseButton> mb = p_event;
 	if (mb.is_valid()) {
-		if (mode == Mode::Default) {
-			if (mb->get_button_index() == MouseButton::LEFT) {
-				// Pick object under cursor
-				const Vector2 cursor_pos = get_local_mouse_position();
+		if (mode == Mode::Default && mb->get_button_index() == MouseButton::LEFT && mb->is_pressed()) {
+			const Vector2 cursor_pos = get_local_mouse_position();
+			const Vector3 ray_origin = camera->project_ray_origin(cursor_pos);
+			const Vector3 ray_normal = camera->project_ray_normal(cursor_pos);
 
+			if (current_gizmo) {
+				mode = Mode::Gizmo;
+				current_gizmo->interact(ray_origin, ray_normal, true);
+			} else {
+				// Pick object under cursor
 				PhysicsDirectSpaceState3D::RayParameters ray_params{
 					.collide_with_bodies = true,
 					.collide_with_areas = true,
 					.hit_from_inside = true,
 					.hit_back_faces = true};
-
-				const Vector3 ray_origin = camera->project_ray_origin(cursor_pos);
-				const Vector3 ray_normal = camera->project_ray_normal(cursor_pos);
 				ray_params.from = ray_origin;
 				ray_params.to = ray_origin + ray_normal * camera->get_far();
-				ray_params.collision_mask = RenderLayerProps | RenderLayerTerrain;
+				ray_params.collision_mask = LayerProps | LayerTerrain;
 
 				PhysicsDirectSpaceState3D::RayResult rr;
 				bool found = PhysicsServer3D::get_singleton()
@@ -47,8 +80,8 @@ void Viewer::gui_input(const Ref<InputEvent>& p_event) {
 					const Vector3 ray_origin = bg_camera->project_ray_origin(cursor_pos);
 					const Vector3 ray_normal = bg_camera->project_ray_normal(cursor_pos);
 					ray_params.from = ray_origin;
-					ray_params.to = ray_origin + ray_normal * camera->get_far();
-					ray_params.collision_mask = RenderLayerSkyBox;
+					ray_params.to = ray_origin + ray_normal * bg_camera->get_far();
+					ray_params.collision_mask = LayerSkyBox;
 
 					found = PhysicsServer3D::get_singleton()
 								->space_get_direct_state(bg_camera->get_world_3d()->get_space())
@@ -71,22 +104,72 @@ void Viewer::gui_input(const Ref<InputEvent>& p_event) {
 					}
 				}
 			}
-		}
-		if (mb->get_button_index() == MouseButton::RIGHT) {
-			mode = mb->is_pressed() ? Mode::FPS : Mode::Default;
-			Input::get_singleton()->set_mouse_mode(
-				mb->is_pressed() ? Input::MOUSE_MODE_CAPTURED : Input::MOUSE_MODE_VISIBLE);
+		} else if (mode == Mode::Default || mode == Mode::FPS) {
+			if (mb->get_button_index() == MouseButton::RIGHT) {
+				mode = mb->is_pressed() ? Mode::FPS : Mode::Default;
+				Input::get_singleton()->set_mouse_mode(
+					mb->is_pressed() ? Input::MOUSE_MODE_CAPTURED : Input::MOUSE_MODE_VISIBLE);
+			}
+		} else if (mode == Mode::Gizmo && mb->get_button_index() == MouseButton::LEFT && !mb->is_pressed()) {
+
+			const Vector2 cursor_pos = get_local_mouse_position();
+			const Vector3 ray_origin = camera->project_ray_origin(cursor_pos);
+			const Vector3 ray_normal = camera->project_ray_normal(cursor_pos);
+			current_gizmo->interact(ray_origin, ray_normal);
+
+			mode = Mode::Default;
 		}
 	}
 
 	Ref<InputEventMouseMotion> mm = p_event;
 	if (mm.is_valid()) {
-		if (mode == Mode::FPS) {
+		if (mode == Mode::Default) {
+			// Check if hovering over gizmo
+			const Vector2 cursor_pos = get_local_mouse_position();
+
+			PhysicsDirectSpaceState3D::RayParameters ray_params{
+				.collide_with_bodies = true,
+				.collide_with_areas = true,
+				.hit_from_inside = true,
+				.hit_back_faces = true};
+
+			const Vector3 ray_origin = camera->project_ray_origin(cursor_pos);
+			const Vector3 ray_normal = camera->project_ray_normal(cursor_pos);
+			ray_params.from = ray_origin;
+			ray_params.to = ray_origin + ray_normal * camera->get_far();
+			ray_params.collision_mask = LayerGizmo;
+
+			PhysicsDirectSpaceState3D::RayResult rr;
+			bool found = PhysicsServer3D::get_singleton()
+							 ->space_get_direct_state(camera->get_world_3d()->get_space())
+							 ->intersect_ray(ray_params, rr);
+
+			Gizmo* new_gizmo = nullptr;
+			if (found) {
+				new_gizmo = dynamic_cast<Gizmo*>(dynamic_cast<Node*>(rr.collider)->get_parent());
+			}
+
+			if (new_gizmo != current_gizmo) {
+				if (current_gizmo)
+					current_gizmo->mouse_over(false);
+
+				current_gizmo = new_gizmo;
+
+				if (current_gizmo)
+					current_gizmo->mouse_over(true);
+			}
+
+		} else if (mode == Mode::FPS) {
 			Vector3 old_rot = camera->get_rotation();
 			Vector2 rel = mm->get_relative() * look_speed;
 			Vector3 new_rot(CLAMP(old_rot.x - rel.y, -Math_PI / 2, Math_PI / 2), (old_rot.y - rel.x), 0);
 			camera->set_rotation(new_rot);
-			bg_camera->set_rotation(new_rot);
+			update_cameras();
+		} else if (mode == Mode::Gizmo) {
+			const Vector2 cursor_pos = get_local_mouse_position();
+			const Vector3 ray_origin = camera->project_ray_origin(cursor_pos);
+			const Vector3 ray_normal = camera->project_ray_normal(cursor_pos);
+			current_gizmo->interact(ray_origin, ray_normal);
 		}
 	}
 }
@@ -118,6 +201,7 @@ void Viewer::_notification(int p_what) {
 
 			movement *= get_process_delta_time() * move_speed;
 			camera->translate(movement);
+			update_cameras();
 		}
 
 		for (WRL::EntryID entry : pending) {
@@ -157,10 +241,10 @@ void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 		auto& model = wrl->get_entry_format(a.value).model;
 		if (model) {
 			auto mesh_instance = memnew(MeshInstance3D);
-			static std::unordered_map<WRL::Format::Model::Type, RenderLayer> layer_lookup = {
-				{WRL::Format::Model::Type::Prop, RenderLayerProps},
-				{WRL::Format::Model::Type::Terrain, RenderLayerTerrain},
-				{WRL::Format::Model::Type::Skybox, RenderLayerSkyBox},
+			static std::unordered_map<WRL::Format::Model::Type, Layer> layer_lookup = {
+				{WRL::Format::Model::Type::Prop, LayerProps},
+				{WRL::Format::Model::Type::Terrain, LayerTerrain},
+				{WRL::Format::Model::Type::Skybox, LayerSkyBox},
 			};
 			mesh_instance->set_layer_mask(layer_lookup.at(model.type));
 			root->add_child(mesh_instance);
@@ -202,6 +286,10 @@ void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 			instances[entry].mesh_instance->set_instance_shader_parameter(prop_name, prop.value);
 		}
 	}
+
+	if (change.select_changed) {
+		update_gizmos(change.select.second);
+	}
 }
 
 Viewer::Viewer(const CustomFS& p_custom_fs) : custom_fs(p_custom_fs), assets(custom_fs) {
@@ -228,14 +316,14 @@ Viewer::Viewer(const CustomFS& p_custom_fs) : custom_fs(p_custom_fs), assets(cus
 	viewport_container->add_child(bg_viewport);
 	bg_camera = memnew(Camera3D);
 	bg_camera->set_near(1);
-	bg_camera->set_cull_mask(RenderLayerSkyBox);
+	bg_camera->set_cull_mask(LayerSkyBox);
 	bg_viewport->add_child(bg_camera);
 
 	SubViewport* viewport = memnew(SubViewport);
 	viewport_container->add_child(viewport);
 	camera = memnew(Camera3D);
 	camera->set_near(1);
-	camera->set_cull_mask(RenderLayerProps | RenderLayerTerrain);
+	camera->set_cull_mask(LayerProps | LayerTerrain | LayerGizmo);
 	viewport->add_child(camera);
 
 	MeshInstance3D* skybox_viewer = memnew(MeshInstance3D);

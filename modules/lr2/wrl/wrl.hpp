@@ -125,16 +125,16 @@ class WRL : public RefCounted {
 				return;
 
 			Change change;
-			if (!lite_init()) {
-				if (wrl.is_valid()) {
+			if (wrl.is_valid()) {
+				if (!lite_init()) {
 					change.removed = wrl->get_scene_map();
-					wrl->event_handlers.erase(this);
-				};
-			}
+				}
+				wrl->event_handlers.erase(this);
+			};
 			wrl = p_wrl;
-			if (!lite_init()) {
-				if (wrl.is_valid()) {
-					wrl->event_handlers.append(this);
+			if (wrl.is_valid()) {
+				wrl->event_handlers.append(this);
+				if (!lite_init()) {
 					change.added = wrl->get_scene_map();
 					wrl->fixup_change(change);
 				}

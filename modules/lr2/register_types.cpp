@@ -22,6 +22,7 @@ void initialize_lr2_module(ModuleInitializationLevel p_level) {
 }
 
 extern Ref<Shader> tdf_shader;
+void unref_gizmo();
 
 void uninitialize_lr2_module(ModuleInitializationLevel p_level) {
 	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
@@ -29,6 +30,7 @@ void uninitialize_lr2_module(ModuleInitializationLevel p_level) {
 	}
 
 	tdf_shader.unref();
+	unref_gizmo();
 
 	ImageLoader::remove_image_format_loader(image_loader_mip);
 	image_loader_mip.unref();
