@@ -10,6 +10,8 @@
 #include "layer.hpp"
 
 Ref<Mesh> arrow_mesh;
+Ref<Mesh> ring_mesh;
+Ref<Shape3D> ring_shape;
 
 Vector<Ref<Material>> gizmo_mats;
 Color gizmo_colours[] = {
@@ -19,6 +21,8 @@ Color gizmo_colours[] = {
 
 void unref_gizmo() {
 	arrow_mesh.unref();
+	ring_mesh.unref();
+	ring_shape.unref();
 	gizmo_mats.clear();
 }
 
@@ -78,6 +82,25 @@ Ref<Mesh> build_rotation_solid(Vector<Vector2> profile, int rot_segments) {
 	return mesh;
 }
 
+void Gizmo::set_shape(const Ref<Shape3D>& shape, const Transform3D& transform) {
+	cshape->set_transform(transform);
+	cshape->set_shape(shape);
+}
+Vector2 Gizmo::plane_position(const Vector3& mouse_origin, const Vector3& mouse_normal) {
+	Vector3 planeOrigin = get_global_transform().origin;
+
+	Vector3 globalTangent = get_global_transform().basis.get_column(1).normalized();
+	Vector3 globalBitangent = get_global_transform().basis.get_column(2).normalized();
+
+	Vector3 originOffset = camera_pos.origin - planeOrigin;
+
+	real_t M = Basis(globalTangent, globalBitangent, mouse_normal).determinant();
+	real_t u = Basis(originOffset, globalBitangent, mouse_normal).determinant() / M;
+	real_t v = Basis(mouse_normal, globalTangent, originOffset).determinant() / M;
+
+	return Vector2(u, v);
+}
+
 void Gizmo::mouse_over(bool over) { set_material_override(over ? active_mat : inactive_mat); }
 void Gizmo::_wrl_changed(const WRL::Change& change, bool reset) {
 	if (reset) {
@@ -92,7 +115,7 @@ void Gizmo::_wrl_changed(const WRL::Change& change, bool reset) {
 }
 
 void Gizmo::update_scale() {
-	real_t distance = camera_pos.distance_to(get_global_transform().origin);
+	real_t distance = camera_pos.origin.distance_to(get_global_transform().origin);
 	Vector3 scale;
 	scale.set_all(0.15);
 	set_scale(scale * distance);
@@ -116,6 +139,12 @@ Gizmo::Gizmo(WRL::EntryID p_entry, String p_position, GizmoDir gd) : entry(p_ent
 	inactive_mat = gizmo_mats[gd];
 	active_mat = gizmo_mats[gd | GizmoDir::ACTIVE];
 
+	StaticBody3D* collider = memnew(StaticBody3D);
+	collider->set_collision_layer(get_layer_mask());
+	add_child(collider);
+	cshape = memnew(CollisionShape3D);
+	collider->add_child(cshape, true);
+
 	mouse_over(false);
 }
 
@@ -137,16 +166,10 @@ Trans1DGizmo::Trans1DGizmo(WRL::EntryID entry, String position, GizmoDir gd) : G
 	if (gd == Z_AXIS)
 		set_rotation({0, -M_PI_2, 0});
 
-	StaticBody3D* collider = memnew(StaticBody3D);
-	collider->set_collision_layer(get_layer_mask());
-	add_child(collider);
-	CollisionShape3D* cshape = memnew(CollisionShape3D);
-	collider->add_child(cshape, true);
-	cshape->set_transform(Transform3D(Basis(Vector3(0, 0, 1), M_PI_2), Vector3(tip_offset / 2, 0, 0)));
 	Ref<CapsuleShape3D> shape = memnew(CapsuleShape3D);
 	shape->set_radius(head_radius);
 	shape->set_height(tip_offset);
-	cshape->set_shape(shape);
+	set_shape(shape, Transform3D(Basis(Vector3(0, 0, 1), M_PI_2), Vector3(tip_offset / 2, 0, 0)));
 }
 
 void Trans1DGizmo::interact(const Vector3& mouse_origin, const Vector3& mouse_normal, bool reset) {
@@ -162,6 +185,42 @@ void Trans1DGizmo::interact(const Vector3& mouse_origin, const Vector3& mouse_no
 		WRL::Change change;
 		Vector3 pos_change = (skew_offset - pos_offset) * get_transform().basis.get_column(0).normalized();
 		change.propertyChanges.insert({entry, position}, pos_change + wrl->get_entry_property(entry, position));
+		wrl->submit_change(change);
+	}
+}
+
+RotateGizmo::RotateGizmo(WRL::EntryID entry, String position, String p_rotation, GizmoDir gd)
+	: Gizmo(entry, position, gd), rotation(p_rotation) {
+	if (ring_mesh.is_null()) {
+		const static Vector<Vector2> ring_profile = {
+			{0, large_radius - small_radius},
+			{-small_radius, large_radius},
+			{0, large_radius + small_radius},
+			{small_radius, large_radius},
+			{0, large_radius - small_radius}};
+		ring_mesh = build_rotation_solid(ring_profile, rot_segments);
+		ring_shape = ring_mesh->create_trimesh_shape();
+	}
+
+	set_mesh(ring_mesh);
+	set_shape(ring_shape);
+
+	if (gd == Y_AXIS)
+		set_rotation({0, 0, M_PI_2});
+	if (gd == Z_AXIS)
+		set_rotation({0, -M_PI_2, 0});
+}
+
+void RotateGizmo::interact(const Vector3& mouse_origin, const Vector3& mouse_normal, bool reset) {
+	if (reset) {
+		last_angle = plane_position(mouse_origin, mouse_normal).angle();
+	} else {
+		real_t current_angle = plane_position(mouse_origin, mouse_normal).angle();
+		WRL::Change change;
+		Quaternion rot_change(get_basis().get_column(0).normalized(), current_angle - last_angle);
+		change.propertyChanges.insert(
+			{entry, rotation}, rot_change * wrl->get_entry_property<Quaternion>(entry, rotation));
+		last_angle = current_angle;
 		wrl->submit_change(change);
 	}
 }

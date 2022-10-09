@@ -8,23 +8,31 @@
 
 enum GizmoDir { X_AXIS, Y_AXIS, Z_AXIS, OTHER, ACTIVE };
 
+class CollisionShape3D;
+
 class Gizmo : public MeshInstance3D, public WRL::EventHandler {
 	GDCLASS(Gizmo, MeshInstance3D);
 
   private:
 	Ref<Material> inactive_mat;
 	Ref<Material> active_mat;
-	Vector3 camera_pos;
+	Transform3D camera_pos;
+
+	CollisionShape3D* cshape;
 
   protected:
 	WRL::EntryID entry;
 	String position;
 
+	void set_shape(const Ref<Shape3D>& shape, const Transform3D& transform = Transform3D());
+
+	Vector2 plane_position(const Vector3& mouse_origin, const Vector3& mouse_normal);
+
   public:
 	void mouse_over(bool);
 	virtual void interact(const Vector3& mouse_origin, const Vector3& mouse_normal, bool reset = false) = 0;
-	void update_camera(Vector3 position) {
-		camera_pos = position;
+	void update_camera(const Transform3D& transform) {
+		camera_pos = transform;
 		update_scale();
 	}
 
@@ -48,7 +56,23 @@ class Trans1DGizmo : public Gizmo {
 	real_t pos_offset;
 
   public:
-	void interact(const Vector3& mouse_origin, const Vector3& mouse_normal, bool reset = false) override;
+	void interact(const Vector3& mouse_origin, const Vector3& mouse_normal, bool reset) override;
 
 	Trans1DGizmo(WRL::EntryID, String position, GizmoDir);
+};
+
+class RotateGizmo : public Gizmo {
+	GDCLASS(RotateGizmo, Gizmo)
+
+	constexpr static real_t large_radius = 0.5, small_radius = 0.03;
+	constexpr static int rot_segments = 64;
+
+	String rotation;
+
+	real_t last_angle;
+
+  public:
+	void interact(const Vector3& mouse_origin, const Vector3& mouse_normal, bool reset) override;
+
+	RotateGizmo(WRL::EntryID, String position, String rotation, GizmoDir);
 };

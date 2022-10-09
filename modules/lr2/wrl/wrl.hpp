@@ -98,7 +98,7 @@ class WRL : public RefCounted {
 		PropertyMap propertyChanges;
 		HashMap<int, EntryID> added;
 		HashMap<int, EntryID> removed;
-		bool select_changed;
+		bool select_changed = false;
 		Pair<int, EntryID> select;
 	};
 	void submit_change(const Change&, String action_name = "");

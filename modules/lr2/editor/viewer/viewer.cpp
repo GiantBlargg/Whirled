@@ -17,7 +17,7 @@ void Viewer::update_cameras() {
 	bg_camera->set_basis(camera->get_basis());
 
 	for (Gizmo* g : gizmos) {
-		g->update_camera(camera->get_position());
+		g->update_camera(camera->get_transform());
 	}
 }
 
@@ -33,6 +33,12 @@ void Viewer::update_gizmos(WRL::EntryID selected) {
 				gizmos.append(memnew(Trans1DGizmo(selected, model.position, GizmoDir::X_AXIS)));
 				gizmos.append(memnew(Trans1DGizmo(selected, model.position, GizmoDir::Y_AXIS)));
 				gizmos.append(memnew(Trans1DGizmo(selected, model.position, GizmoDir::Z_AXIS)));
+
+				if (model.rotation != "") {
+					gizmos.append(memnew(RotateGizmo(selected, model.position, model.rotation, GizmoDir::X_AXIS)));
+					gizmos.append(memnew(RotateGizmo(selected, model.position, model.rotation, GizmoDir::Y_AXIS)));
+					gizmos.append(memnew(RotateGizmo(selected, model.position, model.rotation, GizmoDir::Z_AXIS)));
+				}
 			}
 		}
 	}
