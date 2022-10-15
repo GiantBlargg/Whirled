@@ -237,7 +237,21 @@ void Inspector::_wrl_changed(const WRL::Change& change, bool) {
 					"font_size", type_label->get_theme_font_size("font_size") * 1.2);
 				vbox->add_child(type_label);
 			}
+
+			Vector<WRL::Format::Property> properties;
+
 			for (const auto& prop : format.properties) {
+				if (prop.name.get(0) != '_') {
+					properties.append(prop);
+				}
+			}
+			for (const auto& prop : format.properties) {
+				if (prop.name.get(0) == '_') {
+					properties.append(prop);
+				}
+			}
+
+			for (const auto& prop : properties) {
 				Label* label = memnew(Label);
 				label->set_text(prop.name);
 				vbox->add_child(label);
