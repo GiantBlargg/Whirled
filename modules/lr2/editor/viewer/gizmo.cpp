@@ -116,9 +116,8 @@ void Gizmo::_wrl_changed(const WRL::Change& change, bool reset) {
 
 void Gizmo::update_scale() {
 	real_t distance = camera_pos.origin.distance_to(get_global_transform().origin);
-	Vector3 scale;
-	scale.set_all(0.15);
-	set_scale(scale * distance);
+	Vector3 one_vector(1, 1, 1);
+	set_scale(one_vector * 0.15 * distance);
 }
 
 Gizmo::Gizmo(WRL::EntryID p_entry, String p_position, GizmoDir gd) : entry(p_entry), position(p_position) {
