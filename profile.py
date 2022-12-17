@@ -1,7 +1,7 @@
 custom_modules = "../modules"
 module_lr2_enabled = "yes"
 
-tools = "no"
+target = "template_debug"
 
 deprecated = "no"
 minizip = "no"

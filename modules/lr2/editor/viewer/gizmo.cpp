@@ -4,6 +4,7 @@
 #include "scene/3d/physics_body_3d.h"
 #include "scene/main/viewport.h"
 #include "scene/resources/capsule_shape_3d.h"
+#include "scene/resources/concave_polygon_shape_3d.h"
 #include "scene/resources/primitive_meshes.h"
 #include "scene/resources/surface_tool.h"
 

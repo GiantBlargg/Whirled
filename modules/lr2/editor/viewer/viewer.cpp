@@ -23,7 +23,7 @@ void Viewer::update_cameras() {
 
 void Viewer::update_gizmos(WRL::EntryID selected) {
 	for (Gizmo* g : gizmos) {
-		g->queue_delete();
+		g->queue_free();
 	}
 	gizmos.clear();
 	if (selected) {
@@ -235,7 +235,7 @@ void Viewer::_notification(int p_what) {
 void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 	for (const auto& r : change.removed) {
 		if (instances.has(r.value)) {
-			instances[r.value].mesh_instance->queue_delete();
+			instances[r.value].mesh_instance->queue_free();
 			instances.erase(r.value);
 		}
 		if (pending.has(r.value)) {
@@ -269,7 +269,7 @@ void Viewer::_wrl_changed(const WRL::Change& change, bool) {
 			const String& model = prop.value;
 			if (instances[entry].model_path != model) {
 				if (instances[entry].collider)
-					instances[entry].collider->queue_delete();
+					instances[entry].collider->queue_free();
 				instances[entry].model_path = model;
 				pending.insert(entry);
 			}

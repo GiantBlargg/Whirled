@@ -193,7 +193,7 @@ class RotationWidget : public HBoxContainer, public Widget {
 
 	void update_output(String) {
 		output_value(
-			Quaternion(
+			Quaternion::from_euler(
 				Vector3{
 					static_cast<real_t>(x->get_text().to_float()), static_cast<real_t>(y->get_text().to_float()),
 					static_cast<real_t>(z->get_text().to_float())} *
@@ -221,7 +221,7 @@ class RotationWidget : public HBoxContainer, public Widget {
 void Inspector::_wrl_changed(const WRL::Change& change, bool) {
 	if (change.select_changed) {
 		if (vbox) {
-			vbox->queue_delete();
+			vbox->queue_free();
 			vbox = nullptr;
 		}
 		selected = change.select.second;

@@ -253,7 +253,7 @@ Error ImageLoaderMIP::convert_to_image(
 		}
 	}
 
-	p_image->create(width, height, false, Image::FORMAT_RGBA8, image_data);
+	p_image->set_data(width, height, false, Image::FORMAT_RGBA8, image_data);
 
 	return OK;
 }

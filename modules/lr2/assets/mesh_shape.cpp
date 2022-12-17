@@ -1,5 +1,6 @@
 #include "mesh_shape.hpp"
 
+#include "scene/resources/concave_polygon_shape_3d.h"
 #include "scene/resources/mesh.h"
 
 bool MeshShapeLoader::can_handle(const AssetKey& key, const CustomFS& fs) const {
