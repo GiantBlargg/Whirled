@@ -1,0 +1,30 @@
+cargo-features = ["profile-rustflags"]
+
+[package]
+name = "whirled"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies.bevy]
+version = "0.9.1"
+default-features = false
+features = [
+	"bevy_asset",
+	"bevy_scene",
+	"bevy_winit",
+	"bevy_core_pipeline",
+	"bevy_pbr",
+	"bevy_render",
+	"bevy_sprite",
+	"bevy_text",
+	"bevy_ui",
+	"x11",
+	"wayland",
+]
+
+[profile.dev]
+# opt-level = 1
+rustflags = ["-Clink-arg=-fuse-ld=lld", "-Zshare-generics=y"]
+
+[profile.dev.package."*"]
+opt-level = 3
