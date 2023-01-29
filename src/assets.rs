@@ -10,22 +10,19 @@ use bevy::{
 };
 
 #[derive(Resource, Clone)]
-struct LR2fs {
+pub struct LR2fs {
 	base: PathBuf,
 }
 
 impl LR2fs {
 	fn resolve<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf> {
 		let mut path_buf = self.base.clone();
-		for a in path.as_ref().ancestors() {
+		for a in path.as_ref().iter() {
 			path_buf.push(
 				fs::read_dir(&path_buf)?
 					.find(|p| {
 						p.as_ref()
-							.map(|p| {
-								p.file_name().to_ascii_lowercase()
-									== a.as_os_str().to_ascii_lowercase()
-							})
+							.map(|p| p.file_name().to_ascii_lowercase() == a.to_ascii_lowercase())
 							.unwrap_or(false)
 					})
 					.unwrap_or(io::Result::Err(io::Error::from(io::ErrorKind::NotFound)))?

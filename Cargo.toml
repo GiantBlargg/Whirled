@@ -5,6 +5,9 @@ name = "whirled"
 version = "0.1.0"
 edition = "2021"
 
+[dependencies]
+bevy_egui = "0.19.0"
+
 [dependencies.bevy]
 version = "0.9.1"
 default-features = false
@@ -23,7 +26,6 @@ features = [
 ]
 
 [profile.dev]
-# opt-level = 1
 rustflags = ["-Clink-arg=-fuse-ld=lld", "-Zshare-generics=y"]
 
 [profile.dev.package."*"]
