@@ -14,7 +14,32 @@ pub struct LR2fs {
 	base: PathBuf,
 }
 
+pub struct MappedDirEntry {
+	path: PathBuf,
+	dir_entry: fs::DirEntry,
+}
+
+impl MappedDirEntry {
+	pub fn path(&self) -> PathBuf {
+		self.path.clone()
+	}
+	#[allow(dead_code)]
+	pub fn metadata(&self) -> io::Result<fs::Metadata> {
+		self.dir_entry.metadata()
+	}
+	pub fn file_type(&self) -> io::Result<fs::FileType> {
+		self.dir_entry.file_type()
+	}
+	pub fn file_name(&self) -> std::ffi::OsString {
+		self.dir_entry.file_name()
+	}
+}
+
 impl LR2fs {
+	pub fn base_name(&self) -> Option<&str> {
+		self.base.file_name()?.to_str()
+	}
+
 	fn resolve<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf> {
 		let mut path_buf = self.base.clone();
 		for a in path.as_ref().iter() {
@@ -40,8 +65,19 @@ impl LR2fs {
 		fs::read(self.resolve(path)?)
 	}
 
-	pub fn read_dir<P: AsRef<Path>>(&self, path: P) -> io::Result<fs::ReadDir> {
-		fs::read_dir(self.resolve(path)?)
+	pub fn read_dir<P: AsRef<Path>>(
+		&self,
+		path: P,
+	) -> io::Result<impl Iterator<Item = io::Result<MappedDirEntry>> + 'static> {
+		let p: PathBuf = path.as_ref().to_owned();
+		fs::read_dir(self.resolve(path)?).map(move |r| {
+			r.map(move |d| {
+				d.map(|d| MappedDirEntry {
+					path: p.join(d.file_name()),
+					dir_entry: d,
+				})
+			})
+		})
 	}
 }
 
@@ -62,10 +98,9 @@ impl AssetIo for LR2fs {
 		&self,
 		path: &Path,
 	) -> Result<Box<dyn Iterator<Item = PathBuf>>, AssetIoError> {
-		Ok(Box::new(self.read_dir(path)?.map(move |entry| {
-			let path = entry.unwrap().path();
-			path.to_owned()
-		})))
+		Ok(Box::new(
+			self.read_dir(path)?.map(|entry| entry.unwrap().path()),
+		))
 	}
 
 	fn get_metadata(&self, path: &Path) -> Result<bevy::asset::Metadata, AssetIoError> {
