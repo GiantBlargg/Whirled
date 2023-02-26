@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+	ffi::OsStr,
+	path::{Path, PathBuf},
+};
 
 use bevy::prelude::{Plugin, Res, ResMut, Resource};
 use bevy_egui::{
@@ -22,9 +25,9 @@ fn populate_dir<P: AsRef<Path>>(fs: &LR2fs, fr: &mut ResMut<FileRes>, ui: &mut U
 	let name = (if p == Path::new("") {
 		fs.base_name()
 	} else {
-		p.file_name().and_then(std::ffi::OsStr::to_str)
+		p.file_name().and_then(OsStr::to_str)
 	})
-	.unwrap_or("");
+	.unwrap_or_default();
 	#[allow(deprecated)]
 	let resp = CollapsingHeader::new(name)
 		.selectable(true)
@@ -84,14 +87,12 @@ fn file_ui(mut ctx: ResMut<EguiContext>, fs: Res<LR2fs>, mut fr: ResMut<FileRes>
 											if t.is_dir() {
 												FileType::Directory
 											} else {
-												let ext = e.path().extension().map_or(
-													"".to_owned(),
-													|s| {
-														s.to_ascii_lowercase()
-															.to_string_lossy()
-															.to_string()
-													},
-												);
+												let ext = e
+													.path()
+													.extension()
+													.and_then(OsStr::to_str)
+													.map(str::to_ascii_lowercase)
+													.unwrap_or_default();
 												match ext.as_str() {
 													"wrl" => FileType::Wrl,
 													"md2" => FileType::Model,
@@ -106,22 +107,20 @@ fn file_ui(mut ctx: ResMut<EguiContext>, fs: Res<LR2fs>, mut fr: ResMut<FileRes>
 						.collect()
 					});
 
-					{
-						let parent = fr.current_path.parent();
-						if let Some(p) = parent {
-							contents.push(("..".to_owned(), p.to_owned(), FileType::Directory));
-						}
+					if let Some(p) = fr.current_path.parent() {
+						contents.push(("..".to_owned(), p.to_owned(), FileType::Directory));
 					}
 
 					contents.sort_unstable_by_key(|(d, _, _)| d.to_ascii_lowercase());
 
 					for (c, p, t) in contents {
-						if ui.button(&c).double_clicked() {
+						let resp = ui.button(&c);
+						if resp.double_clicked() {
 							match t {
 								FileType::Unknown => {}
 								FileType::Directory => {
 									fr.current_path = p;
-									fr.queue_open = true
+									fr.queue_open = true;
 								}
 								FileType::Wrl => {}
 								FileType::Model => {}

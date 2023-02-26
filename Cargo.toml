@@ -19,8 +19,6 @@ features = [
 	"bevy_pbr",
 	"bevy_render",
 	"bevy_sprite",
-	"bevy_text",
-	"bevy_ui",
 	"x11",
 	"wayland",
 ]
