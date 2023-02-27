@@ -58,6 +58,7 @@ fn populate_dir<P: AsRef<Path>>(fs: &LR2fs, fr: &mut ResMut<FileRes>, ui: &mut U
 	}
 }
 
+#[derive(PartialEq, Eq)]
 enum FileType {
 	Unknown,
 	Directory,
@@ -111,7 +112,9 @@ fn file_ui(mut ctx: ResMut<EguiContext>, fs: Res<LR2fs>, mut fr: ResMut<FileRes>
 						contents.push(("..".to_owned(), p.to_owned(), FileType::Directory));
 					}
 
-					contents.sort_unstable_by_key(|(d, _, _)| d.to_ascii_lowercase());
+					contents.sort_unstable_by_key(|(d, _, t)| {
+						(t != &FileType::Directory, d.to_ascii_lowercase())
+					});
 
 					for (c, p, t) in contents {
 						let resp = ui.button(&c);
