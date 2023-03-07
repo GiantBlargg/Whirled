@@ -115,8 +115,12 @@ impl AssetIo for LR2fs {
 			})
 	}
 
-	fn watch_path_for_changes(&self, path: &Path) -> Result<(), AssetIoError> {
-		Err(AssetIoError::PathWatchError(path.into()))
+	fn watch_path_for_changes(
+		&self,
+		to_watch: &Path,
+		_to_reload: Option<PathBuf>,
+	) -> Result<(), AssetIoError> {
+		Err(AssetIoError::PathWatchError(to_watch.into()))
 	}
 
 	fn watch_for_changes(&self) -> Result<(), AssetIoError> {

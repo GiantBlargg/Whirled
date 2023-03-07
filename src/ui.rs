@@ -6,7 +6,7 @@ use std::{
 use bevy::prelude::{Plugin, Res, ResMut, Resource};
 use bevy_egui::{
 	egui::{CollapsingHeader, ScrollArea, SidePanel, TopBottomPanel, Ui},
-	EguiContext, EguiPlugin,
+	EguiContexts, EguiPlugin,
 };
 
 use crate::assets::LR2fs;
@@ -66,10 +66,10 @@ enum FileType {
 	Model,
 }
 
-fn file_ui(mut ctx: ResMut<EguiContext>, fs: Res<LR2fs>, mut fr: ResMut<FileRes>) {
+fn file_ui(mut contexts: EguiContexts, fs: Res<LR2fs>, mut fr: ResMut<FileRes>) {
 	TopBottomPanel::bottom("file_ui")
 		.resizable(true)
-		.show(ctx.ctx_mut(), |ui| {
+		.show(contexts.ctx_mut(), |ui| {
 			SidePanel::left("dir_tree").show_inside(ui, |ui| {
 				ScrollArea::vertical().show(ui, |ui| populate_dir(fs.as_ref(), &mut fr, ui, ""));
 			});
