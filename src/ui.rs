@@ -3,13 +3,18 @@ use std::{
 	path::{Path, PathBuf},
 };
 
-use bevy::prelude::{Plugin, Res, ResMut, Resource};
+use bevy::prelude::{
+	Children, EventWriter, IntoSystemConfigs, Name, Plugin, Query, Res, ResMut, Resource, With,
+};
 use bevy_egui::{
 	egui::{CollapsingHeader, ScrollArea, SidePanel, TopBottomPanel, Ui},
 	EguiContexts, EguiPlugin,
 };
 
-use crate::assets::LR2fs;
+use crate::{
+	assets::LR2fs,
+	wrl::{WRLCommand, WRLEntry, WRLRoot},
+};
 
 #[derive(Resource)]
 struct FileRes {
@@ -53,6 +58,9 @@ fn populate_dir<P: AsRef<Path>>(fs: &LR2fs, fr: &mut ResMut<FileRes>, ui: &mut U
 				populate_dir(fs, fr, ui, p.join(&d))
 			}
 		});
+	if fr.queue_open & selected {
+		resp.header_response.scroll_to_me(None)
+	}
 	if resp.header_response.clicked() {
 		fr.as_mut().current_path = p.to_path_buf();
 	}
@@ -66,7 +74,12 @@ enum FileType {
 	Model,
 }
 
-fn file_ui(mut contexts: EguiContexts, fs: Res<LR2fs>, mut fr: ResMut<FileRes>) {
+fn file_ui(
+	mut contexts: EguiContexts,
+	fs: Res<LR2fs>,
+	mut fr: ResMut<FileRes>,
+	mut wrl: EventWriter<WRLCommand>,
+) {
 	TopBottomPanel::bottom("file_ui")
 		.resizable(true)
 		.show(contexts.ctx_mut(), |ui| {
@@ -125,13 +138,40 @@ fn file_ui(mut contexts: EguiContexts, fs: Res<LR2fs>, mut fr: ResMut<FileRes>) 
 									fr.current_path = p;
 									fr.queue_open = true;
 								}
-								FileType::Wrl => {}
+								FileType::Wrl => {
+									wrl.send(WRLCommand::Load(p));
+								}
 								FileType::Model => {}
 							}
 						}
 					}
 				})
 			});
+		});
+}
+
+fn hierarchy_step(
+	ui: &mut Ui,
+	children: &Children,
+	entries: Query<(&Name, Option<&Children>), With<WRLEntry>>,
+) {
+}
+
+fn hierarchy_browser(
+	mut contexts: EguiContexts,
+	root: Query<&Children, With<WRLRoot>>,
+	entries: Query<(&Name, Option<&Children>), With<WRLEntry>>,
+) {
+	SidePanel::left("hierarchy_browser")
+		.resizable(true)
+		.show(contexts.ctx_mut(), |ui| {
+			ScrollArea::vertical().show(ui, |ui| {
+				if root.is_empty() {
+					return;
+				}
+				let children = root.single();
+				hierarchy_step(ui, children, entries);
+			})
 		});
 }
 
@@ -144,6 +184,6 @@ impl Plugin for UIPlugin {
 				current_path: "game data/SAVED WORLDS".into(),
 				queue_open: true,
 			})
-			.add_system(file_ui);
+			.add_systems((file_ui, hierarchy_browser).chain());
 	}
 }
