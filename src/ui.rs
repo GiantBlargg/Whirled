@@ -154,8 +154,26 @@ fn file_ui(
 fn hierarchy_step(
 	ui: &mut Ui,
 	children: &Children,
-	entries: Query<(&Name, Option<&Children>), With<WRLEntry>>,
+	entries: &Query<(&Name, Option<&Children>), With<WRLEntry>>,
 ) {
+	for c in children {
+		if let Ok((name, c)) = entries.get(*c) {
+			if let Some(c) = c {
+				#[allow(deprecated)]
+				let resp = CollapsingHeader::new(name.as_str())
+					.selectable(true)
+					.show(ui, |ui| {
+						hierarchy_step(ui, c, entries);
+					});
+			} else {
+				#[allow(deprecated)]
+				let resp = CollapsingHeader::new(name.as_str())
+					.selectable(true)
+					.icon(|_, _, _| {})
+					.show(ui, |_| {});
+			}
+		}
+	}
 }
 
 fn hierarchy_browser(
@@ -164,14 +182,14 @@ fn hierarchy_browser(
 	entries: Query<(&Name, Option<&Children>), With<WRLEntry>>,
 ) {
 	SidePanel::left("hierarchy_browser")
-		.resizable(true)
+		.resizable(false)
 		.show(contexts.ctx_mut(), |ui| {
 			ScrollArea::vertical().show(ui, |ui| {
 				if root.is_empty() {
 					return;
 				}
 				let children = root.single();
-				hierarchy_step(ui, children, entries);
+				hierarchy_step(ui, children, &entries);
 			})
 		});
 }
