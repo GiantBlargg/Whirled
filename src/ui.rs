@@ -4,7 +4,8 @@ use std::{
 };
 
 use bevy::prelude::{
-	Children, EventWriter, IntoSystemConfigs, Name, Plugin, Query, Res, ResMut, Resource, With,
+	Children, EventWriter, IntoSystemConfigs, Name, Plugin, Query, Res, ResMut, Resource, Update,
+	With,
 };
 use bevy_egui::{
 	egui::{CollapsingHeader, ScrollArea, SidePanel, TopBottomPanel, Ui},
@@ -179,11 +180,11 @@ pub struct UIPlugin;
 
 impl Plugin for UIPlugin {
 	fn build(&self, app: &mut bevy::prelude::App) {
-		app.add_plugin(EguiPlugin)
+		app.add_plugins(EguiPlugin)
 			.insert_resource(FileRes {
 				current_path: "game data/SAVED WORLDS".into(),
 				queue_open: true,
 			})
-			.add_systems((file_ui, hierarchy_browser).chain());
+			.add_systems(Update, (file_ui, hierarchy_browser).chain());
 	}
 }

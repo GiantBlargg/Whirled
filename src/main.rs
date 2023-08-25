@@ -19,7 +19,6 @@ fn main() {
 				.build()
 				.add_before::<AssetPlugin, _>(LR2AssetPlugin),
 		)
-		.add_plugin(WRLPlugin)
-		.add_plugin(UIPlugin)
+		.add_plugins((WRLPlugin, UIPlugin))
 		.run();
 }

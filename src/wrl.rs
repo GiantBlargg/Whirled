@@ -5,8 +5,8 @@ use std::{
 };
 
 use bevy::prelude::{
-	error, BuildChildren, Commands, Component, DespawnRecursiveExt, Entity, EventReader, Name,
-	Plugin, Quat, Res, Vec2, Vec3,
+	error, BuildChildren, Commands, Component, DespawnRecursiveExt, Entity, Event, EventReader,
+	Name, Plugin, Quat, Res, Vec2, Vec3,
 };
 
 use crate::assets::LR2fs;
@@ -175,6 +175,7 @@ fn load_wrl<P: AsRef<Path>>(cmd: &mut Commands, fs: &LR2fs, path: P) -> io::Resu
 	Ok(root)
 }
 
+#[derive(Event)]
 pub enum WRLCommand {
 	Load(PathBuf),
 	Save(Entity),

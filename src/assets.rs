@@ -123,7 +123,10 @@ impl AssetIo for LR2fs {
 		Err(AssetIoError::PathWatchError(to_watch.into()))
 	}
 
-	fn watch_for_changes(&self) -> Result<(), AssetIoError> {
+	fn watch_for_changes(
+		&self,
+		_configuration: &bevy::asset::ChangeWatcher,
+	) -> Result<(), AssetIoError> {
 		Err(AssetIoError::PathWatchError("".into()))
 	}
 }
