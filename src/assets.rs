@@ -1,11 +1,14 @@
 use std::{
-	fs, io,
+	fs::{self, File},
+	io::{self, Read},
 	path::{Path, PathBuf},
+	pin::Pin,
+	task::Poll,
 };
 
 use bevy::{
-	asset::{AssetIo, AssetIoError, Metadata},
-	prelude::{AssetServer, Plugin, Resource},
+	asset::io::{AssetReader, AssetReaderError, AssetSource, PathStream, Reader},
+	prelude::{AssetApp, Plugin, Resource},
 	utils::BoxedFuture,
 };
 
@@ -65,6 +68,10 @@ impl LR2fs {
 		fs::read(self.resolve(path)?)
 	}
 
+	pub fn open<P: AsRef<Path>>(&self, path: P) -> io::Result<File> {
+		File::open(self.resolve(path)?)
+	}
+
 	pub fn read_dir<P: AsRef<Path>>(
 		&self,
 		path: P,
@@ -81,53 +88,100 @@ impl LR2fs {
 	}
 }
 
-impl AssetIo for LR2fs {
-	fn load_path<'a>(&'a self, path: &'a Path) -> BoxedFuture<'a, Result<Vec<u8>, AssetIoError>> {
+struct FileReader(File);
+
+impl futures_io::AsyncRead for FileReader {
+	fn poll_read(
+		self: Pin<&mut Self>,
+		_cx: &mut std::task::Context<'_>,
+		buf: &mut [u8],
+	) -> Poll<std::io::Result<usize>> {
+		let this = self.get_mut();
+		let read = this.0.read(buf);
+		Poll::Ready(read)
+	}
+}
+
+struct DirReader(Vec<PathBuf>);
+
+impl futures_core::Stream for DirReader {
+	type Item = PathBuf;
+
+	fn poll_next(
+		self: Pin<&mut Self>,
+		_cx: &mut std::task::Context<'_>,
+	) -> Poll<Option<Self::Item>> {
+		Poll::Ready(self.get_mut().0.pop())
+	}
+
+	fn size_hint(&self) -> (usize, Option<usize>) {
+		let len = self.0.len();
+		(len, Some(len))
+	}
+}
+
+impl AssetReader for LR2fs {
+	fn read<'a>(
+		&'a self,
+		path: &'a Path,
+	) -> BoxedFuture<'a, Result<Box<Reader<'a>>, AssetReaderError>> {
 		Box::pin(async move {
-			self.read(path).map_err(|e| {
-				if e.kind() == io::ErrorKind::NotFound {
-					AssetIoError::NotFound(path.to_path_buf())
-				} else {
-					e.into()
+			match self.open(path) {
+				Ok(file) => {
+					let reader: Box<Reader> = Box::new(FileReader(file));
+					Ok(reader)
 				}
-			})
+				Err(e) => {
+					if e.kind() == std::io::ErrorKind::NotFound {
+						Err(AssetReaderError::NotFound(path.to_owned()))
+					} else {
+						Err(e.into())
+					}
+				}
+			}
 		})
 	}
 
-	fn read_directory(
-		&self,
-		path: &Path,
-	) -> Result<Box<dyn Iterator<Item = PathBuf>>, AssetIoError> {
-		Ok(Box::new(
-			self.read_dir(path)?.map(|entry| entry.unwrap().path()),
-		))
+	fn read_meta<'a>(
+		&'a self,
+		path: &'a Path,
+	) -> BoxedFuture<'a, Result<Box<Reader<'a>>, AssetReaderError>> {
+		Box::pin(async { Err(AssetReaderError::NotFound(path.to_owned())) })
 	}
 
-	fn get_metadata(&self, path: &Path) -> Result<bevy::asset::Metadata, AssetIoError> {
-		self.metadata(path)
-			.and_then(Metadata::try_from)
-			.map_err(|e| {
-				if e.kind() == io::ErrorKind::NotFound {
-					AssetIoError::NotFound(path.to_path_buf())
-				} else {
-					e.into()
+	fn read_directory<'a>(
+		&'a self,
+		path: &'a Path,
+	) -> BoxedFuture<'a, Result<Box<PathStream>, AssetReaderError>> {
+		Box::pin(async move {
+			match self.read_dir(path) {
+				Ok(read_dir) => {
+					let mapped_stream =
+						read_dir.filter_map(|f| f.ok().map(|dir_entry| dir_entry.path()));
+					let read_dir: Box<PathStream> = Box::new(DirReader(mapped_stream.collect()));
+					Ok(read_dir)
 				}
-			})
+				Err(e) => {
+					if e.kind() == std::io::ErrorKind::NotFound {
+						Err(AssetReaderError::NotFound(path.to_owned()))
+					} else {
+						Err(e.into())
+					}
+				}
+			}
+		})
 	}
 
-	fn watch_path_for_changes(
-		&self,
-		to_watch: &Path,
-		_to_reload: Option<PathBuf>,
-	) -> Result<(), AssetIoError> {
-		Err(AssetIoError::PathWatchError(to_watch.into()))
-	}
-
-	fn watch_for_changes(
-		&self,
-		_configuration: &bevy::asset::ChangeWatcher,
-	) -> Result<(), AssetIoError> {
-		Err(AssetIoError::PathWatchError("".into()))
+	fn is_directory<'a>(
+		&'a self,
+		path: &'a Path,
+	) -> BoxedFuture<'a, Result<bool, AssetReaderError>> {
+		Box::pin(async move {
+			let metadata = self
+				.metadata(path)
+				.map_err(|_e| AssetReaderError::NotFound(path.to_owned()))?;
+			Ok(metadata.file_type().is_dir())
+		})
 	}
 }
 
@@ -142,6 +196,9 @@ impl Plugin for LR2AssetPlugin {
 		let fs = LR2fs { base };
 
 		app.insert_resource(fs.clone());
-		app.insert_resource(AssetServer::new(fs));
+		app.register_asset_source(
+			None,
+			AssetSource::build().with_reader(move || Box::new(fs.clone())),
+		);
 	}
 }

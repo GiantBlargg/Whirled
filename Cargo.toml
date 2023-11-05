@@ -6,10 +6,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy_egui = "0.21"
+bevy_egui = "0.23"
+futures-core = "0.3.29"
+futures-io = "0.3.29"
 
 [dependencies.bevy]
-version = "0.11"
+version = "0.12"
 default-features = false
 features = [
 	"bevy_asset",
@@ -24,7 +26,7 @@ features = [
 ]
 
 [profile.dev]
-rustflags = ["-Clink-arg=-fuse-ld=lld", "-Zshare-generics=y"]
+rustflags = ["-Clink-arg=-fuse-ld=mold", "-Zshare-generics=y"]
 
 [profile.dev.package."*"]
 opt-level = 3

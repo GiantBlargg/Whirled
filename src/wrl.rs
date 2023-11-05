@@ -4,9 +4,12 @@ use std::{
 	path::{Path, PathBuf},
 };
 
-use bevy::prelude::{
-	error, BuildChildren, Commands, Component, DespawnRecursiveExt, Entity, Event, EventReader,
-	Name, Plugin, Quat, Res, Vec2, Vec3,
+use bevy::{
+	log::error,
+	prelude::{
+		BuildChildren, Commands, Component, DespawnRecursiveExt, Entity, Event, EventReader, Name,
+		Plugin, Quat, Res, Update, Vec2, Vec3,
+	},
 };
 
 use crate::assets::LR2fs;
@@ -202,6 +205,7 @@ pub struct WRLPlugin;
 
 impl Plugin for WRLPlugin {
 	fn build(&self, app: &mut bevy::prelude::App) {
-		app.add_event::<WRLCommand>().add_system(wrl_command_system);
+		app.add_event::<WRLCommand>()
+			.add_systems(Update, wrl_command_system);
 	}
 }
