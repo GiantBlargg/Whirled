@@ -12,7 +12,7 @@ use bevy::{
 	},
 };
 
-use crate::assets::LR2fs;
+use crate::assets::Lr2Fs;
 
 trait ReadExt: io::Read {
 	fn read_u32(&mut self) -> io::Result<u32> {
@@ -120,7 +120,7 @@ const WRL_MAGIC: u32 = u32::from_le_bytes(*b"RC2W");
 const WRL_VERSION: u32 = 11;
 const OBMG_MAGIC: u32 = u32::from_le_bytes(*b"OBMG");
 
-fn load_wrl<P: AsRef<Path>>(cmd: &mut Commands, fs: &LR2fs, path: P) -> io::Result<Entity> {
+fn load_wrl<P: AsRef<Path>>(cmd: &mut Commands, fs: &Lr2Fs, path: P) -> io::Result<Entity> {
 	let mut data = io::Cursor::new(fs.read(path.as_ref())?);
 
 	if data.read_u32()? != WRL_MAGIC {
@@ -185,7 +185,7 @@ pub enum WRLCommand {
 	Close(Entity),
 }
 
-fn wrl_command_system(mut cmd: Commands, mut wrl_cmd: EventReader<WRLCommand>, fs: Res<LR2fs>) {
+fn wrl_command_system(mut cmd: Commands, mut wrl_cmd: EventReader<WRLCommand>, fs: Res<Lr2Fs>) {
 	for c in wrl_cmd.iter() {
 		match c {
 			WRLCommand::Load(path) => {

@@ -13,7 +13,7 @@ use bevy_egui::{
 };
 
 use crate::{
-	assets::LR2fs,
+	assets::Lr2Fs,
 	wrl::{WRLCommand, WRLEntry, WRLRoot},
 };
 
@@ -23,7 +23,7 @@ struct FileRes {
 	queue_open: bool,
 }
 
-fn populate_dir<P: AsRef<Path>>(fs: &LR2fs, fr: &mut ResMut<FileRes>, ui: &mut Ui, path: P) {
+fn populate_dir<P: AsRef<Path>>(fs: &Lr2Fs, fr: &mut ResMut<FileRes>, ui: &mut Ui, path: P) {
 	let p = path.as_ref();
 
 	let selected = p == fr.current_path;
@@ -77,7 +77,7 @@ enum FileType {
 
 fn file_ui(
 	mut contexts: EguiContexts,
-	fs: Res<LR2fs>,
+	fs: Res<Lr2Fs>,
 	mut fr: ResMut<FileRes>,
 	mut wrl: EventWriter<WRLCommand>,
 ) {

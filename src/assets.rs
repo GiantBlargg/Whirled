@@ -13,7 +13,7 @@ use bevy::{
 };
 
 #[derive(Resource, Clone)]
-pub struct LR2fs {
+pub struct Lr2Fs {
 	base: PathBuf,
 }
 
@@ -38,7 +38,7 @@ impl MappedDirEntry {
 	}
 }
 
-impl LR2fs {
+impl Lr2Fs {
 	pub fn base_name(&self) -> Option<&str> {
 		self.base.file_name()?.to_str()
 	}
@@ -96,9 +96,7 @@ impl futures_io::AsyncRead for FileReader {
 		_cx: &mut std::task::Context<'_>,
 		buf: &mut [u8],
 	) -> Poll<std::io::Result<usize>> {
-		let this = self.get_mut();
-		let read = this.0.read(buf);
-		Poll::Ready(read)
+		Poll::Ready(self.get_mut().0.read(buf))
 	}
 }
 
@@ -120,7 +118,7 @@ impl futures_core::Stream for DirReader {
 	}
 }
 
-impl AssetReader for LR2fs {
+impl AssetReader for Lr2Fs {
 	fn read<'a>(
 		&'a self,
 		path: &'a Path,
@@ -193,7 +191,7 @@ impl Plugin for LR2AssetPlugin {
 
 		//TODO: Check for LR2
 
-		let fs = LR2fs { base };
+		let fs = Lr2Fs { base };
 
 		app.insert_resource(fs.clone());
 		app.register_asset_source(
