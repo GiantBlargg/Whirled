@@ -151,11 +151,11 @@ jobs:
           key: godot-server-${{ github.sha }}
           restore-keys: godot-server-
       - run: sudo apt-get install scons libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4.1.7
         with:
           name: mono-linux
           path: ~/mono-installs/desktop-linux-x86_64-release
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4.1.7
         with:
           name: mono-bcl-desktop
           path: ~/mono-installs/desktop-linux-x86_64-release/lib/mono/4.5
@@ -188,15 +188,15 @@ jobs:
           key: godot-linux-${{ github.sha }}
           restore-keys: godot-linux-
       - run: sudo apt-get install scons libxcursor-dev libxinerama-dev libgl1-mesa-dev libglu-dev libasound2-dev libpulse-dev libudev-dev libxi-dev libxrandr-dev
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4.1.7
         with:
           name: mono-linux
           path: ~/mono-installs/desktop-linux-x86_64-release
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4.1.7
         with:
           name: mono-bcl-desktop
           path: ~/mono-installs/desktop-linux-x86_64-release/lib/mono/4.5
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4.1.7
         with:
           name: godot-server
           path: godot/godot/bin
@@ -233,15 +233,15 @@ jobs:
           sudo apt-get install mingw-w64 scons
           sudo update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
           sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4.1.7
         with:
           name: mono-windows
           path: ~/mono-installs/desktop-windows-x86_64-release
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4.1.7
         with:
           name: mono-bcl-desktop-win32
           path: ~/mono-installs/desktop-windows-x86_64-release/lib/mono/4.5
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4.1.7
         with:
           name: godot-server
           path: godot/godot/bin
@@ -265,15 +265,15 @@ jobs:
     needs: [godot-linux, godot-server, mono-bcl-desktop]
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4.1.7
         with:
           name: godot-server
           path: godot/godot/bin
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4.1.7
         with:
           name: godot-linux
           path: ~/.local/share/godot/templates/${{ env.GODOT_VERSION }}
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4.1.7
         with:
           name: mono-bcl-desktop
           path: ~/.local/share/godot/templates/${{ env.GODOT_VERSION }}/bcl/net_4_x
@@ -293,15 +293,15 @@ jobs:
     needs: [godot-windows, godot-server, mono-bcl-desktop]
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4.1.7
         with:
           name: godot-server
           path: godot/godot/bin
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4.1.7
         with:
           name: godot-windows
           path: ~/.local/share/godot/templates/${{ env.GODOT_VERSION }}
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4.1.7
         with:
           name: mono-bcl-desktop
           path: ~/.local/share/godot/templates/${{ env.GODOT_VERSION }}/bcl/net_4_x_win
@@ -333,7 +333,7 @@ jobs:
   #         prerelease: true
 
   #     - name: Download Linux Artifact
-  #       uses: actions/download-artifact@v2
+  #       uses: actions/download-artifact@v4.1.7
   #       with:
   #         name: linux
   #         path: Whirled_Linux
@@ -353,7 +353,7 @@ jobs:
   #         asset_content_type: application/zip
 
   #     - name: Download Windows Artifact
-  #       uses: actions/download-artifact@v2
+  #       uses: actions/download-artifact@v4.1.7
   #       with:
   #         name: windows
   #         path: Whirled_Windows
